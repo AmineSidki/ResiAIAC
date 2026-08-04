@@ -1,0 +1,782 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{pdflscape}
+
+\usetikzlibrary{arrows, positioning, shapes.geometric, shapes.multipart, matrix}
+
+% Styles for the UML class diagrams (logical model and physical/table model)
+\tikzset{
+  umlclass/.style={
+    rectangle split, rectangle split parts=2, draw=black, thick,
+    rectangle split part fill={blue!12,white},
+    font=\fontsize{6.3}{7.4}\selectfont, align=left,
+    rectangle split part align={center,left},
+    inner sep=4pt, rounded corners=1pt, text width=3.1cm
+  },
+  umlclasswide/.style={
+    rectangle split, rectangle split parts=2, draw=black, thick,
+    rectangle split part fill={blue!12,white},
+    font=\fontsize{6.3}{7.4}\selectfont, align=left,
+    rectangle split part align={center,left},
+    inner sep=4pt, rounded corners=1pt, text width=3.7cm
+  },
+  umltable/.style={
+    rectangle split, rectangle split parts=2, draw=black, thick,
+    rectangle split part fill={yellow!18,white},
+    font=\fontsize{6.3}{7.4}\selectfont, align=left,
+    rectangle split part align={center,left},
+    inner sep=4pt, rounded corners=1pt, text width=3.1cm
+  },
+  umltablewide/.style={
+    rectangle split, rectangle split parts=2, draw=black, thick,
+    rectangle split part fill={yellow!18,white},
+    font=\fontsize{6.3}{7.4}\selectfont, align=left,
+    rectangle split part align={center,left},
+    inner sep=4pt, rounded corners=1pt, text width=3.7cm
+  },
+  assoc/.style={draw=black!70, thick},
+  mult/.style={font=\fontsize{7}{8}\selectfont, fill=white, inner sep=1.5pt}
+}
+
+\geometry{top=2cm, bottom=2cm, left=1.5cm, right=1.5cm}
+
+% Custom commands for professional sequence diagrams with stickmen
+\newcommand{\drawactor}[3]{
+  % #1: name of coordinate, #2: label, #3: height of lifeline
+  \begin{scope}[shift={(#1)}]
+    \draw[thick, fill=blue!10] (0,1.8) circle (0.20); % head
+    \draw[thick] (0,1.6) -- (0,0.9); % body
+    \draw[thick] (-0.35,1.3) -- (0.35,1.3); % arms
+    \draw[thick] (0,0.9) -- (-0.2,0.4); % left leg
+    \draw[thick] (0,0.9) -- (0.2,0.4); % right leg
+    \node[font=\bfseries, anchor=north] (#1_label) at (0, 0.15) {#2};
+  \end{scope}
+  \coordinate (#1_top) at (#1_label.south);
+  \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#3) coordinate (#1_bot);
+}
+
+\newcommand{\drawapp}[3]{
+  % #1: coordinate/node name, #2: label, #3: height of lifeline
+  \node[draw, fill=green!15, minimum width=3.2cm, minimum height=0.8cm, rounded corners, font=\bfseries] (#1_node) at (#1) {#2};
+  \coordinate (#1_top) at (#1_node.south);
+  \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#3) coordinate (#1_bot);
+}
+
+\title{\textbf{Rapport de Conception Technique \\ Système de Gestion de l'Internat AIAC \\ (ResiAIAC)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Étude bibliographique}
+
+\subsection{Introduction}
+Cette analyse bibliographique présente un panorama complet des technologies, frameworks, outils et concepts modernes de développement logiciel mis en œuvre dans le cadre du projet \textbf{ResiAIAC}. Ce système intègre des composants backend et frontend avancés, des architectures distribuées hautement scalables et des pratiques d'intégration et de déploiement continus (DevOps) de standard industriel.
+
+\subsection{Technologies et Outils Backend}
+
+\subsubsection{Spring Boot}
+\textbf{Définition :} Spring Boot est un framework Java d'entreprise open-source, conçu sur l'écosystème Spring, qui élimine la complexité de configuration des applications autonomes prêtes pour la production. Il repose sur le paradigme de \textit{"convention plutôt que configuration"} (Convention over Configuration).
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Auto-configuration :} Résolution et instanciation automatiques des beans requis en fonction des dépendances présentes.
+    \item \textbf{Serveur Embarqué :} Intégration par défaut de serveurs d'applications (Tomcat, Jetty ou Undertow) éliminant le besoin de serveurs d'applications externes.
+    \item \textbf{Gestion des Dépendances :} Utilisation des "starters" Maven/Gradle standardisant les architectures de dépendance.
+\end{itemize}
+\textbf{Intérêt pratique :} Permet le développement ultra-rapide de microservices extensibles et d'API REST résilientes et sécurisées.
+
+\subsubsection{PostgreSQL}
+\textbf{Définition :} Système de gestion de base de données relationnelle et objet (SGBDR) open-source de classe entreprise. Il est mondialement reconnu pour son respect rigoureux des standards SQL, sa fiabilité exceptionnelle et sa richesse fonctionnelle.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Transactions ACID :} Support complet et robuste garantissant l'intégrité absolue des données.
+    \item \textbf{Modèles de Données Hybrides :} Gestion native et optimisée du format JSONB permettant d'associer la flexibilité du NoSQL à la rigueur du relationnel.
+    \item \textbf{Extensibilité :} Support d'extensions avancées (PostGIS pour les données spatiales, pgvector pour l'IA).
+\end{itemize}
+
+\subsubsection{Redis}
+\textbf{Définition :} Redis (Remote Dictionary Server) est une base de données en mémoire, clé-valeur, ultra-rapide. Elle est principalement exploitée comme cache applicatif, courtier de messages (Message Broker) ou stockage de sessions.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Structures de données hautement optimisées (listes, hashes, sets triés).
+    \item Latence inférieure à la milliseconde grâce au stockage en RAM.
+    \item Persistance configurable (RDB/AOF) pour prévenir la perte accidentelle de données.
+\end{itemize}
+
+\subsubsection{SeaweedFS}
+\textbf{Définition :} Système de stockage distribué d'objets, hautement scalable et efficace pour le stockage de milliards de petits fichiers, inspiré de l'architecture Haystack de Facebook.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Séparation stricte de la gestion des métadonnées (Master Server) et du stockage physique des fichiers (Volume Servers).
+    \item Compatibilité totale avec l'API Amazon S3.
+    \item Réplication native et basculement automatique garantissant une haute disponibilité.
+\end{itemize}
+
+\subsection{Technologies et Outils Frontend}
+
+\subsubsection{Angular}
+\textbf{Définition :} Framework applicatif structuré et typé, développé par Google, utilisant TypeScript pour concevoir des applications web monopages (SPA) robustes, performantes et scalables au niveau entreprise.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Architecture modulaire stricte basée sur les composants réutilisables.
+    \item Injection de dépendances native pour une modularité accrue et une testabilité maximale.
+    \item \textit{Two-Way Data Binding} unifiant de manière transparente le modèle et la vue.
+\end{itemize}
+
+\subsubsection{RxJS}
+\textbf{Définition :} Bibliothèque réactive mettant en œuvre le pattern Observer et les flux d'observables pour orchestrer de manière asynchrone les événements et les requêtes de données.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Gestion fluide des requêtes HTTP concurrentes et du temps réel (WebSockets).
+    \item Large palette d'opérateurs de transformation et de filtrage (\texttt{switchMap}, \texttt{debounceTime}, \\ \texttt{combineLatest}).
+\end{itemize}
+
+\subsubsection{TailwindCSS}
+\textbf{Définition :} Framework CSS orienté "utilitaires d'abord" (Utility-First), permettant de concevoir des interfaces graphiques modernes et réactives directement dans le balisage HTML.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Évite la prolifération de feuilles de style complexes et redondantes.
+    \item Optimisation draconienne de la taille des bundles via l'élimination automatique des classes inutilisées (PurgeCSS).
+\end{itemize}
+
+\subsection{Infrastructure, Déploiement et Concepts}
+
+\subsubsection{Docker \& Docker Compose}
+\textbf{Définition :} Docker standardise l'empaquetage des applications et de leur environnement d'exécution complet dans des conteneurs isolés, garantissant le principe \textit{"build once, run anywhere"}. Docker Compose permet la définition multi-conteneur via un unique fichier déclaratif (\texttt{compose.yml}).
+
+\subsubsection{Kubernetes (K8s)}
+\textbf{Définition :} Orchestrateur de conteneurs open-source standard de l'industrie, conçu pour automatiser le déploiement, la mise à l'échelle automatique (Auto-scaling) et la gestion des applications conteneurisées.
+
+\subsubsection{GitHub Actions}
+\textbf{Définition :} Plateforme d'automatisation CI/CD intégrée à GitHub pour exécuter des pipelines de tests automatisés, de validation de code (Linter) et de déploiement automatique sur chaque événement Git.
+
+\subsubsection{Systèmes Distribués \& API REST}
+\textbf{Définition :} Architecture distribuée structurant les services indépendamment, communiquant via le protocole HTTP sans état (Stateless) en s'appuyant sur les verbes HTTP standards.
+
+\subsubsection{Gestion d'État (State Management)}
+\textbf{Définition :} Centralisation et prévisibilité des données applicatives (par exemple via NgRx) pour assurer la cohérence des vues sur les interfaces utilisateur complexes.
+
+\subsubsection{Mise en Cache (Caching)}
+\textbf{Définition :} Stratégie d'optimisation visant à éliminer les goulots d'étranglement de la base de données en conservant temporairement en RAM les données hautement sollicitées.
+
+\subsection{Conclusion et Références Bibliographiques}
+Le choix de cette pile technologique moderne garantit la création d'une application performante, modulaire et hautement disponible.
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Spring Boot :} \url{https://spring.io/projects/spring-boot}
+    \item \textbf{PostgreSQL :} \url{https://www.postgresql.org/docs/}
+    \item \textbf{Redis :} \url{https://redis.io/docs/}
+    \item \textbf{SeaweedFS :} \url{https://github.com/seaweedfs/seaweedfs}
+    \item \textbf{Docker :} \url{https://docs.docker.com/}
+    \item \textbf{Kubernetes :} \url{https://kubernetes.io/docs/}
+    \item \textbf{GitHub Actions :} \url{https://docs.github.com/en/actions}
+    \item \textbf{Angular :} \url{https://angular.dev/}
+\end{itemize}
+
+\newpage
+
+\section{Étude des opportunités et Analyse de l'existant}
+
+\subsection{Situation Actuelle et Problématique}
+La gestion de la résidence universitaire de l'AIAC repose sur un écosystème hétérogène d'outils cloisonnés. L'application de gestion administrative actuelle est fermée aux étudiants, forçant ces derniers à passer par des processus manuels (cahier de réclamations physique) ou des systèmes déconnectés (formulaires BDE pour la réservation des chambres).
+
+\subsection{Synthèse des Problèmes et Opportunités}
+La fragmentation actuelle engendre plusieurs dysfonctionnements majeurs :
+\begin{enumerate}
+    \item \textbf{Perte de temps et d'efficacité :} La double saisie des données papier vers Excel augmente la charge administrative.
+    \item \textbf{Erreurs humaines :} La transcription manuelle induit des incohérences de données.
+    \item \textbf{Absence de traçabilité :} Complexité de suivi de l'historique et de l'état des réclamations.
+    \item \textbf{Isolement informationnel :} Manque total de visibilité unifiée sur l'occupation de l'internat.
+\end{enumerate}
+
+\subsection{Analyse Comparative des Outils Existants}
+Le tableau ci-dessous dresse l'état des lieux des solutions de contournement actuellement utilisées par les acteurs :
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l l X l}
+\toprule
+\textbf{Outil Actuel} & \textbf{Acteurs} & \textbf{Objectif du Processus} & \textbf{Limites Identifiées} \\
+\midrule
+\textbf{Papier / Cahier} & Étudiant, Responsable & Saisie des dossiers, réclamations & Perte physique, dégradation \\
+\textbf{Excel} & Manager, Responsable & Suivi des réclamations & Erreurs de formules, pas de partage \\
+\textbf{Téléphone} & Logisticiens, Équipes & Prise de décision urgente & Absence d'historique écrit \\
+\textbf{Email} & Collaborateurs & Envoi de pièces justificatives & Risque de non-réponse, classement \\
+\textbf{WhatsApp} & Manager, Personnel & Échanges informels de terrain & Non professionnel, non structuré \\
+\bottomrule
+\end{tabularx}
+\caption{Cartographie des outils actuels et leurs limites}
+\end{table}
+
+\newpage
+
+\section{Conception Statistique et Modèle de Données}
+
+\subsection{Diagramme des Classes -- Spécifications du Modèle de Données}
+Pour remplacer l'application existante et centraliser l'information, le modèle de données de \textbf{ResiAIAC} est structuré autour des entités et relations clés suivantes :
+
+\begin{description}
+    \item[\textbf{Utilisateur :}] Représente toute personne accédant au système (Étudiant, Manager, Responsable, Administrateur). Contient l'historique complet de ses réservations, de ses documents administratifs et de ses réclamations.
+    \item[\textbf{Document :}] Pièce justificative déposée par l'étudiant pour son dossier d'admission (carte d'identité, attestation, etc.). Il possède un état de validation (\textit{Valide, Rejeté, En attente}) et une note sur sa validité.
+    \item[\textbf{Chambre :}] Entité physique caractérisée par sa capacité, son état d'occupation et sa localisation (Étage et Bâtiment). Elle est rattachée aux réservations et réclamations.
+    \item[\textbf{Reservation :}] Trace historique de l'affectation d'une chambre à un étudiant pour une période donnée.
+    \item[\textbf{Reclamation :}] Ticket ouvert par un étudiant concernant un problème technique dans sa chambre (lié à une entité \textbf{Service} et à des équipements défectueux).
+    \item[\textbf{UtilisateurPromotionChambre (UPC) :}] Table d'association majeure modélisant la répartition des étudiants par promotion et par chambre pour assurer un suivi historique rigoureux.
+\end{description}
+
+Le diagramme de classes UML ci-après (Figure~\ref{fig:diagramme-classes}) formalise l'ensemble de ces entités, leurs attributs ainsi que les multiplicités des relations qui les lient.
+
+\begin{landscape}
+\centering
+\textbf{Figure~1 -- Diagramme de Classes UML (Modèle Logique)}\label{fig:diagramme-classes}
+\vspace{0.3cm}
+
+\resizebox{!}{0.82\textheight}{%
+\begin{tikzpicture}[>=stealth]
+\matrix[row sep=2.6cm, column sep=1.6cm, ampersand replacement=\&, anchor=center]{
+\&\&
+  \node[umlclass] (Batiment) {\textbf{Batiment}\nodepart{two} id : UUID\\nom : String\\etages : List<Etage>};
+\&\&\\
+\node[umlclass] (Filiere) {\textbf{Filiere}\nodepart{two} id : Long\\nom : String\\promotions : List<Promotion>};
+\&\&
+  \node[umlclass] (Etage) {\textbf{Etage}\nodepart{two} id : UUID\\numero : String\\batiment : Batiment\\chambres : List<Chambre>};
+\&\&\\
+\node[umlclass] (Promotion) {\textbf{Promotion}\nodepart{two} id : UUID\\anneeDeDepart : Long\\anneeDeFin : Long\\filiere : Filiere\\combinaisonsUPC : List<UPC>};
+\&\&
+  \node[umlclass] (Chambre) {\textbf{Chambre}\nodepart{two} id : UUID\\matricule : String\\capacite : Long\\etat : EtatChambre\\etage : Etage\\reservations : List<Reservation>\\reclamations : List<Reclamation>\\combinaisonsUPC : List<UPC>};
+\&\&
+  \node[umlclass] (Utilisateur) {\textbf{Utilisateur}\nodepart{two} id : UUID\\nom : String\\prenom : String\\cin : String\\adresse : String\\telephone : String\\documents : List<Document>\\reservations : List<Reservation>\\reclamations : List<Reclamation>\\combinaisonsUPC : List<UPC>\\creation : TimeStamp\\modification : TimeStamp};
+\\
+\node[umlclasswide] (UPC) {\textbf{UtilisateurPromotion\\Chambre}\nodepart{two} id : UPCId\\utilisateur : Utilisateur\\promotion : Promotion\\chambre : Chambre\\retard : Boolean\\note : String\\equipementsEndommages : List<EquipementUpc>};
+\&\&
+  \node[umlclass] (Reservation) {\textbf{Reservation}\nodepart{two} id : UUID\\utilisateur : Utilisateur\\chambre : Chambre\\etat : EtatReservation\\creation : TimeStamp};
+\&\&
+  \node[umlclass] (Document) {\textbf{Document}\nodepart{two} id : Long\\nomFichier : String\\nomSceau : String\\proprietaire : Utilisateur\\valide : Boolean\\noteSurValidite : String\\creation : TimeStamp};
+\\
+\node[umlclass] (Equipement) {\textbf{Equipement}\nodepart{two} id : Long\\nom : String\\reclamations : List<EquipementReclamation>\\upcs : List<EquipementUpc>};
+\&
+  \node[umlclass] (EquipementUpc) {\textbf{EquipementUpc}\nodepart{two} id : EquipementUpcId\\equipement : Equipement\\upc : UtilisateurPromotionChambre\\quantite : Long};
+\&
+  \node[umlclasswide] (Reclamation) {\textbf{Reclamation}\nodepart{two} id : UUID\\utilisateur : Utilisateur\\chambre : Chambre\\service : Service\\message : String\\equipements : List<EquipementReclamation>\\etat : EtatReclamation\\creation : TimeStamp};
+\&
+  \node[umlclasswide] (EquipementReclamation) {\textbf{EquipementReclamation}\nodepart{two} id : EquipementReclamationId\\equipement : Equipement\\reclamation : Reclamation\\quantite : Long};
+\&
+  \node[umlclass] (Service) {\textbf{Service}\nodepart{two} id : Long\\nom : String\\reclamations : List<Reclamation>};
+\\
+};
+
+% Associations
+\draw[assoc] (Batiment.south) -- (Etage.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Etage.south) -- (Chambre.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Filiere.south) -- (Promotion.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Promotion.south) -- (UPC.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Chambre.south west) -- (UPC.north east) node[mult, near start, above]{1} node[mult, near end, below]{*};
+\draw[assoc] (Chambre.south) -- (Reservation.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Chambre.east) -- ++(0.9,0) |- (Reclamation.north) node[mult, pos=0, above right]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south west) -- (UPC.north east) node[mult, near start, above]{1} node[mult, near end, right]{*};
+\draw[assoc] (Utilisateur.south west) -- (Reservation.north east) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south west) -- (Reclamation.north east) node[mult, near start, right]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south) -- (Document.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Service.north) -- ++(0,0.9) -| (Reclamation.north east) node[mult, pos=0, above right]{1} node[mult, pos=1, above left]{*};
+\draw[assoc] (UPC.south east) -- (EquipementUpc.north west) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Equipement.east) -- (EquipementUpc.west) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Equipement.north) -- ++(0,0.9) -| (EquipementReclamation.north) node[mult, pos=0, above left]{1} node[mult, pos=1, above, yshift=1pt]{*};
+\draw[assoc] (Reclamation.east) -- ++(0.4,0) |- (EquipementReclamation.north west) node[mult, pos=0, above]{1} node[mult, pos=1, above right]{*};
+
+\end{tikzpicture}
+}
+\end{landscape}
+
+\subsection{Modèle Physique de Données (Schéma de Base de Données)}
+Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transposition du modèle logique en un schéma physique de base de données, sous forme de diagramme de classes UML où chaque classe porte le stéréotype \guillemotleft~table~\guillemotright. Les attributs identifiants sont marqués \textbf{[PK]} (clé primaire) et les références vers d'autres tables \textbf{[FK]} (clé étrangère), conformément aux conventions de modélisation physique en UML.
+
+\begin{landscape}
+\centering
+\textbf{Figure~2 -- Diagramme de Classes UML (Modèle Physique / Schéma de Base de Données)}\label{fig:diagramme-physique}
+\vspace{0.3cm}
+
+\resizebox{!}{0.82\textheight}{%
+\begin{tikzpicture}[>=stealth]
+\matrix[row sep=2.6cm, column sep=1.6cm, ampersand replacement=\&, anchor=center]{
+\&\&
+  \node[umltable] (Batiment) {\textit{\guillemotleft table\guillemotright}\\\textbf{batiment}\nodepart{two} \textbf{id : UUID [PK]}\\nom : String};
+\&\&\\
+\node[umltable] (Filiere) {\textit{\guillemotleft table\guillemotright}\\\textbf{filiere}\nodepart{two} \textbf{id : Long [PK]}\\nom : String};
+\&\&
+  \node[umltable] (Etage) {\textit{\guillemotleft table\guillemotright}\\\textbf{etage}\nodepart{two} \textbf{id : UUID [PK]}\\batimentId : UUID [FK]\\numero : String};
+\&\&\\
+\node[umltable] (Promotion) {\textit{\guillemotleft table\guillemotright}\\\textbf{promotion}\nodepart{two} \textbf{id : UUID [PK]}\\filiereId : Long [FK]\\anneeDeDepart : Long\\anneeDeFin : Long};
+\&\&
+  \node[umltable] (Chambre) {\textit{\guillemotleft table\guillemotright}\\\textbf{chambre}\nodepart{two} \textbf{id : UUID [PK]}\\etageId : UUID [FK]\\matricule : String\\capacite : Long\\etat : Enum};
+\&\&
+  \node[umltable] (Utilisateur) {\textit{\guillemotleft table\guillemotright}\\\textbf{user}\nodepart{two} \textbf{id : UUID [PK]}\\nom : String\\prenom : String\\cin : String\\adresse : String\\telephone : String\\creation : TimeStamp\\modification : TimeStamp};
+\\
+\node[umltablewide] (UPC) {\textit{\guillemotleft table\guillemotright}\\\textbf{user\_promotion\_chambre}\nodepart{two} \textbf{id : UUID [PK]}\\userId : UUID [FK]\\promotionId : UUID [FK]\\chambreId : UUID [FK]\\retard : Boolean\\note : String};
+\&\&
+  \node[umltable] (Reservation) {\textit{\guillemotleft table\guillemotright}\\\textbf{reservation}\nodepart{two} \textbf{id : UUID [PK]}\\userId : UUID [FK]\\roomId : UUID [FK]\\etat : Enum\\creation : TimeStamp};
+\&\&
+  \node[umltable] (Document) {\textit{\guillemotleft table\guillemotright}\\\textbf{document}\nodepart{two} \textbf{id : UUID [PK]}\\nomFichier : String\\nomSceau : String\\proprietaireId : UUID [FK]\\valide : Boolean\\noteSurValidite : String\\creation : TimeStamp};
+\\
+\node[umltable] (Equipement) {\textit{\guillemotleft table\guillemotright}\\\textbf{equipement}\nodepart{two} \textbf{id : Long [PK]}\\nom : String};
+\&
+  \node[umltable] (EquipementUpc) {\textit{\guillemotleft table\guillemotright}\\\textbf{equipement\_upc}\nodepart{two} \textbf{id : UUID [PK]}\\equipementId : Long [FK]\\upcId : UUID [FK]\\quantite : Long};
+\&
+  \node[umltablewide] (Reclamation) {\textit{\guillemotleft table\guillemotright}\\\textbf{reclamation}\nodepart{two} \textbf{id : UUID [PK]}\\userId : UUID [FK]\\roomId : UUID [FK]\\serviceId : Long [FK]\\message : String\\etat : Enum\\creation : TimeStamp};
+\&
+  \node[umltablewide] (EquipementReclamation) {\textit{\guillemotleft table\guillemotright}\\\textbf{equipement\_reclamation}\nodepart{two} \textbf{id : UUID [PK]}\\idEquipement : Long [FK]\\idReclamation : UUID [FK]\\quantite : Long};
+\&
+  \node[umltable] (Service) {\textit{\guillemotleft table\guillemotright}\\\textbf{service}\nodepart{two} \textbf{id : Long [PK]}\\nom : String};
+\\
+};
+
+% Associations (mirrors the logical model)
+\draw[assoc] (Batiment.south) -- (Etage.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Etage.south) -- (Chambre.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Filiere.south) -- (Promotion.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Promotion.south) -- (UPC.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Chambre.south west) -- (UPC.north east) node[mult, near start, above]{1} node[mult, near end, below]{*};
+\draw[assoc] (Chambre.south) -- (Reservation.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Chambre.east) -- ++(0.9,0) |- (Reclamation.north) node[mult, pos=0, above right]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south west) -- (UPC.north east) node[mult, near start, above]{1} node[mult, near end, right]{*};
+\draw[assoc] (Utilisateur.south west) -- (Reservation.north east) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south west) -- (Reclamation.north east) node[mult, near start, right]{1} node[mult, near end, above]{*};
+\draw[assoc] (Utilisateur.south) -- (Document.north) node[mult, near start, left]{1} node[mult, near end, left]{*};
+\draw[assoc] (Service.north) -- ++(0,0.9) -| (Reclamation.north east) node[mult, pos=0, above right]{1} node[mult, pos=1, above left]{*};
+\draw[assoc] (UPC.south east) -- (EquipementUpc.north west) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Equipement.east) -- (EquipementUpc.west) node[mult, near start, above]{1} node[mult, near end, above]{*};
+\draw[assoc] (Equipement.north) -- ++(0,0.9) -| (EquipementReclamation.north) node[mult, pos=0, above left]{1} node[mult, pos=1, above, yshift=1pt]{*};
+\draw[assoc] (Reclamation.east) -- ++(0.4,0) |- (EquipementReclamation.north west) node[mult, pos=0, above]{1} node[mult, pos=1, above right]{*};
+
+\end{tikzpicture}
+}
+\end{landscape}
+
+\newpage
+
+\section{Modélisation des Processus (Diagrammes de Séquences)}
+
+Afin de garantir une cohérence graphique et conceptuelle parfaite, l'ensemble des scénarios a été homogénéisé selon le modèle standardisé et direct : \textbf{Acteur $\rightarrow$ Application}.
+
+\subsection{Module A : Admission et Validation des Dossiers}
+
+\subsubsection{Scénario A1 : Dépôt de Documents par l'Étudiant}
+Ce scénario décrit le flux d'authentification et de téléchargement sécurisé des pièces justificatives de l'étudiant.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{etud}{Étudiant}{6.5cm}
+    \drawapp{app}{Application}{6.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-6.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-6.0cm]etud_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {S'authentifie} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Vérifie l'état de\\validation utilisateur} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.6cm]etud_top) -- node[above, font=\small] {Affiche la liste des documents requis} ([yshift=-2.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.4cm]etud_top) -- node[above, font=\small] {Télécharge le document justificatif} ([yshift=-3.4cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-4.0cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Stocke le fichier et\\persiste les métadonnées} -- ([yshift=-4.6cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-5.2cm]etud_top) -- node[above, font=\small] {Confirme le succès du téléchargement} ([yshift=-5.2cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsubsection{Scénario A2 : Traitement et Validation de Dossier par le Responsable}
+Ce diagramme détaille le flux d'analyse et de validation des pièces justificatives par le responsable d'internat.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (resp) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{resp}{Responsable}{11.5cm}
+    \drawapp{app}{Application}{11.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-11.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]resp_top) rectangle ([xshift=0.1cm, yshift=-11.0cm]resp_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]resp_top) -- node[above, font=\small] {Consulte la liste des étudiants non validés} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère les étudiants\\"Non validé"} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]resp_top) -- node[above, font=\small] {Retourne la liste des étudiants} ([yshift=-2.5cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]resp_top) -- node[above, font=\small] {Choisit un étudiant} ([yshift=-3.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère les informations\\de l'étudiant choisi} -- ([yshift=-4.4cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-4.9cm]resp_top) -- node[above, font=\small] {Retourne les informations de l'étudiant} ([yshift=-4.9cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.6cm]resp_top) -- node[above, font=\small] {Choisit un document} ([yshift=-5.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère le document\\en base de données} -- ([yshift=-6.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-7.3cm]resp_top) -- node[above, font=\small] {Retourne les détails du document} ([yshift=-7.3cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-8.0cm]resp_top) -- node[above, font=\small] {Valide ou Rejette le document} ([yshift=-8.0cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-8.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met à jour l'état\\en base de données} -- ([yshift=-9.2cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-9.8cm]resp_top) -- node[above, font=\small] {Confirme la modification de l'état} ([yshift=-9.8cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsection{Module B : Réservation et Attribution des Chambres}
+
+\subsubsection{Scénario B1 : Réservation de Chambre par l'Étudiant}
+Ce flux permet à l'étudiant de consulter de manière transparente l'inventaire en temps réel et de réserver son affectation.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{etud}{Étudiant}{9.5cm}
+    \drawapp{app}{Application}{9.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-9.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-9.0cm]etud_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {Se connecte} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère les informations\\de l'étudiant} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]etud_top) -- node[above, font=\small] {Retourne les informations de l'étudiant} ([yshift=-2.5cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]etud_top) -- node[above, font=\small] {Consulte les chambres ouvertes} ([yshift=-3.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Filtre et extrait les\\chambres libres} -- ([yshift=-4.4cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-4.9cm]etud_top) -- node[above, font=\small] {Retourne la liste des chambres ouvertes} ([yshift=-4.9cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.6cm]etud_top) -- node[above, font=\small] {Sélectionne et valide la chambre} ([yshift=-5.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Enregistre l'affectation\\et bloque la chambre} -- ([yshift=-6.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-7.4cm]etud_top) -- node[above, font=\small] {Confirme et délivre le récapitulatif} ([yshift=-7.4cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsection{Module C : Réclamations et Demandes de Changement}
+
+\subsubsection{Scénario C1 : Dépôt Direct d'une Réclamation par l'Étudiant}
+Ce schéma simplifie à l'extrême le parcours utilisateur de signalement d'un dysfonctionnement matériel de terrain.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{etud}{Étudiant}{4.5cm}
+    \drawapp{app}{Application}{4.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]etud_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {Remplit le formulaire et soumet} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Valide l'affectation de\\chambre et persiste} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.8cm]etud_top) -- node[above, font=\small] {Réclamation créée (HTTP 201 Created)} ([yshift=-2.8cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Scénario C2 : Création de Réclamation depuis l'Espace Étudiant}
+Ce scénario montre le flux de déclaration standardisé au sein du tableau de bord de l'application.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{etud}{Étudiant}{7.5cm}
+    \drawapp{app}{Application}{7.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-7.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-7.0cm]etud_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {Se connecte à son espace personnel} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère ses données\\et sa chambre} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]etud_top) -- node[above, font=\small] {Retourne les données de profil} ([yshift=-2.5cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]etud_top) -- node[above, font=\small] {Saisit et envoie la réclamation} ([yshift=-3.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Enregistre l'anomalie\\en base de données} -- ([yshift=-4.4cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.0cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Notifie le manager\\de service par email} -- ([yshift=-5.6cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-6.2cm]etud_top) -- node[above, font=\small] {Confirme l'enregistrement à l'écran} ([yshift=-6.2cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsubsection{Scénario C3 : Suivi de l'Avancement par l'Étudiant}
+Visualisation en temps réel de l'état des tickets de maintenance ou d'assistance en cours de traitement.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{etud}{Étudiant}{9.5cm}
+    \drawapp{app}{Application}{9.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-9.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-9.0cm]etud_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {Se connecte} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère le profil\\de l'étudiant} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]etud_top) -- node[above, font=\small] {Retourne les données} ([yshift=-2.5cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]etud_top) -- node[above, font=\small] {Charge l'onglet "Mes réclamations"} ([yshift=-3.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Extrait la liste des\\tickets associés} -- ([yshift=-4.4cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-4.9cm]etud_top) -- node[above, font=\small] {Affiche l'ensemble des tickets} ([yshift=-4.9cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.6cm]etud_top) -- node[above, font=\small] {Sélectionne une réclamation spécifique} ([yshift=-5.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère l'historique\\et les notes techniques} -- ([yshift=-6.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-7.4cm]etud_top) -- node[above, font=\small] {Affiche les détails complets du ticket} ([yshift=-7.4cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsubsection{Scénario C4 : Traitement et Clôture par le Manager de Résidence}
+Flux opérationnel de gestion, assignation, mise à jour et résolution des réclamations par le personnel.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (mgr) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{mgr}{Manager}{11.5cm}
+    \drawapp{app}{Application}{11.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-11.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]mgr_top) rectangle ([xshift=0.1cm, yshift=-11.0cm]mgr_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]mgr_top) -- node[above, font=\small] {Consulte l'annuaire des réclamations} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Filtre les tickets\\ouverts et non résolus} -- ([yshift=-2.0cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]mgr_top) -- node[above, font=\small] {Affiche la liste des tickets en attente} ([yshift=-2.5cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]mgr_top) -- node[above, font=\small] {Prend en charge une réclamation} ([yshift=-3.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Extrait l'ensemble des\\détails techniques} -- ([yshift=-4.4cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-4.9cm]mgr_top) -- node[above, font=\small] {Affiche l'interface de traitement} ([yshift=-4.9cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.6cm]mgr_top) -- node[above, font=\small] {Valide la prise en charge} ([yshift=-5.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "En Cours"\\et notifie l'étudiant} -- ([yshift=-6.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-7.3cm]mgr_top) -- node[above, font=\small] {Retourne un code de succès (HTTP 200)} ([yshift=-7.3cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-8.0cm]mgr_top) -- node[above, font=\small] {Déclare la résolution de l'anomalie} ([yshift=-8.0cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-8.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "Clôturé"\\en base de données} -- ([yshift=-9.2cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-9.8cm]mgr_top) -- node[above, font=\small] {Affiche l'accusé de résolution} ([yshift=-9.8cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsection{Module D : Gestion des Départs et États des Lieux}
+
+\subsubsection{Scénario D : Processus Administratif de Libération de Chambre}
+Ce diagramme de séquence décrit la déclaration de sortie d'un résident et la validation d'état de la chambre.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (mgr) at (0,0);
+    \coordinate (app) at (9,0);
+
+    \drawactor{mgr}{Manager}{12.5cm}
+    \drawapp{app}{Application}{12.5cm}
+
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-12.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]mgr_top) rectangle ([xshift=0.1cm, yshift=-12.0cm]mgr_top);
+
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]mgr_top) -- node[above, font=\small] {Consulte la liste des réclamations} ([yshift=-0.8cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère les réclamations\\non résolues} -- ([yshift=-2.0cm]app_top);
+
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.5cm]mgr_top) -- node[above, font=\small] {Retourne la liste des réclamations ouvertes} ([yshift=-2.5cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-3.2cm]mgr_top) -- node[above, font=\small] {Choisit une réclamation pour départ} ([yshift=-3.2cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-3.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Récupère les informations\\complémentaires} -- ([yshift=-4.4cm]app_top);
+
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-4.9cm]mgr_top) -- node[above, font=\small] {Retourne les informations complètes sur la réclamation} ([yshift=-4.9cm]app_top);
+
+    % Self-loop action for the Manager on the left
+    \draw[->, >=stealth, thick] ([yshift=-5.6cm]mgr_top) -- ++(-1.2,0) -- ++(0,-0.6) node[left, font=\footnotesize, text width=3.2cm, align=right] {Vérifie l'état\\de la chambre} -- ([yshift=-6.2cm]mgr_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-6.8cm]mgr_top) -- node[above, font=\small, text width=12.5cm, align=center] {Complète les informations sur l'état des lieux et déclenche la génération de la lettre} ([yshift=-6.8cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-7.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met à jour les informations\\sur l'état des lieux.} -- ([yshift=-8.0cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-8.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Génère une lettre de départ\\avec les nouvelles infos} -- ([yshift=-9.2cm]app_top);
+
+    \draw[->, >=stealth, thick] ([yshift=-9.8cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met à jour l'état de\\la réclamation} -- ([yshift=-10.4cm]app_top);
+
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-11.0cm]mgr_top) -- node[above, font=\small] {Lettre de départ} ([yshift=-11.0cm]app_top);
+\end{tikzpicture}%
+}
+\end{center}
+
+\newpage
+
+\subsection{Module E : Administration, RBAC et Audit}
+
+\subsubsection{Scénario E1 : Gestion Applicative des Profils Utilisateurs}
+Contrôle complet des habilitations des comptes et annuaires par l'administrateur du système.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (admin) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{admin}{Administrateur}{7.5cm}
+    \drawapp{app}{Application}{7.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-7.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]admin_top) rectangle ([xshift=0.1cm, yshift=-7.0cm]admin_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]admin_top) -- node[above, font=\small] {Consulte la liste complète des utilisateurs} ([yshift=-0.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-1.5cm]admin_top) -- node[above, font=\small] {Retourne la liste complète} ([yshift=-1.5cm]app_top);
+    
+    \node[draw, fill=yellow!10, text width=6.2cm, align=left, font=\footnotesize, right=0.3cm of admin_top, yshift=-3.1cm] (opt) {
+        \textbf{Actions Administratives autorisées :} \\
+        $\bullet$ Création d'un compte utilisateur \\
+        $\bullet$ Édition d'un profil existant \\
+        $\bullet$ Suspension/Désactivation d'accès
+    };
+    
+    \draw[->, >=stealth, thick] ([yshift=-4.6cm]admin_top) -- node[above, font=\small] {Soumet le formulaire de modification} ([yshift=-4.6cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-5.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Exécute et valide la\\mise à jour en base} -- ([yshift=-5.8cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-6.4cm]admin_top) -- node[above, font=\small] {Confirme le succès de l'opération} ([yshift=-6.4cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+\subsubsection{Scénario E2 : Gestion Fine des Rôles (RBAC)}
+Ce flux standardisé permet l'assignation et la réorganisation des rôles pour sécuriser les données et processus métiers.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (admin) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{admin}{Administrateur}{5.0cm}
+    \drawapp{app}{Application}{5.0cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-4.5cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]admin_top) rectangle ([xshift=0.1cm, yshift=-4.5cm]admin_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]admin_top) -- node[above, font=\small, text width=6cm, align=center] {Ouvre la page de gestion des rôles \& affecte un rôle} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Vérifie les privilèges\\et recalcule les accès} -- ([yshift=-2.2cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-2.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Persiste les droits\\au sein du schéma SQL} -- ([yshift=-3.2cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-3.8cm]admin_top) -- node[above, font=\small] {Affiche : "Rôle attribué avec succès"} ([yshift=-3.8cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Scénario E3 : Consultation des Journaux d'Audit Sécurisés}
+Ce diagramme modélise l'extraction sécurisée des logs techniques de traçabilité des opérations.
+
+\begin{center}
+\begin{tikzpicture}
+    \coordinate (admin) at (0,0);
+    \coordinate (app) at (9,0);
+    
+    \drawactor{admin}{Administrateur}{4.5cm}
+    \drawapp{app}{Application}{4.5cm}
+    
+    % Activation boxes
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]app_top);
+    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]admin_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]admin_top);
+    
+    % Messages
+    \draw[->, >=stealth, thick] ([yshift=-0.8cm]admin_top) -- node[above, font=\small] {Consulter les journaux d'audit de l'application} ([yshift=-0.8cm]app_top);
+    
+    \draw[->, >=stealth, thick] ([yshift=-1.5cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.5cm, align=left] {Exécute l'extraction des logs\\sur le stockage de sécurité} -- ([yshift=-2.1cm]app_top);
+    
+    \draw[<-, >=stealth, dashed, thick] ([yshift=-3.0cm]admin_top) -- node[above, font=\small] {Affiche l'interface des logs d'audit} ([yshift=-3.0cm]app_top);
+\end{tikzpicture}
+\end{center}
+
+\end{document}
