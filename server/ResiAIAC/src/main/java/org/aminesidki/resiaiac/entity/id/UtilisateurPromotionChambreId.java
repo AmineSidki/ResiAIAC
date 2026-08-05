@@ -1,19 +1,17 @@
 package org.aminesidki.resiaiac.entity.id;
 
 import jakarta.persistence.Embeddable;
-import lombok.*;
-
 import java.util.UUID;
+import lombok.*;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
 @Embeddable
 public class UtilisateurPromotionChambreId {
-    private UUID utilisateurId;
-    private UUID promotionId;
-    private UUID chambreId;
+  private UUID utilisateur_id;
+  private UUID promotion_id;
+  private UUID chambre_id;
 }

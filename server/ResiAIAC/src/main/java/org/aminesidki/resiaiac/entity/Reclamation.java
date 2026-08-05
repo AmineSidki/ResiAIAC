@@ -1,43 +1,41 @@
 package org.aminesidki.resiaiac.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.aminesidki.resiaiac.enumeration.EtatReclamation;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
+import lombok.*;
+import org.aminesidki.resiaiac.enumeration.EtatReclamation;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class Reclamation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    private String message;
-    private EtatReclamation etat;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "utilisateur")
-    private Utilisateur utilisateur;
+  private String message;
+  private EtatReclamation etat;
 
-    @ManyToOne
-    @JoinColumn(name = "chambre")
-    private Chambre chambre;
+  @ManyToOne
+  @JoinColumn(name = "utilisateur_id")
+  private Utilisateur utilisateur;
 
-    @ManyToOne
-    @JoinColumn(name = "service")
-    private Service service;
+  @ManyToOne
+  @JoinColumn(name = "chambre_id")
+  private Chambre chambre;
 
-    @OneToMany(mappedBy = "reclamation")
-    private List<EquipementReclamation> equipements;
+  @ManyToOne
+  @JoinColumn(name = "service_id")
+  private Service service;
 
-    @CreationTimestamp
-    private Timestamp createdAt;
+  @OneToMany(mappedBy = "reclamation")
+  private List<EquipementReclamation> equipements;
+
+  @CreationTimestamp private Timestamp createdAt;
 }

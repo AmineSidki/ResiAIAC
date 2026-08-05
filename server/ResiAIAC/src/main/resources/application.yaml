@@ -1,3 +1,15 @@
 spring:
   application:
     name: ResiAIAC
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USR}
+    password: ${DB_PWD}
+
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: update
+    show-sql: true
