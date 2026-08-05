@@ -1,39 +1,36 @@
 package org.aminesidki.resiaiac.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.*;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
-
-import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class UtilisateurPromotionChambre {
-    @EmbeddedId
-    private UtilisateurPromotionChambreId id;
-    private Boolean retard;
-    private String note;
+  @EmbeddedId private UtilisateurPromotionChambreId id;
+  private Boolean retard;
+  private String note;
 
-    @MapsId("utilisateurId")
-    @ManyToOne
-    @JoinColumn(name = "utilisateur")
-    private Utilisateur utilisateur;
+  @MapsId("utilisateur_id")
+  @ManyToOne
+  @JoinColumn(name = "utilisateur_id")
+  private Utilisateur utilisateur;
 
-    @MapsId("promotionId")
-    @ManyToOne
-    @JoinColumn(name = "promotion")
-    private Promotion promotion;
+  @MapsId("promotion_id")
+  @ManyToOne
+  @JoinColumn(name = "promotion_id")
+  private Promotion promotion;
 
-    @MapsId("chambreId")
-    @ManyToOne
-    @JoinColumn(name = "chambre")
-    private Chambre chambre;
+  @MapsId("chambre_id")
+  @ManyToOne
+  @JoinColumn(name = "chambre_id")
+  private Chambre chambre;
 
-    @OneToMany(mappedBy = "upc")
-    private List<EquipementUpc> equipementsEndommages;
+  @OneToMany(mappedBy = "upc")
+  private List<EquipementUpc> equipementsEndommages;
 }

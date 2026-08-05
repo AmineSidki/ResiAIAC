@@ -1,9 +1,6 @@
 package org.aminesidki.resiaiac.entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.*;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 
@@ -11,20 +8,20 @@ import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class EquipementReclamation {
-    @EmbeddedId
-    private EquipementReclamationId id;
+  @EmbeddedId private EquipementReclamationId id;
 
-    private Long quantite;
+  private Long quantite;
 
-    @ManyToOne
-    @JoinColumn(name = "equipement_id")
-    private Equipement equipement;
+  @MapsId("equipement_id")
+  @ManyToOne
+  @JoinColumn(name = "equipement_id")
+  private Equipement equipement;
 
-    @ManyToOne
-    @JoinColumn(name = "reclamation_id")
-    private Reclamation reclamation;
+  @MapsId("reclamation_id")
+  @ManyToOne
+  @JoinColumn(name = "reclamation_id")
+  private Reclamation reclamation;
 }

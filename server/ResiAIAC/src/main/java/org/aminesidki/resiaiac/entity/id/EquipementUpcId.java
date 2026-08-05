@@ -5,12 +5,11 @@ import lombok.*;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
 @Embeddable
 public class EquipementUpcId {
-    private Long equipementId;
-    private UtilisateurPromotionChambreId utilisateurPromotionChambreId;
+  private Long equipement_id;
+  private UtilisateurPromotionChambreId utilisateurPromotionChambre_id;
 }

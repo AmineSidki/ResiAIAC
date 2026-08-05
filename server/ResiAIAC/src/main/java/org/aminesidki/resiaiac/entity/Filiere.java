@@ -1,24 +1,22 @@
 package org.aminesidki.resiaiac.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class Filiere {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Long id;
 
-    private String nom;
+  private String nom;
 
-    @OneToMany(mappedBy = "filiere")
-    private List<Promotion> promotions;
+  @OneToMany(mappedBy = "filiere")
+  private List<Promotion> promotions;
 }

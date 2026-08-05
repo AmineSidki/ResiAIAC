@@ -8,25 +8,23 @@ import org.aminesidki.resiaiac.entity.id.EquipementUpcId;
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class EquipementUpc {
-    @EmbeddedId
-    private EquipementUpcId id;
-    private Long quantite;
+  @EmbeddedId private EquipementUpcId id;
+  private Long quantite;
 
-    @MapsId("equipementId")
-    @ManyToOne
-    @JoinColumn(name = "equipement_id")
-    private Equipement equipement;
+  @MapsId("equipement_id")
+  @ManyToOne
+  @JoinColumn(name = "equipement_id")
+  private Equipement equipement;
 
-    @MapsId("utilisateurPromotionChambreId")
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "upc_utilisateur", referencedColumnName = "utilisateurId"),
-            @JoinColumn(name = "upc_promotion", referencedColumnName = "promotionId"),
-            @JoinColumn(name = "upc_chambre", referencedColumnName = "chambreId")
-    })
-    private UtilisateurPromotionChambre upc;
+  @MapsId("utilisateurPromotionChambre_id")
+  @ManyToOne
+  @JoinColumns({
+    @JoinColumn(name = "upc_utilisateur", referencedColumnName = "utilisateur_id"),
+    @JoinColumn(name = "upc_promotion", referencedColumnName = "promotion_id"),
+    @JoinColumn(name = "upc_chambre", referencedColumnName = "chambre_id")
+  })
+  private UtilisateurPromotionChambre upc;
 }

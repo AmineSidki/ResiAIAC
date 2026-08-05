@@ -1,24 +1,23 @@
 package org.aminesidki.resiaiac.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
 @AllArgsConstructor
 @NoArgsConstructor
 public class Batiment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    private String nom;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @OneToMany(mappedBy = "batiment")
-    private List<Etage> etages;
+  private String nom;
+
+  @OneToMany(mappedBy = "batiment")
+  private List<Etage> etages;
 }
