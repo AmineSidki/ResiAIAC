@@ -20,4 +20,4 @@ jobs:
           cache: maven
 
       - name: Run Spotless check
-        run: mvn -B spotless:check
+        run: cd server && cd ResiAIAC && mvn -B spotless:check
