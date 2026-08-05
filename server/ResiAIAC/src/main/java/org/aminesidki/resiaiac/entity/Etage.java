@@ -23,6 +23,6 @@ public class Etage {
     @JoinColumn(name = "batiment")
     private Batiment batiment;
 
-    @OneToMany
+    @OneToMany(mappedBy = "etage")
     private List<Chambre> chambres;
 }

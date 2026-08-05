@@ -22,13 +22,13 @@ public class Chambre {
     private Long capacite;
     private EtatChambre etat;
 
-    @OneToMany
+    @OneToMany(mappedBy = "chambre")
     private List<Reservation> reservations;
 
-    @OneToMany
+    @OneToMany(mappedBy = "chambre")
     private List<Reclamation> reclamations;
 
-    @OneToMany
+    @OneToMany(mappedBy = "chambre")
     private List<UtilisateurPromotionChambre>  combinaisonsUpc;
 
     @ManyToOne

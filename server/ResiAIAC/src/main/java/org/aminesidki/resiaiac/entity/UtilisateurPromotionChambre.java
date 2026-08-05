@@ -34,6 +34,6 @@ public class UtilisateurPromotionChambre {
     @JoinColumn(name = "chambre")
     private Chambre chambre;
 
-    @OneToMany
+    @OneToMany(mappedBy = "upc")
     private List<EquipementUpc> equipementsEndommages;
 }

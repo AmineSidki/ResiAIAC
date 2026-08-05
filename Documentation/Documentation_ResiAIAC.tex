@@ -12,8 +12,9 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{pdflscape}
+\usepackage{fontawesome5}
 
-\usetikzlibrary{arrows, positioning, shapes.geometric, shapes.multipart, matrix}
+\usetikzlibrary{arrows, positioning, shapes.geometric, shapes.multipart, matrix, fit, backgrounds}
 
 % Styles for the UML class diagrams (logical model and physical/table model)
 \tikzset{
@@ -71,6 +72,17 @@
   \node[draw, fill=green!15, minimum width=3.2cm, minimum height=0.8cm, rounded corners, font=\bfseries] (#1_node) at (#1) {#2};
   \coordinate (#1_top) at (#1_node.south);
   \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#3) coordinate (#1_bot);
+}
+
+% Styles for the deployment / infrastructure diagram
+\tikzset{
+  depnode/.style={
+    draw=black, thick, rounded corners=3pt, minimum width=2.6cm, minimum height=1.05cm,
+    align=center, font=\footnotesize\bfseries, text width=2.4cm, fill=#1
+  },
+  depnode/.default=blue!12,
+  deplink/.style={->, >=stealth, thick, black!65},
+  depzone/.style={draw=black!55, thick, dashed, rounded corners=6pt, inner sep=10pt, fill=black!3}
 }
 
 \title{\textbf{Rapport de Conception Technique \\ Système de Gestion de l'Internat AIAC \\ (ResiAIAC)}}
@@ -374,6 +386,60 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 \end{tikzpicture}
 }
 \end{landscape}
+
+\newpage
+
+\section{Architecture de Déploiement}
+
+Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) illustre l'architecture technique cible de \textbf{ResiAIAC}, organisée en couches : couche client (SPA Angular), couche de routage/entrée (NGINX), couche applicative conteneurisée et orchestrée par Kubernetes (services Spring Boot et Keycloak pour l'IAM), couche de persistance et de stockage (PostgreSQL, Redis, MinIO), couche d'observabilité (Prometheus, Grafana, la pile Logstash) et enfin la chaîne d'intégration et de déploiement continus (CI/CD).
+
+\begin{center}
+\textbf{Figure~3 -- Diagramme de Déploiement de l'Infrastructure ResiAIAC}\label{fig:diagramme-deploiement}
+\vspace{0.3cm}
+
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[>=stealth]
+
+  % ---------- Client layer ----------
+  \node[depnode=green!15, text width=2.8cm] (client) at (0,11.2) {\faAngular\ Navigateur\\SPA Angular};
+
+  % ---------- Edge / ingress layer ----------
+  \node[depnode=orange!20, text width=2.8cm] (nginx) at (0,8.6) {\faCogs\ NGINX\\(Proxy Inverse)};
+
+  % ---------- Kubernetes cluster ----------
+  \node[depzone, fit={(-4.8,7.0) (4.8,-1.2)}, label={[font=\bfseries\small]above:Cluster Kubernetes}] (k8s) {};
+
+  \node[depnode=blue!12, text width=3.0cm, label={[font=\bfseries]above:(x N)}] (spring) at (0,5.3) {\faServer\ Main application};
+  \node[depnode=blue!12, text width=2.3cm] (keycloak) at (-2.4,2.7) {\faKey\ Keycloak\\(IAM / OAuth2)};
+  \node[depnode=blue!12, text width=2.3cm] (obsvc) at (2.4,2.7) {\faHeartbeat\ Sondes\\(Metrics / Logs)};
+
+  % ---------- Data / storage layer ----------
+  \node[depnode=yellow!22, text width=2.3cm] (postgres) at (-2.9,0.0) {\faDatabase\ PostgreSQL\\(Base de Données)};
+  \node[depnode=yellow!22, text width=2.3cm] (redis) at (0.1,0.0) {\faDatabase\ Redis\\(Cache)};
+  \node[depnode=yellow!22, text width=2.3cm] (minio) at (3.1,0.0) {\faDatabase\ SeaweedFS\\(Stockage Objet)};
+
+  % ---------- Observability stack ----------
+  \node[depzone, fit={(6.2,7.0) (12.2,-1.2)}, label={[font=\bfseries\small]above:Observabilité}] (obs) {};
+  \node[depnode=red!12, text width=2.6cm] (prometheus) at (9.2,5.3) {\faChartLine\ Prometheus\\(Métriques)};
+  \node[depnode=red!12, text width=2.6cm] (grafana) at (9.2,2.7) {\faChartPie\ Grafana\\(Tableaux de Bord)};
+  \node[depnode=red!12, text width=2.6cm] (logstash) at (9.2,0.0) {\faListAlt\ Logstash\\(Agrégation de Logs)};
+
+  % ---------- Links ----------
+  \draw[deplink] (client) -- node[right, font=\scriptsize] {HTTPS} (nginx);
+  \draw[deplink] (nginx) -- node[right, font=\scriptsize] {HTTP} (spring);
+  \draw[deplink] (spring) -- node[left, font=\scriptsize] {Auth} (keycloak);
+  \draw[deplink] (spring) -- (obsvc);
+  \draw[deplink] (spring) -- (postgres);
+  \draw[deplink] (spring) -- (redis);
+  \draw[deplink] (spring) -- (minio);
+
+  \draw[deplink] (obsvc) -- (prometheus);
+  \draw[deplink] (prometheus) -- (grafana);
+  \draw[deplink] (obsvc) -- (logstash.west);
+
+\end{tikzpicture}
+}
+\end{center}
 
 \newpage
 

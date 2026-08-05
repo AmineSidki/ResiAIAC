@@ -18,9 +18,9 @@ public class Equipement {
     private Long id;
     private String nom;
 
-    @OneToMany
+    @OneToMany(mappedBy = "equipement")
     private List<EquipementReclamation> reclamations;
 
-    @OneToMany
+    @OneToMany(mappedBy = "equipement")
     private List<EquipementUpc> upcs;
 }

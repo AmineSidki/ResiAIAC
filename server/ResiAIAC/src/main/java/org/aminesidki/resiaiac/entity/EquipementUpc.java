@@ -24,9 +24,9 @@ public class EquipementUpc {
     @MapsId("utilisateurPromotionChambreId")
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "upc_utilisateur", referencedColumnName = "utilisateur"),
-            @JoinColumn(name = "upc_promotion", referencedColumnName = "promotion"),
-            @JoinColumn(name = "upc_chambre", referencedColumnName = "chambre")
+            @JoinColumn(name = "upc_utilisateur", referencedColumnName = "utilisateurId"),
+            @JoinColumn(name = "upc_promotion", referencedColumnName = "promotionId"),
+            @JoinColumn(name = "upc_chambre", referencedColumnName = "chambreId")
     })
     private UtilisateurPromotionChambre upc;
 }

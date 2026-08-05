@@ -19,6 +19,6 @@ public class Batiment {
     private UUID id;
     private String nom;
 
-    @OneToMany
+    @OneToMany(mappedBy = "batiment")
     private List<Etage> etages;
 }

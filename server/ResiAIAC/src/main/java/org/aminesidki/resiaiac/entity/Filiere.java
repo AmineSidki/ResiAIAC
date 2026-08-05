@@ -19,6 +19,6 @@ public class Filiere {
 
     private String nom;
 
-    @OneToMany
+    @OneToMany(mappedBy = "filiere")
     private List<Promotion> promotions;
 }

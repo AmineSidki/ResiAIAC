@@ -35,7 +35,7 @@ public class Reclamation {
     @JoinColumn(name = "service")
     private Service service;
 
-    @OneToMany
+    @OneToMany(mappedBy = "reclamation")
     private List<EquipementReclamation> equipements;
 
     @CreationTimestamp

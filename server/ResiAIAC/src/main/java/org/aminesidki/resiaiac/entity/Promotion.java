@@ -25,6 +25,6 @@ public class Promotion {
     @JoinColumn(name = "filiere")
     private Filiere filiere;
 
-    @OneToMany
+    @OneToMany(mappedBy = "promotion")
     private List<UtilisateurPromotionChambre> combinaisonsUpc;
 }

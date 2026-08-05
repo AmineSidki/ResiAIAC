@@ -18,6 +18,6 @@ public class Service {
     private Long id;
     private String nom;
 
-    @OneToMany
+    @OneToMany(mappedBy = "service")
     private List<Reclamation> reclamations;
 }

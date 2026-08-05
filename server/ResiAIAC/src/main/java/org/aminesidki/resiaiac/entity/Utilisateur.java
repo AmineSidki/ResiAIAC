@@ -26,16 +26,16 @@ public class Utilisateur {
     private String adresse;
     private String telephone;
 
-    @OneToMany
+    @OneToMany(mappedBy = "utilisateur")
     private List<Reservation> reservations;
 
-    @OneToMany
+    @OneToMany(mappedBy = "utilisateur")
     private List<Reclamation> reclamations;
 
-    @OneToMany
+    @OneToMany(mappedBy = "proprietaire")
     private List<Document> documents;
 
-    @OneToMany
+    @OneToMany(mappedBy = "utilisateur")
     private List<UtilisateurPromotionChambre>  combinaisonsUpc;
 
     @CreationTimestamp
