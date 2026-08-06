@@ -8,5 +8,5 @@ import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatReservation;
 
 public record ReservationDto(
-    UUID id, EtatReservation etat, Utilisateur utilisateur, Chambre chambre, Timestamp createdAt)
+    UUID id, EtatReservation etat, UUID utilisateurId, UUID chambreId, Timestamp createdAt)
     implements Serializable {}

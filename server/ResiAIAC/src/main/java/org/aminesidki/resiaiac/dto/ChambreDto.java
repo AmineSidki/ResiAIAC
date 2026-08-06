@@ -5,5 +5,5 @@ import java.util.UUID;
 import org.aminesidki.resiaiac.entity.Etage;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
 
-public record ChambreDto(UUID id, String matricule, long capacite, EtatChambre etat, Etage etage)
+public record ChambreDto(UUID id, String matricule, long capacite, EtatChambre etat, UUID etageId)
     implements Serializable {}
