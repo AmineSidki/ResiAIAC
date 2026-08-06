@@ -12,8 +12,8 @@ public record ReclamationDto(
     UUID id,
     String message,
     EtatReclamation etat,
-    Utilisateur utilisateur,
-    Chambre chambre,
-    Service service,
+    UUID utilisateurId,
+    UUID chambreId,
+    Long serviceId,
     Timestamp createdAt)
     implements Serializable {}

@@ -11,6 +11,6 @@ public record DocumentDto(
     String nomSceau,
     Boolean valide,
     String noteSurValidite,
-    Utilisateur proprietaire,
+    UUID proprietaireId,
     Timestamp createdAt)
     implements Serializable {}
