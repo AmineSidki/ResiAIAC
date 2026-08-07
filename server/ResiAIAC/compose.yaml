@@ -47,7 +47,9 @@ services:
       - "8090:8090"
     networks:
       - dev_net
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
     environment:
       KC_HOSTNAME_STRICT: false
       KC_HTTP_PORT: 8090

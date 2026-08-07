@@ -37,20 +37,12 @@ Pour exécuter le backend de l'application en environnement de développement, s
 * Apache Maven (ou le wrapper `mvnw` inclus)
 * Docker et Docker Compose
 
-### Lancement de la Base de Données
-Le conteneur PostgreSQL est défini dans le fichier de configuration Docker Compose situé dans le dossier du serveur.
-
-```bash
-cd server/ResiAIAC
-docker compose up -d
-```
-
-### Lancement de l'Application Spring Boot
-Grâce au support d'intégration de Spring Boot Docker Compose, l'application peut se connecter automatiquement au service démarré localement.
-
-Pour compiler et lancer l'API :
-```bash
-./mvnw clean spring-boot:run
-```
-
-L'application compilera le code, démarrera le serveur sur son port par défaut (8080) et créera la structure des tables SQL à partir des entités définies.
+### Démarrage du project (environnement de développement)
+* **Backend**: Executer la commande suivante dans le répertoire `server/ResiAIAC`:   
+    ```bash
+    docker compose up --build
+    ```
+* **Frontend**: Aucun client n'est en place en ce moment, pas encore d'instructions.
+ 
+> [!WARNING]
+> The backend client's secret is blank, it will be re-generated on volume wipe. When you start the container, watch out from deleting keycloak's when rebuilding the application for tests. On the first startup or if you do accidentally wipe it, it's fine, the container will import the old settings, all you have to do is to copy the regenerated token into Spring once it starts.
