@@ -1,5 +1,8 @@
 package org.aminesidki.resiaiac.dto;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
 
-public record FiliereDto(Long id, String nom) implements Serializable {}
+/** Dto for {@link org.aminesidki.resiaiac.entity.Filiere } */
+public record FiliereDto(Long id, String nom, List<UUID> promotions) implements Serializable {}

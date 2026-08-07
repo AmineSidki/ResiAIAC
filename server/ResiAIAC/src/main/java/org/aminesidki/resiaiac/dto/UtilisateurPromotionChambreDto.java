@@ -1,18 +1,18 @@
 package org.aminesidki.resiaiac.dto;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.entity.Chambre;
-import org.aminesidki.resiaiac.entity.Promotion;
-import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.entity.id.EquipementUpcId;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 
+/** Dto for {@link org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre } */
 public record UtilisateurPromotionChambreDto(
     UtilisateurPromotionChambreId id,
     Boolean retard,
     String note,
-    UUID utilisateurId,
-    UUID promotionId,
-    UUID chambreId)
+    UUID utilisateur,
+    UUID promotion,
+    UUID chambre,
+    List<EquipementUpcId> equipementsEndommages)
     implements Serializable {}

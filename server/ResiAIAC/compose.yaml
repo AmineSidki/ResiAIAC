@@ -24,6 +24,7 @@ services:
       - dev_net
     depends_on:
       - application-postgres
+      - keycloak
 
   application-postgres:
     image: postgres:latest
@@ -43,11 +44,15 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     ports:
-      - "8090:8080"
+      - "8090:8090"
     networks:
       - dev_net
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
     environment:
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_PORT: 8090
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USR}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PWD}
       KC_DB: postgres
