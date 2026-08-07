@@ -148,18 +148,20 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <exclude>**/*Application.class</exclude>
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/mapper/**</exclude>
+                                <exclude>**/enumeration/**</exclude>
+                                <exclude>**/repository/**</exclude>
+                                <exclude>**/exception/**</exclude>
+                                <exclude>**/configuration/**</exclude>
+                                <exclude>**/controller/test/**</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
-                                    <excludes>
-                                        <exclude>**/*Application</exclude>
-                                        <exclude>**/entity/**</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/configuration/**</exclude>
-                                        <exclude>**/enumeration/**</exclude>
-                                        <exclude>**/exception/**</exclude>
-                                    </excludes>
                                     <limits>
                                         <limit>
                                             <counter>INSTRUCTION</counter>

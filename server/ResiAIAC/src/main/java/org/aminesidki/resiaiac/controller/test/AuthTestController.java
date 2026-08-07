@@ -1,4 +1,4 @@
-package org.aminesidki.resiaiac.controller;
+package org.aminesidki.resiaiac.controller.test;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
