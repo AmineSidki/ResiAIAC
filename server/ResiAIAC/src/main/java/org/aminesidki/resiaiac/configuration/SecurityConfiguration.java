@@ -1,11 +1,6 @@
 package org.aminesidki.resiaiac.configuration;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +10,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -46,19 +40,24 @@ public class SecurityConfiguration {
   @Profile("default")
   public SecurityFilterChain filterChain(HttpSecurity security) {
     return security
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(
-                    (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .oauth2ResourceServer(
-                    httpSecurityOAuth2ResourceServerConfigurer ->
-                            httpSecurityOAuth2ResourceServerConfigurer.jwt(
-                                    jwtConfigurer ->
-                                            jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-            .authorizeHttpRequests(customizer -> customizer.requestMatchers("/api/v1/auth-test/public").permitAll()
-                    .anyRequest().authenticated())
-            .build();
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(
+            (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .oauth2ResourceServer(
+            httpSecurityOAuth2ResourceServerConfigurer ->
+                httpSecurityOAuth2ResourceServerConfigurer.jwt(
+                    jwtConfigurer ->
+                        jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+        .authorizeHttpRequests(
+            customizer ->
+                customizer
+                    .requestMatchers("/api/v1/auth-test/public")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .build();
   }
 
   @Bean
@@ -75,8 +74,13 @@ public class SecurityConfiguration {
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(
                     jwtConfigurer ->
                         jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-        .authorizeHttpRequests(customizer -> customizer.requestMatchers("/api/v1/auth-test/public").permitAll()
-                .anyRequest().authenticated())
+        .authorizeHttpRequests(
+            customizer ->
+                customizer
+                    .requestMatchers("/api/v1/auth-test/public")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
         .build();
   }
 }

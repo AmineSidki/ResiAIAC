@@ -1,8 +1,15 @@
 package org.aminesidki.resiaiac.dto;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.UUID;
-import org.aminesidki.resiaiac.entity.Filiere;
+import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 
-public record PromotionDto(UUID id, Long anneeDeDepart, Long anneeDeFin, Long filiereId)
+/** Dto for {@link org.aminesidki.resiaiac.entity.Promotion } */
+public record PromotionDto(
+    UUID id,
+    Long anneeDeDepart,
+    Long anneeDeFin,
+    Long filiere,
+    List<UtilisateurPromotionChambreId> combinaisonsUpc)
     implements Serializable {}
