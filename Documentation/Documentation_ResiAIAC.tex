@@ -273,11 +273,11 @@ Le diagramme de classes UML ci-après (Figure~\ref{fig:diagramme-classes}) forma
 \&\&
   \node[umlclass] (Batiment) {\textbf{Batiment}\nodepart{two} id : UUID\\nom : String\\etages : List<Etage>};
 \&\&\\
-\node[umlclass] (Filiere) {\textbf{Filiere}\nodepart{two} id : Long\\nom : String\\promotions : List<Promotion>};
+\node[umlclass] (Filiere) {\textbf{Filiere}\nodepart{two} id : Long\\nom : String\\niveauMaximal : Integer\\promotions : List<Promotion>};
 \&\&
   \node[umlclass] (Etage) {\textbf{Etage}\nodepart{two} id : UUID\\numero : String\\batiment : Batiment\\chambres : List<Chambre>};
 \&\&\\
-\node[umlclass] (Promotion) {\textbf{Promotion}\nodepart{two} id : UUID\\anneeDeDepart : Long\\anneeDeFin : Long\\filiere : Filiere\\combinaisonsUPC : List<UPC>};
+\node[umlclass] (Promotion) {\textbf{Promotion}\nodepart{two} id : UUID\\anneeDeDepart : Long\\anneeDeFin : Long\\niveau : Integer\\filiere : Filiere\\combinaisonsUPC : List<UPC>};
 \&\&
   \node[umlclass] (Chambre) {\textbf{Chambre}\nodepart{two} id : UUID\\matricule : String\\capacite : Long\\etat : EtatChambre\\etage : Etage\\reservations : List<Reservation>\\reclamations : List<Reclamation>\\combinaisonsUPC : List<UPC>};
 \&\&
@@ -337,11 +337,11 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 \&\&
   \node[umltable] (Batiment) {\textit{\guillemotleft table\guillemotright}\\\textbf{batiment}\nodepart{two} \textbf{id : UUID [PK]}\\nom : String};
 \&\&\\
-\node[umltable] (Filiere) {\textit{\guillemotleft table\guillemotright}\\\textbf{filiere}\nodepart{two} \textbf{id : Long [PK]}\\nom : String};
+\node[umltable] (Filiere) {\textit{\guillemotleft table\guillemotright}\\\textbf{filiere}\nodepart{two} \textbf{id : Long [PK]}\\nom : String\\niveauMaximal : Integer};
 \&\&
   \node[umltable] (Etage) {\textit{\guillemotleft table\guillemotright}\\\textbf{etage}\nodepart{two} \textbf{id : UUID [PK]}\\batimentId : UUID [FK]\\numero : String};
 \&\&\\
-\node[umltable] (Promotion) {\textit{\guillemotleft table\guillemotright}\\\textbf{promotion}\nodepart{two} \textbf{id : UUID [PK]}\\filiereId : Long [FK]\\anneeDeDepart : Long\\anneeDeFin : Long};
+\node[umltable] (Promotion) {\textit{\guillemotleft table\guillemotright}\\\textbf{promotion}\nodepart{two} \textbf{id : UUID [PK]}\\filiereId : Long [FK]\\anneeDeDepart : Long\\anneeDeFin : Long\\niveau : Integer};
 \&\&
   \node[umltable] (Chambre) {\textit{\guillemotleft table\guillemotright}\\\textbf{chambre}\nodepart{two} \textbf{id : UUID [PK]}\\etageId : UUID [FK]\\matricule : String\\capacite : Long\\etat : Enum};
 \&\&

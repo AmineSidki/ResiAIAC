@@ -18,6 +18,7 @@ public class Promotion {
 
   private Long anneeDeDepart;
   private Long anneeDeFin;
+  private Integer niveau;
 
   @ManyToOne
   @JoinColumn(name = "filiere_id")

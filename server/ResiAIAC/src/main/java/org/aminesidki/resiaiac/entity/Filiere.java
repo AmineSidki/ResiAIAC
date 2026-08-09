@@ -16,6 +16,7 @@ public class Filiere {
   private Long id;
 
   private String nom;
+  private Integer niveauMaximal;
 
   @OneToMany(mappedBy = "filiere")
   private List<Promotion> promotions;
