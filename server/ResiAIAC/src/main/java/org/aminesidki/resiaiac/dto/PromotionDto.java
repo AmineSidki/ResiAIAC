@@ -11,5 +11,6 @@ public record PromotionDto(
     Long anneeDeDepart,
     Long anneeDeFin,
     Long filiere,
+    Integer niveau,
     List<UtilisateurPromotionChambreId> combinaisonsUpc)
     implements Serializable {}
