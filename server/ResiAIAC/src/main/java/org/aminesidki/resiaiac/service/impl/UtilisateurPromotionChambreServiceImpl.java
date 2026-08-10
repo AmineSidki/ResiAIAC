@@ -7,23 +7,22 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UtilisateurPromotionChambreServiceImpl implements UtilisateurPromotionChambreService {
-    @Override
-    public UtilisateurPromotionChambreDto save(UtilisateurPromotionChambreDto dto) {
-        return null;
-    }
+  @Override
+  public UtilisateurPromotionChambreDto save(UtilisateurPromotionChambreDto dto) {
+    return null;
+  }
 
-    @Override
-    public UtilisateurPromotionChambreDto getById(UtilisateurPromotionChambreId id) {
-        return null;
-    }
+  @Override
+  public UtilisateurPromotionChambreDto getById(UtilisateurPromotionChambreId id) {
+    return null;
+  }
 
-    @Override
-    public UtilisateurPromotionChambreDto update(UtilisateurPromotionChambreId id, UtilisateurPromotionChambreDto dto) {
-        return null;
-    }
+  @Override
+  public UtilisateurPromotionChambreDto update(
+      UtilisateurPromotionChambreId id, UtilisateurPromotionChambreDto dto) {
+    return null;
+  }
 
-    @Override
-    public void delete(UtilisateurPromotionChambreId id) {
-
-    }
+  @Override
+  public void delete(UtilisateurPromotionChambreId id) {}
 }

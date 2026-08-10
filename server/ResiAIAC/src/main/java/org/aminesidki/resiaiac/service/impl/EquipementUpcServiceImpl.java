@@ -7,23 +7,21 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EquipementUpcServiceImpl implements EquipementUpcService {
-    @Override
-    public EquipementUpcDto save(EquipementUpcDto dto) {
-        return null;
-    }
+  @Override
+  public EquipementUpcDto save(EquipementUpcDto dto) {
+    return null;
+  }
 
-    @Override
-    public EquipementUpcDto getById(EquipementUpcId id) {
-        return null;
-    }
+  @Override
+  public EquipementUpcDto getById(EquipementUpcId id) {
+    return null;
+  }
 
-    @Override
-    public EquipementUpcDto update(EquipementUpcId id, EquipementUpcDto dto) {
-        return null;
-    }
+  @Override
+  public EquipementUpcDto update(EquipementUpcId id, EquipementUpcDto dto) {
+    return null;
+  }
 
-    @Override
-    public void delete(EquipementUpcId id) {
-
-    }
+  @Override
+  public void delete(EquipementUpcId id) {}
 }
