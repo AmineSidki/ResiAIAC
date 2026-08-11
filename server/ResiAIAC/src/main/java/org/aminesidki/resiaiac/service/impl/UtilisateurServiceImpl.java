@@ -1,12 +1,15 @@
 package org.aminesidki.resiaiac.service.impl;
 
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
 @Service
 public class UtilisateurServiceImpl implements UtilisateurService {
+
   @Override
   public UtilisateurDto save(UtilisateurDto dto) {
     return null;
