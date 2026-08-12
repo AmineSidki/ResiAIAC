@@ -1,0 +1,1 @@
+bin/kc.sh export --dir /opt/keycloak/data/import --realm ResiAIAC --users realm_file

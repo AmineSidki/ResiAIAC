@@ -7,10 +7,14 @@ import org.aminesidki.resiaiac.entity.Filiere;
 import org.aminesidki.resiaiac.entity.Promotion;
 import org.aminesidki.resiaiac.repository.PromotionRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Filiere } */
-@Mapper(componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class FiliereMapper {
 
   @Autowired private PromotionRepository promotionRepo;
@@ -21,14 +25,17 @@ public abstract class FiliereMapper {
   // Map to Entity
   public abstract Filiere toEntity(FiliereDto dto);
 
-  public List<Promotion> mapIdToPromotions(List<UUID> ids) {
+  // Update entity with Dto
+  public abstract void updateEntityFromDto(FiliereDto dto, @MappingTarget Filiere entity);
+
+  protected List<Promotion> mapIdToPromotions(List<UUID> ids) {
     if (ids == null) {
       return null;
     }
     return promotionRepo.findAllById(ids);
   }
 
-  public List<UUID> mapPromotionsToIds(List<Promotion> entities) {
+  protected List<UUID> mapPromotionsToIds(List<Promotion> entities) {
     if (entities == null) {
       return null;
     }

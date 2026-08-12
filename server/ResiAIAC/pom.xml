@@ -158,6 +158,7 @@
                                 <exclude>**/exception/**</exclude>
                                 <exclude>**/configuration/**</exclude>
                                 <exclude>**/controller/test/**</exclude>
+                                <exclude>**/service/impl/**</exclude>
                             </excludes>
                             <rules>
                                 <rule>

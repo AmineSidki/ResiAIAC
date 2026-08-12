@@ -8,10 +8,14 @@ import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.repository.EquipementRepository;
 import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.EquipementReclamation } */
-@Mapper(componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class EquipementReclamationMapper {
 
   @Autowired private ReclamationRepository reclamationRepo;
@@ -23,28 +27,32 @@ public abstract class EquipementReclamationMapper {
   // Map to Entity
   public abstract EquipementReclamation toEntity(EquipementReclamationDto dto);
 
-  public Equipement mapIdToEquipement(Long id) {
+  // Update entity with Dto
+  public abstract void updateEntityFromDto(
+      EquipementReclamationDto dto, @MappingTarget EquipementReclamation entity);
+
+  protected Equipement mapIdToEquipement(Long id) {
     if (id == null) {
       return null;
     }
     return equipementRepo.findById(id).orElse(null);
   }
 
-  public Long mapEquipementToId(Equipement entity) {
+  protected Long mapEquipementToId(Equipement entity) {
     if (entity == null) {
       return null;
     }
     return entity.getId();
   }
 
-  public Reclamation mapIdToReclamation(UUID id) {
+  protected Reclamation mapIdToReclamation(UUID id) {
     if (id == null) {
       return null;
     }
     return reclamationRepo.findById(id).orElse(null);
   }
 
-  public UUID mapReclamationToId(Reclamation entity) {
+  protected UUID mapReclamationToId(Reclamation entity) {
     if (entity == null) {
       return null;
     }

@@ -6,10 +6,14 @@ import org.aminesidki.resiaiac.entity.Document;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Document } */
-@Mapper(componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class DocumentMapper {
 
   @Autowired private UtilisateurRepository utilisateurRepo;
@@ -20,14 +24,17 @@ public abstract class DocumentMapper {
   // Map to Entity
   public abstract Document toEntity(DocumentDto dto);
 
-  public Utilisateur mapIdToUtilisateur(UUID id) {
+  // Update entity with Dto
+  public abstract void updateEntityFromDto(DocumentDto dto, @MappingTarget Document entity);
+
+  protected Utilisateur mapIdToUtilisateur(UUID id) {
     if (id == null) {
       return null;
     }
     return utilisateurRepo.findById(id).orElse(null);
   }
 
-  public UUID mapUtilisateurToId(Utilisateur entity) {
+  protected UUID mapUtilisateurToId(Utilisateur entity) {
     if (entity == null) {
       return null;
     }

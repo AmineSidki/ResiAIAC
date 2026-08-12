@@ -7,10 +7,14 @@ import org.aminesidki.resiaiac.entity.Batiment;
 import org.aminesidki.resiaiac.entity.Etage;
 import org.aminesidki.resiaiac.repository.EtageRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Batiment } */
-@Mapper(componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class BatimentMapper {
 
   @Autowired private EtageRepository etageRepo;
@@ -21,14 +25,17 @@ public abstract class BatimentMapper {
   // Map to Entity
   public abstract Batiment toEntity(BatimentDto dto);
 
-  public List<Etage> mapIdToEtages(List<UUID> ids) {
+  // Update entity with Dto
+  public abstract void updateEntityFromDto(BatimentDto dto, @MappingTarget Batiment entity);
+
+  protected List<Etage> mapIdToEtages(List<UUID> ids) {
     if (ids == null) {
       return null;
     }
     return etageRepo.findAllById(ids);
   }
 
-  public List<UUID> mapEtagesToIds(List<Etage> entities) {
+  protected List<UUID> mapEtagesToIds(List<Etage> entities) {
     if (entities == null) {
       return null;
     }

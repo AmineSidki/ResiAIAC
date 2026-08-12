@@ -9,10 +9,14 @@ import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 import org.aminesidki.resiaiac.repository.FiliereRepository;
 import org.aminesidki.resiaiac.repository.UtilisateurPromotionChambreRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Promotion } */
-@Mapper(componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class PromotionMapper {
 
   @Autowired private FiliereRepository filiereRepo;
@@ -24,21 +28,24 @@ public abstract class PromotionMapper {
   // Map to Entity
   public abstract Promotion toEntity(PromotionDto dto);
 
-  public Filiere mapIdToFiliere(Long id) {
+  // Update entity with Dto
+  public abstract void updateEntityFromDto(PromotionDto dto, @MappingTarget Promotion entity);
+
+  protected Filiere mapIdToFiliere(Long id) {
     if (id == null) {
       return null;
     }
     return filiereRepo.findById(id).orElse(null);
   }
 
-  public Long mapFiliereToId(Filiere entity) {
+  protected Long mapFiliereToId(Filiere entity) {
     if (entity == null) {
       return null;
     }
     return entity.getId();
   }
 
-  public List<UtilisateurPromotionChambre> mapIdToUtilisateurPromotionChambres(
+  protected List<UtilisateurPromotionChambre> mapIdToUtilisateurPromotionChambres(
       List<UtilisateurPromotionChambreId> ids) {
     if (ids == null) {
       return null;
@@ -46,7 +53,7 @@ public abstract class PromotionMapper {
     return utilisateurPromotionChambreRepo.findAllById(ids);
   }
 
-  public List<UtilisateurPromotionChambreId> mapUtilisateurPromotionChambresToIds(
+  protected List<UtilisateurPromotionChambreId> mapUtilisateurPromotionChambresToIds(
       List<UtilisateurPromotionChambre> entities) {
     if (entities == null) {
       return null;
