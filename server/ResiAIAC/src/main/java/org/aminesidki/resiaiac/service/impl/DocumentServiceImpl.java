@@ -3,7 +3,6 @@ package org.aminesidki.resiaiac.service.impl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.DocumentDto;
-import org.aminesidki.resiaiac.dto.ServiceDto;
 import org.aminesidki.resiaiac.entity.Document;
 import org.aminesidki.resiaiac.mapper.DocumentMapper;
 import org.aminesidki.resiaiac.repository.DocumentRepository;

@@ -42,6 +42,7 @@ public class EquipementServiceImpl implements EquipementService {
 
   @Override
   public void delete(Long id) {
-    equipementRepository.delete(ResourceFetcher.fetchResource(id, equipementRepository, "Equipement"));
+    equipementRepository.delete(
+        ResourceFetcher.fetchResource(id, equipementRepository, "Equipement"));
   }
 }

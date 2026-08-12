@@ -43,6 +43,7 @@ public class ReservationServiceImpl implements ReservationService {
 
   @Override
   public void delete(UUID id) {
-    reservationRepository.delete(ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
+    reservationRepository.delete(
+        ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
   }
 }

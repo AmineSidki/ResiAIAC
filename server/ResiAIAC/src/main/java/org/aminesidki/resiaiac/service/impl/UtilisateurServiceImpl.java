@@ -43,6 +43,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Override
   public void delete(UUID id) {
-    utilisateurRepository.delete(ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"));
+    utilisateurRepository.delete(
+        ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"));
   }
 }
