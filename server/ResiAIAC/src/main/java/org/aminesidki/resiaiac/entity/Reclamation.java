@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.*;
 import org.aminesidki.resiaiac.enumeration.EtatReclamation;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -38,4 +39,5 @@ public class Reclamation {
   private List<EquipementReclamation> equipements;
 
   @CreationTimestamp private Timestamp createdAt;
+  @UpdateTimestamp private Timestamp updatedAt;
 }

@@ -38,6 +38,7 @@ public class BatimentServiceImpl implements BatimentService {
   public BatimentDto update(UUID id, BatimentDto dto) {
     Batiment entity = ResourceFetcher.fetchResource(id, batimentRepository, "Batiment");
     batimentMapper.updateEntityFromDto(dto, entity);
+    entity = batimentRepository.save(entity);
     return batimentMapper.toDto(entity);
   }
 

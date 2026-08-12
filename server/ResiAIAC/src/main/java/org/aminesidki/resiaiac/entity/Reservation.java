@@ -6,6 +6,7 @@ import java.util.UUID;
 import lombok.*;
 import org.aminesidki.resiaiac.enumeration.EtatReservation;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -29,4 +30,5 @@ public class Reservation {
   private Chambre chambre;
 
   @CreationTimestamp private Timestamp createdAt;
+  @UpdateTimestamp private Timestamp updatedAt;
 }
