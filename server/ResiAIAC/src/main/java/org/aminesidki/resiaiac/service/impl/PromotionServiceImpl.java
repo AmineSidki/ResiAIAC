@@ -9,7 +9,9 @@ import org.aminesidki.resiaiac.repository.PromotionRepository;
 import org.aminesidki.resiaiac.service.PromotionService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class PromotionServiceImpl implements PromotionService {
@@ -24,6 +26,7 @@ public class PromotionServiceImpl implements PromotionService {
     return promotionMapper.toDto(entity);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public PromotionDto getById(UUID id) {
     Promotion entity = ResourceFetcher.fetchResource(id, promotionRepository, "Promotion");

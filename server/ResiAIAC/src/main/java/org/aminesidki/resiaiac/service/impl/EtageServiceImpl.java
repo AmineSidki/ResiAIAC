@@ -9,7 +9,9 @@ import org.aminesidki.resiaiac.repository.EtageRepository;
 import org.aminesidki.resiaiac.service.EtageService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class EtageServiceImpl implements EtageService {
@@ -23,6 +25,7 @@ public class EtageServiceImpl implements EtageService {
     return etageMapper.toDto(entity);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public EtageDto getById(UUID id) {
     Etage etage = ResourceFetcher.fetchResource(id, etageRepository, "Etage");

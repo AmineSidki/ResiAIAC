@@ -9,7 +9,9 @@ import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.aminesidki.resiaiac.service.ReclamationService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class ReclamationServiceImpl implements ReclamationService {
@@ -24,6 +26,7 @@ public class ReclamationServiceImpl implements ReclamationService {
     return reclamationMapper.toDto(entity);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public ReclamationDto getById(UUID id) {
     Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");

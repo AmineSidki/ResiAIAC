@@ -9,7 +9,9 @@ import org.aminesidki.resiaiac.repository.ChambreRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class ChambreServiceImpl implements ChambreService {
@@ -24,6 +26,7 @@ public class ChambreServiceImpl implements ChambreService {
     return chambreMapper.toDto(entity);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public ChambreDto getById(UUID id) {
     Chambre entity = ResourceFetcher.fetchResource(id, chambreRepository, "Chambre");

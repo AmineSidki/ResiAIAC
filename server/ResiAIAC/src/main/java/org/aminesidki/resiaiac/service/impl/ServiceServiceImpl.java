@@ -7,7 +7,9 @@ import org.aminesidki.resiaiac.mapper.ServiceMapper;
 import org.aminesidki.resiaiac.repository.ServiceRepository;
 import org.aminesidki.resiaiac.service.ServiceService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @RequiredArgsConstructor
 @org.springframework.stereotype.Service
 public class ServiceServiceImpl implements ServiceService {
@@ -22,6 +24,7 @@ public class ServiceServiceImpl implements ServiceService {
     return serviceMapper.toDto(entity);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public ServiceDto getById(Long id) {
     Service entity = ResourceFetcher.fetchResource(id, serviceRepository, "Service");
