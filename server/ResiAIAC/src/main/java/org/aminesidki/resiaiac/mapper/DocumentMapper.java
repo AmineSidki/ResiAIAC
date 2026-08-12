@@ -1,10 +1,7 @@
 package org.aminesidki.resiaiac.mapper;
 
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.dto.DocumentDto;
-import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Document;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
@@ -14,7 +11,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Document } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class DocumentMapper {
 
   @Autowired private UtilisateurRepository utilisateurRepo;

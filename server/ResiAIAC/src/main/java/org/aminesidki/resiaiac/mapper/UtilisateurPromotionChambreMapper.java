@@ -2,8 +2,6 @@ package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.EquipementUpc;
@@ -21,7 +19,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class UtilisateurPromotionChambreMapper {
 
   @Autowired private EquipementUpcRepository equipementUpcRepo;
@@ -36,7 +36,8 @@ public abstract class UtilisateurPromotionChambreMapper {
   public abstract UtilisateurPromotionChambre toEntity(UtilisateurPromotionChambreDto dto);
 
   // Update entity with Dto
-  public abstract void updateEntityFromDto(UtilisateurPromotionChambreDto dto, @MappingTarget UtilisateurPromotionChambre entity);
+  public abstract void updateEntityFromDto(
+      UtilisateurPromotionChambreDto dto, @MappingTarget UtilisateurPromotionChambre entity);
 
   protected Utilisateur mapIdToUtilisateur(UUID id) {
     if (id == null) {

@@ -12,7 +12,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Batiment } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class BatimentMapper {
 
   @Autowired private EtageRepository etageRepo;

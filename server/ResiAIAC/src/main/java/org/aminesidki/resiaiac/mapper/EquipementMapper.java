@@ -1,10 +1,7 @@
 package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
-
-import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.dto.EquipementDto;
-import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
 import org.aminesidki.resiaiac.entity.EquipementUpc;
@@ -18,7 +15,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Equipement } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class EquipementMapper {
 
   @Autowired private EquipementUpcRepository equipementUpcRepo;

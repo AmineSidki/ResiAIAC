@@ -1,8 +1,6 @@
 package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
-
-import org.aminesidki.resiaiac.dto.FiliereDto;
 import org.aminesidki.resiaiac.dto.PromotionDto;
 import org.aminesidki.resiaiac.entity.Filiere;
 import org.aminesidki.resiaiac.entity.Promotion;
@@ -16,7 +14,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Promotion } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class PromotionMapper {
 
   @Autowired private FiliereRepository filiereRepo;

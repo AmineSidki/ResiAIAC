@@ -1,8 +1,6 @@
 package org.aminesidki.resiaiac.mapper;
 
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.EquipementDto;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
@@ -15,7 +13,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.EquipementReclamation } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class EquipementReclamationMapper {
 
   @Autowired private ReclamationRepository reclamationRepo;
@@ -28,7 +28,8 @@ public abstract class EquipementReclamationMapper {
   public abstract EquipementReclamation toEntity(EquipementReclamationDto dto);
 
   // Update entity with Dto
-  public abstract void updateEntityFromDto(EquipementReclamationDto dto, @MappingTarget EquipementReclamation entity);
+  public abstract void updateEntityFromDto(
+      EquipementReclamationDto dto, @MappingTarget EquipementReclamation entity);
 
   protected Equipement mapIdToEquipement(Long id) {
     if (id == null) {

@@ -1,7 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.BatimentDto;
 import org.aminesidki.resiaiac.entity.Batiment;

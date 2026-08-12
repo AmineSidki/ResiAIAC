@@ -2,8 +2,6 @@ package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.BatimentDto;
 import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.entity.*;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
@@ -17,7 +15,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Chambre } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class ChambreMapper {
 
   @Autowired private UtilisateurPromotionChambreRepository utilisateurPromotionChambreRepo;

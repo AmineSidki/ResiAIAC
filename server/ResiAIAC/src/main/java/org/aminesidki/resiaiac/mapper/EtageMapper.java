@@ -2,12 +2,9 @@ package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.EquipementUpcDto;
 import org.aminesidki.resiaiac.dto.EtageDto;
 import org.aminesidki.resiaiac.entity.Batiment;
 import org.aminesidki.resiaiac.entity.Chambre;
-import org.aminesidki.resiaiac.entity.EquipementUpc;
 import org.aminesidki.resiaiac.entity.Etage;
 import org.aminesidki.resiaiac.repository.BatimentRepository;
 import org.aminesidki.resiaiac.repository.ChambreRepository;
@@ -17,7 +14,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Etage } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class EtageMapper {
 
   @Autowired private BatimentRepository batimentRepo;

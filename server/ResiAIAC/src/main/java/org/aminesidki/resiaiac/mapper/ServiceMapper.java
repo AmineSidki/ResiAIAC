@@ -2,11 +2,8 @@ package org.aminesidki.resiaiac.mapper;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.ServiceDto;
 import org.aminesidki.resiaiac.entity.Reclamation;
-import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Service;
 import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.mapstruct.Mapper;
@@ -15,7 +12,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** Mapper for {@link org.aminesidki.resiaiac.entity.Service } */
-@Mapper(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,componentModel = "spring")
+@Mapper(
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    componentModel = "spring")
 public abstract class ServiceMapper {
 
   @Autowired private ReclamationRepository reclamationRepo;
