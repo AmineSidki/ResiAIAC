@@ -10,10 +10,5 @@ public interface BatimentService {
 
   BatimentDto update(UUID id, BatimentDto dto);
 
-  /*1. I m not sure if we have to do exception here in all delete methods ?
-  if (!batimentRepository.existsById(id)) {
-      throw new ResourceNotFoundException("Bâtiment introuvable avec l'id : " + id);
-  }
-  */
   void delete(UUID id);
 }
