@@ -5,7 +5,7 @@ import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.dto.ServiceDto;
 
 public interface DocumentService {
-  DocumentDto save(ServiceDto dto);
+  DocumentDto save(DocumentDto dto);
 
   DocumentDto getById(UUID id);
 
