@@ -23,7 +23,7 @@ public class UtilisateurPromotionChambreServiceImpl implements UtilisateurPromot
   @Override
   public UtilisateurPromotionChambreDto save(UtilisateurPromotionChambreDto dto) {
     UtilisateurPromotionChambre entity = utilisateurPromotionChambreMapper.toEntity(dto);
-    utilisateurPromotionChambreRepository.save(entity);
+    entity = utilisateurPromotionChambreRepository.save(entity);
     return utilisateurPromotionChambreMapper.toDto(entity);
   }
 
