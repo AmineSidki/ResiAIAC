@@ -38,8 +38,8 @@ public class EquipementReclamationServiceImpl implements EquipementReclamationSe
 
   @Override
   public EquipementReclamationDto update(EquipementReclamationId id, EquipementReclamationDto dto) {
-    EquipementReclamation entity = ResourceFetcher.fetchResource(
-            id, equipementReclamationRepository, "EquipementReclamation");
+    EquipementReclamation entity =
+        ResourceFetcher.fetchResource(id, equipementReclamationRepository, "EquipementReclamation");
     equipementReclamationMapper.updateEntityFromDto(dto, entity);
     entity = equipementReclamationRepository.save(entity);
     return equipementReclamationMapper.toDto(entity);
