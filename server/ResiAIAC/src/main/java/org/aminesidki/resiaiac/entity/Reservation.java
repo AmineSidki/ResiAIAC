@@ -16,6 +16,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 public class Reservation {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

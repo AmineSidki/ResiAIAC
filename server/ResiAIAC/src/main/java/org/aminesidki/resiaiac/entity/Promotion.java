@@ -13,6 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 public class Promotion {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

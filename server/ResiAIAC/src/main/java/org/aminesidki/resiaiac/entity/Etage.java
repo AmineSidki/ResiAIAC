@@ -13,6 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 public class Etage {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

@@ -12,6 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 public class Equipement {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 

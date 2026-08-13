@@ -12,7 +12,10 @@ import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UtilisateurPromotionChambre {
-  @EmbeddedId private UtilisateurPromotionChambreId id;
+  @EmbeddedId
+  @Column(updatable = false, insertable = false)
+  private UtilisateurPromotionChambreId id;
+
   private Boolean retard;
   private String note;
 
