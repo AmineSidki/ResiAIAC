@@ -48,7 +48,8 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>{@code etat} is left {@code null} in test fixtures since {@link EtatReclamation}'s exact
  * constant names aren't part of this test's dependencies; substitute a specific value (e.g. {@code
- * EtatReclamation.EN_ATTENTE}) if one is more meaningful for a given scenario.
+ * EtatReclamation.EN_ATTENTE}) if one is more meaningful for a given scenario. {@code updatedAt} is
+ * likewise left {@code null} — only {@code createdAt} is exercised here.
  */
 @WebMvcTest(ReclamationController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -76,7 +77,7 @@ class ReclamationControllerTest {
     createdAt = new Timestamp(System.currentTimeMillis());
     dto =
         new ReclamationDto(
-            id, "Fuite d'eau", null, utilisateurId, chambreId, serviceId, List.of(), createdAt);
+            id, "Fuite d'eau", null, utilisateurId, chambreId, serviceId, List.of(), null, null);
   }
 
   // ---------- getById ----------
@@ -108,7 +109,8 @@ class ReclamationControllerTest {
             chambreId,
             serviceId,
             List.of(),
-            createdAt);
+            null,
+            null);
     ReclamationDto resultDto =
         new ReclamationDto(
             id,
@@ -118,7 +120,8 @@ class ReclamationControllerTest {
             chambreId,
             serviceId,
             List.of(),
-            createdAt);
+            createdAt,
+            null);
 
     when(reclamationService.save(inputDto)).thenReturn(resultDto);
 
@@ -149,7 +152,8 @@ class ReclamationControllerTest {
             chambreId,
             serviceId,
             List.of(),
-            createdAt);
+            null,
+            null);
 
     when(reclamationService.update(id, dto)).thenReturn(resultDto);
 

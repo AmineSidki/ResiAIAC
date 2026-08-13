@@ -3,10 +3,12 @@ package org.aminesidki.resiaiac.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +23,7 @@ import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,11 +32,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Unit tests for {@link UtilisateurService}, exercised through its {@link UtilisateurServiceImpl}
  * implementation.
  *
+ * <p>{@code save} and {@code delete} are the interesting cases here: {@code save} must create the
+ * Keycloak user before persisting, and roll it back if the DB write fails; {@code delete} must
+ * delete the DB row *before* the Keycloak user, so a failed Keycloak delete leaves the transaction
+ * rollback restoring full consistency rather than an orphaned DB row.
+ *
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
  */
 @ExtendWith(MockitoExtension.class)
 class UtilisateurServiceTest {
+
+  @Mock private KeycloakService keycloakService;
 
   @Mock private UtilisateurRepository utilisateurRepository;
 
@@ -42,15 +52,19 @@ class UtilisateurServiceTest {
   private UtilisateurService utilisateurService;
 
   private UUID id;
+  private UUID keycloakId;
   private Utilisateur entity;
   private UtilisateurDto dto;
 
   @BeforeEach
   void setUp() {
-    utilisateurService = new UtilisateurServiceImpl(utilisateurRepository, utilisateurMapper);
+    utilisateurService =
+        new UtilisateurServiceImpl(keycloakService, utilisateurRepository, utilisateurMapper);
 
     id = UUID.randomUUID();
-    entity = Utilisateur.builder().id(id).nom("Sidki").prenom("Amine").build();
+    keycloakId = UUID.randomUUID();
+    entity =
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     dto =
         new UtilisateurDto(
             id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
@@ -60,18 +74,20 @@ class UtilisateurServiceTest {
   // ---------- save ----------
 
   @Test
-  void save_shouldMapPersistAndReturnDto() {
+  void save_shouldCreateKeycloakUserThenPersistAndReturnDto() {
     UtilisateurDto inputDto =
         new UtilisateurDto(
             null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
             null, null);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
-    Utilisateur savedEntity = Utilisateur.builder().id(id).nom("Sidki").prenom("Amine").build();
+    Utilisateur savedEntity =
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
             null, null);
 
+    when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
     when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(utilisateurRepository.save(mappedEntity)).thenReturn(savedEntity);
     when(utilisateurMapper.toDto(savedEntity)).thenReturn(resultDto);
@@ -79,10 +95,50 @@ class UtilisateurServiceTest {
     UtilisateurDto result = utilisateurService.save(inputDto);
 
     assertThat(result).isEqualTo(resultDto);
+    assertThat(mappedEntity.getKeycloakUser()).isEqualTo(keycloakId);
+    verify(keycloakService).createUser(inputDto);
     verify(utilisateurMapper).toEntity(inputDto);
     verify(utilisateurRepository).save(mappedEntity);
     verify(utilisateurMapper).toDto(savedEntity);
-    verifyNoMoreInteractions(utilisateurRepository, utilisateurMapper);
+    verifyNoMoreInteractions(keycloakService, utilisateurRepository, utilisateurMapper);
+  }
+
+  @Test
+  void save_shouldNotTouchDbOrRollbackWhenKeycloakCreationFails() {
+    UtilisateurDto inputDto =
+        new UtilisateurDto(
+            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
+    RuntimeException keycloakFailure = new RuntimeException("Keycloak unavailable");
+
+    when(keycloakService.createUser(inputDto)).thenThrow(keycloakFailure);
+
+    assertThatThrownBy(() -> utilisateurService.save(inputDto)).isSameAs(keycloakFailure);
+
+    verify(keycloakService).createUser(inputDto);
+    verify(keycloakService, never()).deleteUser(any());
+    verifyNoMoreInteractions(keycloakService);
+    verifyNoInteractions(utilisateurRepository, utilisateurMapper);
+  }
+
+  @Test
+  void save_shouldRollbackKeycloakUserWhenDbSaveFails() {
+    UtilisateurDto inputDto =
+        new UtilisateurDto(
+            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
+    Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
+    RuntimeException dbFailure = new RuntimeException("DB unavailable");
+
+    when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
+    when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(utilisateurRepository.save(mappedEntity)).thenThrow(dbFailure);
+
+    assertThatThrownBy(() -> utilisateurService.save(inputDto)).isSameAs(dbFailure);
+
+    verify(keycloakService).createUser(inputDto);
+    verify(keycloakService).deleteUser(keycloakId);
+    verifyNoMoreInteractions(keycloakService);
   }
 
   // ---------- getById ----------
@@ -101,6 +157,7 @@ class UtilisateurServiceTest {
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"));
       verify(utilisateurMapper).toDto(entity);
       verifyNoMoreInteractions(utilisateurMapper);
+      verifyNoInteractions(keycloakService);
     }
   }
 
@@ -115,6 +172,7 @@ class UtilisateurServiceTest {
       assertThatThrownBy(() -> utilisateurService.getById(id)).isSameAs(notFound);
 
       verifyNoMoreInteractions(utilisateurMapper);
+      verifyNoInteractions(keycloakService);
     }
   }
 
@@ -123,7 +181,12 @@ class UtilisateurServiceTest {
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
     Utilisateur savedEntity =
-        Utilisateur.builder().id(id).nom("Sidki").prenom("Amine-renamed").build();
+        Utilisateur.builder()
+            .id(id)
+            .keycloakUser(keycloakId)
+            .nom("Sidki")
+            .prenom("Amine-renamed")
+            .build();
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
@@ -154,6 +217,7 @@ class UtilisateurServiceTest {
       verify(utilisateurRepository).save(entity);
       verify(utilisateurMapper).toDto(savedEntity);
       verifyNoMoreInteractions(utilisateurRepository, utilisateurMapper);
+      verifyNoInteractions(keycloakService);
     }
   }
 
@@ -169,13 +233,14 @@ class UtilisateurServiceTest {
 
       verify(utilisateurRepository, never()).save(any());
       verifyNoMoreInteractions(utilisateurMapper);
+      verifyNoInteractions(keycloakService);
     }
   }
 
   // ---------- delete ----------
 
   @Test
-  void delete_shouldFetchAndDeleteEntity() {
+  void delete_shouldDeleteDbRowBeforeKeycloakUser() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
@@ -184,8 +249,10 @@ class UtilisateurServiceTest {
       utilisateurService.delete(id);
 
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"));
-      verify(utilisateurRepository, times(1)).delete(entity);
-      verifyNoMoreInteractions(utilisateurRepository);
+      InOrder order = inOrder(utilisateurRepository, keycloakService);
+      order.verify(utilisateurRepository).delete(entity);
+      order.verify(keycloakService).deleteUser(keycloakId);
+      verifyNoMoreInteractions(utilisateurRepository, keycloakService);
     }
   }
 
@@ -200,6 +267,24 @@ class UtilisateurServiceTest {
       assertThatThrownBy(() -> utilisateurService.delete(id)).isSameAs(notFound);
 
       verify(utilisateurRepository, never()).delete(any());
+      verifyNoInteractions(keycloakService);
+    }
+  }
+
+  @Test
+  void delete_shouldNotCallKeycloakWhenDbDeleteFails() {
+    RuntimeException dbFailure = new RuntimeException("DB unavailable");
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenReturn(entity);
+      doThrow(dbFailure).when(utilisateurRepository).delete(entity);
+
+      assertThatThrownBy(() -> utilisateurService.delete(id)).isSameAs(dbFailure);
+
+      verify(utilisateurRepository).delete(entity);
+      verifyNoInteractions(keycloakService);
     }
   }
 }

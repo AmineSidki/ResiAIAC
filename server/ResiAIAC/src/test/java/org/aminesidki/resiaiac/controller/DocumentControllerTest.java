@@ -55,12 +55,15 @@ class DocumentControllerTest {
   @MockitoBean private DocumentService documentService;
 
   private UUID id;
+  private UUID ownerId;
   private DocumentDto dto;
 
   @BeforeEach
   void setUp() {
+    ownerId = UUID.randomUUID();
+
     id = UUID.randomUUID();
-    dto = new DocumentDto(id, "cin.pdf", "seal.png", false, null, UUID.randomUUID(), null);
+    dto = new DocumentDto(id, "cin.pdf", "seal.png", null, null, UUID.randomUUID(), null);
   }
 
   // ---------- getById ----------
@@ -83,8 +86,8 @@ class DocumentControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, false, null, null, null);
-    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, false, null, null, null);
+    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, null, null, ownerId, null);
+    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, null, null, ownerId, null);
 
     when(documentService.save(inputDto)).thenReturn(resultDto);
 
@@ -107,7 +110,7 @@ class DocumentControllerTest {
   void update_shouldMutateAndReturnDto() throws Exception {
     DocumentUpdateRequest request = new DocumentUpdateRequest(id, dto);
     DocumentDto resultDto =
-        new DocumentDto(id, "cin-renamed.pdf", "seal.png", true, null, dto.proprietaire(), null);
+        new DocumentDto(id, "cin-renamed.pdf", "seal.png", null, null, dto.proprietaire(), null);
 
     when(documentService.update(id, dto)).thenReturn(resultDto);
 
@@ -118,8 +121,7 @@ class DocumentControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(id.toString()))
-        .andExpect(jsonPath("$.nomFichier").value("cin-renamed.pdf"))
-        .andExpect(jsonPath("$.valide").value(true));
+        .andExpect(jsonPath("$.nomFichier").value("cin-renamed.pdf"));
 
     verify(documentService).update(id, dto);
     verifyNoMoreInteractions(documentService);

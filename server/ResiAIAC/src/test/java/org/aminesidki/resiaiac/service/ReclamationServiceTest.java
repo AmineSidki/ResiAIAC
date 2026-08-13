@@ -54,7 +54,7 @@ class ReclamationServiceTest {
 
     id = UUID.randomUUID();
     entity = Reclamation.builder().id(id).message("Fuite d'eau").etat(null).build();
-    dto = new ReclamationDto(id, "Fuite d'eau", null, null, null, null, List.of(), null);
+    dto = new ReclamationDto(id, "Fuite d'eau", null, null, null, null, List.of(), null, null);
   }
 
   // ---------- save ----------
@@ -62,12 +62,12 @@ class ReclamationServiceTest {
   @Test
   void save_shouldMapPersistAndReturnDto() {
     ReclamationDto inputDto =
-        new ReclamationDto(null, "Panne electrique", null, null, null, null, List.of(), null);
+        new ReclamationDto(null, "Panne electrique", null, null, null, null, List.of(), null, null);
     Reclamation mappedEntity = Reclamation.builder().message("Panne electrique").etat(null).build();
     Reclamation savedEntity =
         Reclamation.builder().id(id).message("Panne electrique").etat(null).build();
     ReclamationDto resultDto =
-        new ReclamationDto(id, "Panne electrique", null, null, null, null, List.of(), null);
+        new ReclamationDto(id, "Panne electrique", null, null, null, null, List.of(), null, null);
 
     when(reclamationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(reclamationRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -122,7 +122,8 @@ class ReclamationServiceTest {
     Reclamation savedEntity =
         Reclamation.builder().id(id).message("Fuite d'eau - resolue").etat(null).build();
     ReclamationDto resultDto =
-        new ReclamationDto(id, "Fuite d'eau - resolue", null, null, null, null, List.of(), null);
+        new ReclamationDto(
+            id, "Fuite d'eau - resolue", null, null, null, null, List.of(), null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher

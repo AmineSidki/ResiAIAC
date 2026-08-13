@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReservationDto;
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
@@ -34,6 +35,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
  *
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
+ *
+ * <p>{@link EmailService} is mocked; {@code save()} triggers a confirmation email as a side-effect,
+ * verified separately from the persistence flow.
  */
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
@@ -41,6 +45,8 @@ class ReservationServiceTest {
   @Mock private ReservationRepository reservationRepository;
 
   @Mock private ReservationMapper reservationMapper;
+
+  @Mock private EmailService emailService;
 
   private ReservationService reservationService;
 
@@ -50,11 +56,12 @@ class ReservationServiceTest {
 
   @BeforeEach
   void setUp() {
-    reservationService = new ReservationServiceImpl(reservationRepository, reservationMapper);
+    reservationService =
+        new ReservationServiceImpl(reservationRepository, reservationMapper, emailService);
 
     id = UUID.randomUUID();
     entity = Reservation.builder().id(id).build();
-    dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+    dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
   }
 
   // ---------- save ----------
@@ -62,11 +69,11 @@ class ReservationServiceTest {
   @Test
   void save_shouldMapPersistAndReturnDto() {
     ReservationDto inputDto =
-        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
     Reservation mappedEntity = Reservation.builder().build();
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -78,7 +85,8 @@ class ReservationServiceTest {
     verify(reservationMapper).toEntity(inputDto);
     verify(reservationRepository).save(mappedEntity);
     verify(reservationMapper).toDto(savedEntity);
-    verifyNoMoreInteractions(reservationRepository, reservationMapper);
+    verify(emailService).envoyerEmail(any(EmailResponse.class));
+    verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
   }
 
   // ---------- getById ----------
@@ -96,7 +104,7 @@ class ReservationServiceTest {
       assertThat(result).isEqualTo(dto);
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
       verify(reservationMapper).toDto(entity);
-      verifyNoMoreInteractions(reservationMapper);
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
   }
 
@@ -110,7 +118,7 @@ class ReservationServiceTest {
 
       assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
 
-      verifyNoMoreInteractions(reservationMapper);
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
   }
 
@@ -120,7 +128,7 @@ class ReservationServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
@@ -136,7 +144,7 @@ class ReservationServiceTest {
       verify(reservationMapper).updateEntityFromDto(dto, entity);
       verify(reservationRepository).save(entity);
       verify(reservationMapper).toDto(savedEntity);
-      verifyNoMoreInteractions(reservationRepository, reservationMapper);
+      verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
     }
   }
 
@@ -151,7 +159,7 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.update(id, dto)).isSameAs(notFound);
 
       verify(reservationRepository, never()).save(any());
-      verifyNoMoreInteractions(reservationMapper);
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
   }
 
@@ -168,7 +176,7 @@ class ReservationServiceTest {
 
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
       verify(reservationRepository, times(1)).delete(entity);
-      verifyNoMoreInteractions(reservationRepository);
+      verifyNoMoreInteractions(reservationRepository, emailService);
     }
   }
 
@@ -183,6 +191,7 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.delete(id)).isSameAs(notFound);
 
       verify(reservationRepository, never()).delete(any());
+      verifyNoMoreInteractions(emailService);
     }
   }
 }

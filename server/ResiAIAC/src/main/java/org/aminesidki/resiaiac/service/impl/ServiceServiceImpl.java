@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ServiceDto;
 import org.aminesidki.resiaiac.entity.Service;
@@ -16,6 +17,11 @@ public class ServiceServiceImpl implements ServiceService {
 
   private final ServiceRepository serviceRepository;
   private final ServiceMapper serviceMapper;
+
+  @Override
+  public List<ServiceDto> getAll() {
+    return serviceRepository.findAll().stream().map(serviceMapper::toDto).toList();
+  }
 
   @Override
   public ServiceDto save(ServiceDto dto) {

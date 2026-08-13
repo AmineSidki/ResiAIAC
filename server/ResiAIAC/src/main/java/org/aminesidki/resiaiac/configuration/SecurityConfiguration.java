@@ -26,10 +26,9 @@ public class SecurityConfiguration {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
-    corsConfiguration.setAllowedOrigins(List.of("*"));
+    corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
     corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-    corsConfiguration.setAllowCredentials(true);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", corsConfiguration);
 
@@ -53,7 +52,8 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             customizer ->
                 customizer
-                    .requestMatchers("/api/v1/auth-test/public")
+                    .requestMatchers(
+                        "/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -77,7 +77,8 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             customizer ->
                 customizer
-                    .requestMatchers("/api/v1/auth-test/public")
+                    .requestMatchers(
+                        "/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

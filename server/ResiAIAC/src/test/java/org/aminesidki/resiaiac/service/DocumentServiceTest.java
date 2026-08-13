@@ -49,18 +49,18 @@ class DocumentServiceTest {
     documentService = new DocumentServiceImpl(documentRepository, documentMapper);
 
     id = UUID.randomUUID();
-    entity = Document.builder().id(id).nomFichier("cin.pdf").valide(false).build();
-    dto = new DocumentDto(id, "cin.pdf", null, false, null, null, null);
+    entity = Document.builder().id(id).nomFichier("cin.pdf").build();
+    dto = new DocumentDto(id, "cin.pdf", null, null, null, null, null);
   }
 
   // ---------- save ----------
 
   @Test
   void save_shouldMapPersistAndReturnDto() {
-    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, false, null, null, null);
+    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, null, null, null, null);
     Document mappedEntity = Document.builder().nomFichier("cin.pdf").build();
     Document savedEntity = Document.builder().id(id).nomFichier("cin.pdf").build();
-    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, false, null, null, null);
+    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, null, null, null, null);
 
     when(documentMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(documentRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -113,7 +113,7 @@ class DocumentServiceTest {
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
     Document savedEntity = Document.builder().id(id).nomFichier("cin-renamed.pdf").build();
-    DocumentDto resultDto = new DocumentDto(id, "cin-renamed.pdf", null, false, null, null, null);
+    DocumentDto resultDto = new DocumentDto(id, "cin-renamed.pdf", null, null, null, null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher

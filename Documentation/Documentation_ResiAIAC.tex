@@ -144,6 +144,48 @@ Cette analyse bibliographique présente un panorama complet des technologies, fr
     \item Réplication native et basculement automatique garantissant une haute disponibilité.
 \end{itemize}
 
+\subsubsection{Keycloak}
+\textbf{Définition :} Solution open-source de gestion des identités et des accès (IAM), assurant l'authentification et l'autorisation via les protocoles standards OAuth2 et OpenID Connect (OIDC).
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Émission de jetons JWT :} Génère des jetons signés contenant les rôles et informations de l'utilisateur authentifié, vérifiés côté backend sans appel systématique au serveur d'identité.
+    \item \textbf{Gestion des \textit{clients} et des rôles :} Permet de définir des applications clientes distinctes (backend, outils de test) et une hiérarchie de rôles applicatifs.
+    \item \textbf{Déploiement autonome :} Hébergé au sein du cluster Kubernetes aux côtés des services applicatifs, avec sa propre base de données dédiée.
+\end{itemize}
+\textbf{Intérêt pratique :} Centralise l'authentification pour un déploiement mono-tenant (une seule école), sans besoin de fédération SSO entre plusieurs fournisseurs d'identité.
+
+\subsubsection{Spring Security \& RBAC}
+\textbf{Définition :} Module de l'écosystème Spring assurant l'authentification et le contrôle d'accès aux ressources d'une application. Couplé à Keycloak, il agit en \textit{Resource Server} validant les jetons JWT entrants.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Contrôle d'accès basé sur les rôles (RBAC) :} Restriction fine des opérations selon le rôle de l'utilisateur (Étudiant, Responsable, Manager, Administrateur).
+    \item \textbf{Journalisation d'audit :} Traçabilité des actions sensibles effectuées sur le système, consultable par les administrateurs.
+    \item \textbf{Approvisionnement des comptes (Provisioning) :} Création conjointe du compte Keycloak et de l'entité \textit{Utilisateur} au moment de l'admission, afin d'éviter la circulation de données personnelles non chiffrées dans le jeton JWT.
+\end{itemize}
+
+\subsubsection{MapStruct}
+\textbf{Définition :} Générateur de code Java, exécuté à la compilation, produisant des \textit{mappers} pour convertir automatiquement les entités JPA vers leurs Objets de Transfert de Données (DTO) et inversement.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item Génération de code à la compilation (pas de réflexion à l'exécution), garantissant des performances proches d'un mapping manuel.
+    \item Réduction du code répétitif (\textit{boilerplate}) associé à la conversion entité/DTO sur chaque endpoint REST.
+\end{itemize}
+
+\subsubsection{JUnit 5, Mockito \& MockMvc}
+\textbf{Définition :} Ensemble de bibliothèques de test formant la pile de vérification automatisée du backend : JUnit~5 comme moteur d'exécution, Mockito pour l'isolation des dépendances, AssertJ pour des assertions lisibles, et MockMvc pour tester la couche web sans démarrer de serveur réel.
+
+\textbf{Caractéristiques clés :}
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Tests de service (unitaires) :} Chaque \texttt{ServiceImpl} est testé isolément, dépendances (\textit{repository}, \textit{mapper}) simulées via \texttt{@Mock} ; les appels statiques de \texttt{ResourceFetcher} sont simulés avec \texttt{mockStatic} (Mockito 5 / \texttt{mockito-inline}).
+    \item \textbf{Tests de Controller (tranche web) :} Chaque Controller est testé via \texttt{@WebMvcTest} et \texttt{MockMvc}, le service associé étant remplacé par \texttt{@MockitoBean} ; seuls le routage, la (dé)sérialisation JSON et les codes de statut sont vérifiés ici, la logique métier étant déjà couverte par les tests de service.
+    \item \textbf{Filtres de sécurité désactivés à ce niveau :} Les tests de Controller démarrent avec \texttt{addFilters = false}, l'authentification Keycloak/JWT étant hors périmètre de cette tranche de tests.
+    \item \textbf{Couverture des champs énumérés :} Vérification explicite du comportement des champs de type \textit{enum} (ex. \texttt{EtatChambre}, \texttt{EtatDocument}), y compris leur acceptation actuelle de la valeur \texttt{NULL} — point identifié comme perfectible.
+\end{itemize}
+\textbf{Intérêt pratique :} Exécution automatisée à chaque contribution via GitHub Actions, avant intégration au code principal.
+
 \subsection{Technologies et Outils Frontend}
 
 \subsubsection{Angular}
@@ -202,6 +244,9 @@ Le choix de cette pile technologique moderne garantit la création d'une applica
     \item \textbf{PostgreSQL :} \url{https://www.postgresql.org/docs/}
     \item \textbf{Redis :} \url{https://redis.io/docs/}
     \item \textbf{SeaweedFS :} \url{https://github.com/seaweedfs/seaweedfs}
+    \item \textbf{Keycloak :} \url{https://www.keycloak.org/documentation}
+    \item \textbf{Spring Security :} \url{https://docs.spring.io/spring-security/reference/}
+    \item \textbf{MapStruct :} \url{https://mapstruct.org/documentation/}
     \item \textbf{Docker :} \url{https://docs.docker.com/}
     \item \textbf{Kubernetes :} \url{https://kubernetes.io/docs/}
     \item \textbf{GitHub Actions :} \url{https://docs.github.com/en/actions}
@@ -253,7 +298,7 @@ Pour remplacer l'application existante et centraliser l'information, le modèle 
 
 \begin{description}
     \item[\textbf{Utilisateur :}] Représente toute personne accédant au système (Étudiant, Manager, Responsable, Administrateur). Contient l'historique complet de ses réservations, de ses documents administratifs et de ses réclamations.
-    \item[\textbf{Document :}] Pièce justificative déposée par l'étudiant pour son dossier d'admission (carte d'identité, attestation, etc.). Il possède un état de validation (\textit{Valide, Rejeté, En attente}) et une note sur sa validité.
+    \item[\textbf{Document :}] Pièce justificative déposée par l'étudiant pour son dossier d'admission (carte d'identité, attestation, etc.). Il possède un état de validation (\textit{Aucun, En attente, Validé, Invalide}) et une note sur sa validité.
     \item[\textbf{Chambre :}] Entité physique caractérisée par sa capacité, son état d'occupation et sa localisation (Étage et Bâtiment). Elle est rattachée aux réservations et réclamations.
     \item[\textbf{Reservation :}] Trace historique de l'affectation d'une chambre à un étudiant pour une période donnée.
     \item[\textbf{Reclamation :}] Ticket ouvert par un étudiant concernant un problème technique dans sa chambre (lié à une entité \textbf{Service} et à des équipements défectueux).
@@ -287,7 +332,7 @@ Le diagramme de classes UML ci-après (Figure~\ref{fig:diagramme-classes}) forma
 \&\&
   \node[umlclass] (Reservation) {\textbf{Reservation}\nodepart{two} id : UUID\\utilisateur : Utilisateur\\chambre : Chambre\\etat : EtatReservation\\creation : TimeStamp};
 \&\&
-  \node[umlclass] (Document) {\textbf{Document}\nodepart{two} id : Long\\nomFichier : String\\nomSceau : String\\proprietaire : Utilisateur\\valide : Boolean\\noteSurValidite : String\\creation : TimeStamp};
+  \node[umlclass] (Document) {\textbf{Document}\nodepart{two} id : Long\\nomFichier : String\\nomSceau : String\\proprietaire : Utilisateur\\etat : EtatDocument\\noteSurValidite : String\\creation : TimeStamp};
 \\
 \node[umlclass] (Equipement) {\textbf{Equipement}\nodepart{two} id : Long\\nom : String\\reclamations : List<EquipementReclamation>\\upcs : List<EquipementUpc>};
 \&
@@ -351,7 +396,7 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 \&\&
   \node[umltable] (Reservation) {\textit{\guillemotleft table\guillemotright}\\\textbf{reservation}\nodepart{two} \textbf{id : UUID [PK]}\\userId : UUID [FK]\\roomId : UUID [FK]\\etat : Enum\\creation : TimeStamp};
 \&\&
-  \node[umltable] (Document) {\textit{\guillemotleft table\guillemotright}\\\textbf{document}\nodepart{two} \textbf{id : UUID [PK]}\\nomFichier : String\\nomSceau : String\\proprietaireId : UUID [FK]\\valide : Boolean\\noteSurValidite : String\\creation : TimeStamp};
+  \node[umltable] (Document) {\textit{\guillemotleft table\guillemotright}\\\textbf{document}\nodepart{two} \textbf{id : UUID [PK]}\\nomFichier : String\\nomSceau : String\\proprietaireId : UUID [FK]\\etat : Enum\\noteSurValidite : String\\creation : TimeStamp};
 \\
 \node[umltable] (Equipement) {\textit{\guillemotleft table\guillemotright}\\\textbf{equipement}\nodepart{two} \textbf{id : Long [PK]}\\nom : String};
 \&
@@ -389,12 +434,53 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 
 \newpage
 
-\section{Architecture de Déploiement}
+\section{Architecture Applicative Backend}
 
-Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) illustre l'architecture technique cible de \textbf{ResiAIAC}, organisée en couches : couche client (SPA Angular), couche de routage/entrée (NGINX), couche applicative conteneurisée et orchestrée par Kubernetes (services Spring Boot et Keycloak pour l'IAM), couche de persistance et de stockage (PostgreSQL, Redis, MinIO), couche d'observabilité (Prometheus, Grafana, la pile Logstash) et enfin la chaîne d'intégration et de déploiement continus (CI/CD).
+\subsection{Organisation en Couches}
+Chaque module métier du backend (une entité et ses opérations associées) suit rigoureusement la même organisation en couches, illustrée par la Figure~\ref{fig:architecture-couches}. Le Controller REST ne dépend que de l'\textbf{interface} du service, jamais de son implémentation concrète : ce découplage permet de faire évoluer ou remplacer la logique métier d'un service sans modifier son point d'entrée, et facilite l'écriture de tests isolés à chaque couche (voir \S1.2.8).
 
 \begin{center}
-\textbf{Figure~3 -- Diagramme de Déploiement de l'Infrastructure ResiAIAC}\label{fig:diagramme-deploiement}
+\textbf{Figure~4 -- Organisation en Couches d'un Module Backend}\label{fig:architecture-couches}
+\vspace{0.3cm}
+
+\begin{tikzpicture}[>=stealth]
+  \node[depnode=orange!15, text width=3.2cm] (controller) at (0,7.5) {Controller\\(expose l'API REST)};
+  \node[depnode=blue!12, text width=3.2cm] (serviceiface) at (0,5.5) {Service\\(interface)};
+  \node[depnode=blue!22, text width=3.2cm] (serviceimpl) at (0,3.5) {ServiceImpl};
+  \node[depnode=green!15, text width=2.9cm] (mapper) at (5.6,3.5) {Mapper\\(MapStruct)};
+  \node[depnode=yellow!18, text width=3.2cm] (repository) at (0,1.5) {Repository\\(Spring Data JPA)};
+  \node[depnode=black!8, text width=3.2cm] (db) at (0,-0.5) {Base de Données};
+
+  \draw[deplink] (controller) -- node[right, font=\scriptsize]{appelle} (serviceiface);
+  \draw[deplink, dashed] (serviceimpl) -- node[right, font=\scriptsize]{implémente} (serviceiface);
+  \draw[deplink] (serviceimpl) -- node[right, font=\scriptsize]{persiste via} (repository);
+  \draw[deplink] (serviceimpl) -- node[above, font=\scriptsize]{convertit via} (mapper);
+  \draw[deplink] (repository) -- (db);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Séparation DTO / Entité}
+Les entités JPA ne transitent jamais directement par l'API REST. Chaque module expose deux objets de transfert distincts, convertis par un \textit{mapper} MapStruct dédié (voir \S1.2.7) :
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{\texttt{XxxDto} :} représentation de sortie, retournée par les endpoints de lecture.
+    \item \textbf{\texttt{XxxUpdateRequest} :} représentation d'entrée, utilisée pour la création et la mise à jour, validée avant conversion vers l'entité.
+\end{itemize}
+Cette séparation évite d'exposer la structure interne des entités (relations JPA, champs techniques) et permet de faire évoluer le modèle de données sans casser le contrat d'API.
+
+\subsection{Gestion des Identifiants Composites}
+Trois entités du modèle de données reposent sur une clé primaire composite, portée par une classe d'identifiant dédiée : \texttt{UtilisateurPromotionChambreId}, \texttt{EquipementUpcId} et \texttt{EquipementReclamationId}. Par convention, les méthodes \texttt{getById} et \texttt{delete} des services concernés acceptent les composants bruts de la clé (identifiants simples) et reconstituent la clé composite \textbf{au sein de la couche service}, plutôt que de laisser le Controller assembler cet objet technique. La méthode \texttt{update}, à l'inverse, accepte directement l'identifiant composite déjà construit ; cette asymétrie, actuellement assumée dans l'implémentation, est identifiée comme un point à harmoniser.
+
+\subsection{Gestion des Erreurs}
+La récupération d'une ressource par son identifiant passe systématiquement par l'utilitaire générique \texttt{ResourceFetcher.fetchResource(id, repository, resourceType)}, qui centralise la logique \textit{"récupérer ou lever une exception"} et évite sa duplication dans chaque service. Lorsque la ressource est introuvable, une \texttt{ResourceNotFoundException} (exception applicative dédiée) est levée.
+
+À ce stade, aucun gestionnaire d'exceptions global (\texttt{@ControllerAdvice} / \texttt{@ExceptionHandler}) n'est encore en place : les réponses d'erreur de l'API ne sont donc pas encore uniformisées (format de corps de réponse, code HTTP associé à chaque type d'exception). Cette centralisation est prévue lors de la phase de sécurisation de l'API, aux côtés de la validation des entrées et du RBAC.
+
+\section{Architecture de Déploiement}
+
+Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) illustre l'architecture technique cible de \textbf{ResiAIAC}, organisée en couches : couche client (SPA Angular), couche de routage/entrée (NGINX), couche applicative conteneurisée et orchestrée par Kubernetes (services Spring Boot et Keycloak pour l'IAM), couche de persistance et de stockage (PostgreSQL, Redis, SeaweedFS), couche d'observabilité (Prometheus, Grafana, la pile Logstash) et enfin la chaîne d'intégration et de déploiement continus (CI/CD).
+
+\begin{center}
+\textbf{Figure~5 -- Diagramme de Déploiement de l'Infrastructure ResiAIAC}\label{fig:diagramme-deploiement}
 \vspace{0.3cm}
 
 \resizebox{\textwidth}{!}{%
@@ -416,13 +502,13 @@ Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) il
   % ---------- Data / storage layer ----------
   \node[depnode=yellow!22, text width=2.3cm] (postgres) at (-2.9,0.0) {\faDatabase\ PostgreSQL\\(Base de Données)};
   \node[depnode=yellow!22, text width=2.3cm] (redis) at (0.1,0.0) {\faDatabase\ Redis\\(Cache)};
-  \node[depnode=yellow!22, text width=2.3cm] (minio) at (3.1,0.0) {\faDatabase\ SeaweedFS\\(Stockage Objet)};
+  \node[depnode=yellow!22, text width=2.3cm] (seaweedfs) at (3.1,0.0) {\faDatabase\ SeaweedFS\\(Stockage Objet)};
 
   % ---------- Observability stack ----------
   \node[depzone, fit={(6.2,7.0) (12.2,-1.2)}, label={[font=\bfseries\small]above:Observabilité}] (obs) {};
   \node[depnode=red!12, text width=2.6cm] (prometheus) at (9.2,5.3) {\faChartLine\ Prometheus\\(Métriques)};
   \node[depnode=red!12, text width=2.6cm] (grafana) at (9.2,2.7) {\faChartPie\ Grafana\\(Tableaux de Bord)};
-  \node[depnode=red!12, text width=2.6cm] (logstash) at (9.2,0.0) {\faListAlt\ Logstash\\(Agrégation de Logs)};
+  \node[depnode=red!12, text width=2.6cm] (logstash) at (9.2,0.0) {\faList\ Logstash\\(Agrégation de Logs)};
 
   % ---------- Links ----------
   \draw[deplink] (client) -- node[right, font=\scriptsize] {HTTPS} (nginx);
@@ -431,7 +517,7 @@ Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) il
   \draw[deplink] (spring) -- (obsvc);
   \draw[deplink] (spring) -- (postgres);
   \draw[deplink] (spring) -- (redis);
-  \draw[deplink] (spring) -- (minio);
+  \draw[deplink] (spring) -- (seaweedfs);
 
   \draw[deplink] (obsvc) -- (prometheus);
   \draw[deplink] (prometheus) -- (grafana);
@@ -693,13 +779,13 @@ Flux opérationnel de gestion, assignation, mise à jour et résolution des réc
     
     \draw[->, >=stealth, thick] ([yshift=-5.6cm]mgr_top) -- node[above, font=\small] {Valide la prise en charge} ([yshift=-5.6cm]app_top);
     
-    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "En Cours"\\et notifie l'étudiant} -- ([yshift=-6.8cm]app_top);
+    \draw[->, >=stealth, thick] ([yshift=-6.2cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "En\\Traitement" et notifie\\l'étudiant} -- ([yshift=-6.8cm]app_top);
     
     \draw[<-, >=stealth, dashed, thick] ([yshift=-7.3cm]mgr_top) -- node[above, font=\small] {Retourne un code de succès (HTTP 200)} ([yshift=-7.3cm]app_top);
     
     \draw[->, >=stealth, thick] ([yshift=-8.0cm]mgr_top) -- node[above, font=\small] {Déclare la résolution de l'anomalie} ([yshift=-8.0cm]app_top);
     
-    \draw[->, >=stealth, thick] ([yshift=-8.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "Clôturé"\\en base de données} -- ([yshift=-9.2cm]app_top);
+    \draw[->, >=stealth, thick] ([yshift=-8.6cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Met l'état à "Fermé -\\Traité" en base de\\données} -- ([yshift=-9.2cm]app_top);
     
     \draw[<-, >=stealth, dashed, thick] ([yshift=-9.8cm]mgr_top) -- node[above, font=\small] {Affiche l'accusé de résolution} ([yshift=-9.8cm]app_top);
 \end{tikzpicture}
