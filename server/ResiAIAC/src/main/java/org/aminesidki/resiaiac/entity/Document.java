@@ -14,6 +14,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 public class Document {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

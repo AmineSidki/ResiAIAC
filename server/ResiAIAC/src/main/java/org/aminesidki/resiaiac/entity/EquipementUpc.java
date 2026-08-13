@@ -11,7 +11,10 @@ import org.aminesidki.resiaiac.entity.id.EquipementUpcId;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EquipementUpc {
-  @EmbeddedId private EquipementUpcId id;
+  @EmbeddedId
+  @Column(updatable = false, insertable = false)
+  private EquipementUpcId id;
+
   private Long quantite;
 
   @MapsId("equipement_id")

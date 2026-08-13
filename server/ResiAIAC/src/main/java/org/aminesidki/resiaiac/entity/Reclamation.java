@@ -17,6 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 public class Reclamation {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

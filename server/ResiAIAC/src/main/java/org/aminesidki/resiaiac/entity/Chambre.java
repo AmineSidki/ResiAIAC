@@ -14,6 +14,7 @@ import org.aminesidki.resiaiac.enumeration.EtatChambre;
 @NoArgsConstructor
 public class Chambre {
   @Id
+  @Column(updatable = false, insertable = false)
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 

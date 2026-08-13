@@ -11,7 +11,9 @@ import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EquipementReclamation {
-  @EmbeddedId private EquipementReclamationId id;
+  @EmbeddedId
+  @Column(updatable = false, insertable = false)
+  private EquipementReclamationId id;
 
   private Long quantite;
 

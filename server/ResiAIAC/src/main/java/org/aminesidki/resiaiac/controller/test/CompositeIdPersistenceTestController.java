@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/composite-id-persistence-test")
-public class CompositeIdPersitenceTestController {
+public class CompositeIdPersistenceTestController {
   private final EquipementReclamationService equipementReclamationService;
   private final EquipementService equipementService;
   private final ReclamationService reclamationService;
