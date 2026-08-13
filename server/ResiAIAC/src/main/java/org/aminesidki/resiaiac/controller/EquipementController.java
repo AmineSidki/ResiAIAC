@@ -25,7 +25,7 @@ public class EquipementController {
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody EquipementUpdateRequest request) {
     return ResponseEntity.ok(equipementService.update(request.id(), request.dto()));
   }
 

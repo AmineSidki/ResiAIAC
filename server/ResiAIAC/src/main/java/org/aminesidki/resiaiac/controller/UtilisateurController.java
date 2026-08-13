@@ -26,7 +26,7 @@ public class UtilisateurController {
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> save(@RequestBody UtilisateurUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody UtilisateurUpdateRequest request) {
     return ResponseEntity.ok(utilisateurService.update(request.id(), request.dto()));
   }
 
