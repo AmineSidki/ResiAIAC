@@ -26,7 +26,7 @@ public class ReservationController {
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> save(@RequestBody ReservationUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody ReservationUpdateRequest request) {
     return ResponseEntity.ok(reservationService.update(request.id(), request.dto()));
   }
 
