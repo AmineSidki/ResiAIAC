@@ -54,7 +54,7 @@ class ReservationServiceTest {
 
     id = UUID.randomUUID();
     entity = Reservation.builder().id(id).build();
-    dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+    dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
   }
 
   // ---------- save ----------
@@ -62,11 +62,11 @@ class ReservationServiceTest {
   @Test
   void save_shouldMapPersistAndReturnDto() {
     ReservationDto inputDto =
-        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
     Reservation mappedEntity = Reservation.builder().build();
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -120,7 +120,7 @@ class ReservationServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null);
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher

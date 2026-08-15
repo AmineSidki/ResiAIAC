@@ -80,6 +80,7 @@ public class CompositeIdPersistenceTestController {
                 chambreDto.id(),
                 serviceDto.id(),
                 null,
+                null,
                 null));
 
     EquipementDto equipementDto =

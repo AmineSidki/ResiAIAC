@@ -54,19 +54,19 @@ class PromotionServiceTest {
 
     id = UUID.randomUUID();
     entity = Promotion.builder().id(id).anneeDeDepart(2024L).anneeDeFin(2027L).niveau(1).build();
-    dto = new PromotionDto(id, 2024L, 2027L, null, 1, List.of());
+    dto = new PromotionDto(id, 2024L, 2027L, 1, null, List.of());
   }
 
   // ---------- save ----------
 
   @Test
   void save_shouldMapPersistAndReturnDto() {
-    PromotionDto inputDto = new PromotionDto(null, 2025L, 2028L, null, 1, List.of());
+    PromotionDto inputDto = new PromotionDto(null, 2025L, 2028L, 1, null, List.of());
     Promotion mappedEntity =
         Promotion.builder().anneeDeDepart(2025L).anneeDeFin(2028L).niveau(1).build();
     Promotion savedEntity =
         Promotion.builder().id(id).anneeDeDepart(2025L).anneeDeFin(2028L).niveau(1).build();
-    PromotionDto resultDto = new PromotionDto(id, 2025L, 2028L, null, 1, List.of());
+    PromotionDto resultDto = new PromotionDto(id, 2025L, 2028L, 1, null, List.of());
 
     when(promotionMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(promotionRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -120,7 +120,7 @@ class PromotionServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Promotion savedEntity =
         Promotion.builder().id(id).anneeDeDepart(2024L).anneeDeFin(2027L).niveau(2).build();
-    PromotionDto resultDto = new PromotionDto(id, 2024L, 2027L, null, 2, List.of());
+    PromotionDto resultDto = new PromotionDto(id, 2024L, 2027L, 2, null, List.of());
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher

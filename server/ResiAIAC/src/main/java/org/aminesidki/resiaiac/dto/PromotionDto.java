@@ -10,7 +10,7 @@ public record PromotionDto(
     UUID id,
     Long anneeDeDepart,
     Long anneeDeFin,
-    Long filiere,
     Integer niveau,
+    Long filiere,
     List<UtilisateurPromotionChambreId> combinaisonsUpc)
     implements Serializable {}
