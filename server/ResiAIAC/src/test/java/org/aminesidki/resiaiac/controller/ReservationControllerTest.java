@@ -35,7 +35,7 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>{@code etat} is left {@code null} in the fixture DTOs here since the {@code EtatReservation}
  * enum's constants weren't available when writing this test — swap in a real constant if you'd like
- * that field exercised.
+ * that field exercised. {@code createdAt}/{@code updatedAt} are likewise left {@code null}.
  *
  * <p>Security filters are disabled ({@code addFilters = false}) since Keycloak-backed
  * authentication is out of scope for these tests; adjust if endpoint-level authorization rules need
@@ -69,7 +69,7 @@ class ReservationControllerTest {
     id = UUID.randomUUID();
     utilisateurId = UUID.randomUUID();
     chambreId = UUID.randomUUID();
-    dto = new ReservationDto(id, null, utilisateurId, chambreId, null);
+    dto = new ReservationDto(id, null, utilisateurId, chambreId, null, null);
   }
 
   // ---------- getById ----------
@@ -93,8 +93,8 @@ class ReservationControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    ReservationDto inputDto = new ReservationDto(null, null, utilisateurId, chambreId, null);
-    ReservationDto resultDto = new ReservationDto(id, null, utilisateurId, chambreId, null);
+    ReservationDto inputDto = new ReservationDto(null, null, utilisateurId, chambreId, null, null);
+    ReservationDto resultDto = new ReservationDto(id, null, utilisateurId, chambreId, null, null);
 
     when(reservationService.save(inputDto)).thenReturn(resultDto);
 
@@ -117,7 +117,8 @@ class ReservationControllerTest {
   void update_shouldMutateAndReturnDto() throws Exception {
     ReservationUpdateRequest request = new ReservationUpdateRequest(id, dto);
     UUID newChambreId = UUID.randomUUID();
-    ReservationDto resultDto = new ReservationDto(id, null, utilisateurId, newChambreId, null);
+    ReservationDto resultDto =
+        new ReservationDto(id, null, utilisateurId, newChambreId, null, null);
 
     when(reservationService.update(id, dto)).thenReturn(resultDto);
 
