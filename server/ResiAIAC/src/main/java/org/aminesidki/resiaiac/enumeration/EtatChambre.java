@@ -1,3 +1,8 @@
 package org.aminesidki.resiaiac.enumeration;
 
-public enum EtatChambre {}
+public enum EtatChambre {
+  LIBRE,
+  PARTIELLEMENT_LIBRE,
+  MAINTENANCE,
+  OCCUPEE
+}

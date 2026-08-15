@@ -1,3 +1,7 @@
 package org.aminesidki.resiaiac.enumeration;
 
-public enum EtatReservation {}
+public enum EtatReservation {
+  ACTIVE,
+  TERMINEE,
+  FERMEE
+}
