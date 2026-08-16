@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.UUID;
 import lombok.*;
+import org.aminesidki.resiaiac.enumeration.EtatDocument;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -20,7 +21,7 @@ public class Document {
 
   private String nomFichier;
   private String nomSceau;
-  private Boolean valide;
+  private EtatDocument etat;
   private String noteSurValidite;
 
   @ManyToOne

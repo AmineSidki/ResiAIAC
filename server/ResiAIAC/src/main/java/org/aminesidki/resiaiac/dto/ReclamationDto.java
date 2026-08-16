@@ -16,5 +16,6 @@ public record ReclamationDto(
     UUID chambre,
     Long service,
     List<EquipementReclamationId> equipements,
-    Timestamp createdAt)
+    Timestamp createdAt,
+    Timestamp updatedAt)
     implements Serializable {}

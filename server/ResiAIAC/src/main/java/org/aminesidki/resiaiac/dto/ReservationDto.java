@@ -7,5 +7,10 @@ import org.aminesidki.resiaiac.enumeration.EtatReservation;
 
 /** Dto for {@link org.aminesidki.resiaiac.entity.Reservation } */
 public record ReservationDto(
-    UUID id, EtatReservation etat, UUID utilisateur, UUID chambre, Timestamp createdAt)
+    UUID id,
+    EtatReservation etat,
+    UUID utilisateur,
+    UUID chambre,
+    Timestamp createdAt,
+    Timestamp updatedAt)
     implements Serializable {}
