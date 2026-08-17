@@ -63,7 +63,7 @@ class PromotionControllerTest {
   @BeforeEach
   void setUp() {
     id = UUID.randomUUID();
-    dto = new PromotionDto(id, 2023L, 2026L, 3, 1L, List.of());
+    dto = new PromotionDto(id, 2025L, 2026L, 3, 1L, List.of());
   }
 
   // ---------- getById ----------
@@ -76,7 +76,7 @@ class PromotionControllerTest {
         .perform(get("/api/v1/promotion/{id}", id))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(id.toString()))
-        .andExpect(jsonPath("$.anneeDeDepart").value(2023))
+        .andExpect(jsonPath("$.anneeDeDepart").value(2025))
         .andExpect(jsonPath("$.anneeDeFin").value(2026));
 
     verify(promotionService).getById(id);
@@ -87,8 +87,8 @@ class PromotionControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    PromotionDto inputDto = new PromotionDto(null, 2023L, 2026L, 3, 1L, List.of());
-    PromotionDto resultDto = new PromotionDto(id, 2023L, 2026L, 3, 1L, List.of());
+    PromotionDto inputDto = new PromotionDto(null, 2025L, 2026L, 3, 1L, List.of());
+    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 3, 1L, List.of());
 
     when(promotionService.save(inputDto)).thenReturn(resultDto);
 
@@ -110,7 +110,7 @@ class PromotionControllerTest {
   @Test
   void update_shouldMutateAndReturnDto() throws Exception {
     PromotionUpdateRequest request = new PromotionUpdateRequest(id, dto);
-    PromotionDto resultDto = new PromotionDto(id, 2023L, 2026L, 4, 1L, List.of());
+    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 4, 1L, List.of());
 
     when(promotionService.update(id, dto)).thenReturn(resultDto);
 

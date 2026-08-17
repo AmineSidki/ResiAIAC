@@ -180,8 +180,8 @@ Cette analyse bibliographique présente un panorama complet des technologies, fr
 \textbf{Caractéristiques clés :}
 \begin{itemize}[label=$\bullet$]
     \item \textbf{Tests de service (unitaires) :} Chaque \texttt{ServiceImpl} est testé isolément, dépendances (\textit{repository}, \textit{mapper}) simulées via \texttt{@Mock} ; les appels statiques de \texttt{ResourceFetcher} sont simulés avec \texttt{mockStatic} (Mockito 5 / \texttt{mockito-inline}).
-    \item \textbf{Tests de contrôleur (tranche web) :} Chaque contrôleur est testé via \texttt{@WebMvcTest} et \texttt{MockMvc}, le service associé étant remplacé par \texttt{@MockitoBean} ; seuls le routage, la (dé)sérialisation JSON et les codes de statut sont vérifiés ici, la logique métier étant déjà couverte par les tests de service.
-    \item \textbf{Filtres de sécurité désactivés à ce niveau :} Les tests de contrôleur démarrent avec \texttt{addFilters = false}, l'authentification Keycloak/JWT étant hors périmètre de cette tranche de tests.
+    \item \textbf{Tests de Controller (tranche web) :} Chaque Controller est testé via \texttt{@WebMvcTest} et \texttt{MockMvc}, le service associé étant remplacé par \texttt{@MockitoBean} ; seuls le routage, la (dé)sérialisation JSON et les codes de statut sont vérifiés ici, la logique métier étant déjà couverte par les tests de service.
+    \item \textbf{Filtres de sécurité désactivés à ce niveau :} Les tests de Controller démarrent avec \texttt{addFilters = false}, l'authentification Keycloak/JWT étant hors périmètre de cette tranche de tests.
     \item \textbf{Couverture des champs énumérés :} Vérification explicite du comportement des champs de type \textit{enum} (ex. \texttt{EtatChambre}, \texttt{EtatDocument}), y compris leur acceptation actuelle de la valeur \texttt{NULL} — point identifié comme perfectible.
 \end{itemize}
 \textbf{Intérêt pratique :} Exécution automatisée à chaque contribution via GitHub Actions, avant intégration au code principal.
@@ -437,7 +437,7 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 \section{Architecture Applicative Backend}
 
 \subsection{Organisation en Couches}
-Chaque module métier du backend (une entité et ses opérations associées) suit rigoureusement la même organisation en couches, illustrée par la Figure~\ref{fig:architecture-couches}. Le contrôleur REST ne dépend que de l'\textbf{interface} du service, jamais de son implémentation concrète : ce découplage permet de faire évoluer ou remplacer la logique métier d'un service sans modifier son point d'entrée, et facilite l'écriture de tests isolés à chaque couche (voir \S1.2.8).
+Chaque module métier du backend (une entité et ses opérations associées) suit rigoureusement la même organisation en couches, illustrée par la Figure~\ref{fig:architecture-couches}. Le Controller REST ne dépend que de l'\textbf{interface} du service, jamais de son implémentation concrète : ce découplage permet de faire évoluer ou remplacer la logique métier d'un service sans modifier son point d'entrée, et facilite l'écriture de tests isolés à chaque couche (voir \S1.2.8).
 
 \begin{center}
 \textbf{Figure~4 -- Organisation en Couches d'un Module Backend}\label{fig:architecture-couches}
@@ -468,7 +468,7 @@ Les entités JPA ne transitent jamais directement par l'API REST. Chaque module 
 Cette séparation évite d'exposer la structure interne des entités (relations JPA, champs techniques) et permet de faire évoluer le modèle de données sans casser le contrat d'API.
 
 \subsection{Gestion des Identifiants Composites}
-Trois entités du modèle de données reposent sur une clé primaire composite, portée par une classe d'identifiant dédiée : \texttt{UtilisateurPromotionChambreId}, \texttt{EquipementUpcId} et \texttt{EquipementReclamationId}. Par convention, les méthodes \texttt{getById} et \texttt{delete} des services concernés acceptent les composants bruts de la clé (identifiants simples) et reconstituent la clé composite \textbf{au sein de la couche service}, plutôt que de laisser le contrôleur assembler cet objet technique. La méthode \texttt{update}, à l'inverse, accepte directement l'identifiant composite déjà construit ; cette asymétrie, actuellement assumée dans l'implémentation, est identifiée comme un point à harmoniser.
+Trois entités du modèle de données reposent sur une clé primaire composite, portée par une classe d'identifiant dédiée : \texttt{UtilisateurPromotionChambreId}, \texttt{EquipementUpcId} et \texttt{EquipementReclamationId}. Par convention, les méthodes \texttt{getById} et \texttt{delete} des services concernés acceptent les composants bruts de la clé (identifiants simples) et reconstituent la clé composite \textbf{au sein de la couche service}, plutôt que de laisser le Controller assembler cet objet technique. La méthode \texttt{update}, à l'inverse, accepte directement l'identifiant composite déjà construit ; cette asymétrie, actuellement assumée dans l'implémentation, est identifiée comme un point à harmoniser.
 
 \subsection{Gestion des Erreurs}
 La récupération d'une ressource par son identifiant passe systématiquement par l'utilitaire générique \texttt{ResourceFetcher.fetchResource(id, repository, resourceType)}, qui centralise la logique \textit{"récupérer ou lever une exception"} et évite sa duplication dans chaque service. Lorsque la ressource est introuvable, une \texttt{ResourceNotFoundException} (exception applicative dédiée) est levée.
