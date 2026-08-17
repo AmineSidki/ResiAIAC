@@ -52,8 +52,6 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             customizer ->
                 customizer
-                    .requestMatchers("/api/v1/auth-test/public")
-                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .build();
