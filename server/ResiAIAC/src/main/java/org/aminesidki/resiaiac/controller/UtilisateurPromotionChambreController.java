@@ -8,6 +8,7 @@ import org.aminesidki.resiaiac.dto.request.UtilisateurPromotionChambreUpdateRequ
 import org.aminesidki.resiaiac.service.UtilisateurPromotionChambreService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,6 +18,7 @@ public class UtilisateurPromotionChambreController {
 
   private final UtilisateurPromotionChambreService utilisateurPromotionChambreService;
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/")
   public ResponseEntity<?> getById(
       @RequestParam UUID utilisateurId,
@@ -26,11 +28,13 @@ public class UtilisateurPromotionChambreController {
         utilisateurPromotionChambreService.getById(utilisateurId, promotionId, chambreId));
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @PostMapping("/")
   public ResponseEntity<?> save(@RequestBody @Valid UtilisateurPromotionChambreDto dto) {
     return ResponseEntity.ok(utilisateurPromotionChambreService.save(dto));
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @PutMapping("/")
   public ResponseEntity<?> update(
       @RequestBody @Valid UtilisateurPromotionChambreUpdateRequest request) {
@@ -38,6 +42,7 @@ public class UtilisateurPromotionChambreController {
         utilisateurPromotionChambreService.update(request.id(), request.dto()));
   }
 
+  @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @DeleteMapping("/")
   @ResponseStatus(HttpStatus.OK)
   public void delete(

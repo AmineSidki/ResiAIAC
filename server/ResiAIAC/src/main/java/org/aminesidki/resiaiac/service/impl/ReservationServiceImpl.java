@@ -8,6 +8,8 @@ import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
 import org.aminesidki.resiaiac.service.ReservationService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,11 @@ public class ReservationServiceImpl implements ReservationService {
 
   private final ReservationRepository reservationRepository;
   private final ReservationMapper reservationMapper;
+
+  @Override
+  public Page<ReservationDto> getAll(Pageable pageable) {
+    return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
+  }
 
   @Override
   public ReservationDto save(ReservationDto dto) {

@@ -7,13 +7,20 @@ import org.aminesidki.resiaiac.dto.request.ServiceUpdateRequest;
 import org.aminesidki.resiaiac.service.ServiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/service")
+@PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
 public class ServiceController {
   private final ServiceService serviceService;
+
+  @GetMapping("/")
+  public ResponseEntity<?> getAll() {
+    return ResponseEntity.ok(serviceService.getAll());
+  }
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {

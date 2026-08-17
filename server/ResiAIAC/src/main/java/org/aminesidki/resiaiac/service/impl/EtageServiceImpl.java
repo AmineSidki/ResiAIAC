@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EtageDto;
@@ -17,6 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class EtageServiceImpl implements EtageService {
   private final EtageRepository etageRepository;
   private final EtageMapper etageMapper;
+
+  @Override
+  public List<EtageDto> getAll() {
+    return etageRepository.findAll().stream().map(etageMapper::toDto).toList();
+  }
 
   @Override
   public EtageDto save(EtageDto dto) {

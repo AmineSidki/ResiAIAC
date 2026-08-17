@@ -8,6 +8,8 @@ import org.aminesidki.resiaiac.mapper.ReclamationMapper;
 import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.aminesidki.resiaiac.service.ReclamationService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,11 @@ public class ReclamationServiceImpl implements ReclamationService {
 
   private final ReclamationRepository reclamationRepository;
   private final ReclamationMapper reclamationMapper;
+
+  @Override
+  public Page<ReclamationDto> getAll(Pageable pageable) {
+    return reclamationRepository.findAll(pageable).map(reclamationMapper::toDto);
+  }
 
   @Override
   public ReclamationDto save(ReclamationDto dto) {

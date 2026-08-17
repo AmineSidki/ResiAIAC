@@ -8,10 +8,12 @@ import org.aminesidki.resiaiac.dto.request.EquipementReclamationRequest;
 import org.aminesidki.resiaiac.service.EquipementReclamationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('MANAGER')")
 @RequestMapping("/api/v1/equipement-reclamation")
 public class EquipementReclamationController {
   private final EquipementReclamationService equipementReclamationService;

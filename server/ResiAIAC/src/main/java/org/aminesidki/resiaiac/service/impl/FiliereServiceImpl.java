@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.FiliereDto;
 import org.aminesidki.resiaiac.entity.Filiere;
@@ -17,6 +18,11 @@ public class FiliereServiceImpl implements FiliereService {
 
   private final FiliereRepository filiereRepository;
   private final FiliereMapper filiereMapper;
+
+  @Override
+  public List<FiliereDto> getAll() {
+    return filiereRepository.findAll().stream().map(filiereMapper::toDto).toList();
+  }
 
   @Override
   public FiliereDto save(FiliereDto dto) {
