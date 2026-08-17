@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
@@ -22,12 +23,12 @@ public class EquipementReclamationController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementReclamationDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid EquipementReclamationDto dto) {
     return ResponseEntity.ok(equipementReclamationService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody EquipementReclamationRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid EquipementReclamationRequest request) {
     return ResponseEntity.ok(equipementReclamationService.update(request.id(), request.dto()));
   }
 

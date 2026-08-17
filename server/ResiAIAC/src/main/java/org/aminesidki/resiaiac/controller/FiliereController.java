@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.FiliereDto;
 import org.aminesidki.resiaiac.dto.request.FiliereUpdateRequest;
@@ -20,12 +21,12 @@ public class FiliereController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody FiliereDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid FiliereDto dto) {
     return ResponseEntity.ok(filiereService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody FiliereUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid FiliereUpdateRequest request) {
     return ResponseEntity.ok(filiereService.update(request.id(), request.dto()));
   }
 

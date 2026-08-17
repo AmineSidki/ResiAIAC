@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.BatimentDto;
@@ -21,12 +22,12 @@ public class BatimentController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody BatimentDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid BatimentDto dto) {
     return ResponseEntity.ok(batimentService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody BatimentUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid BatimentUpdateRequest request) {
     return ResponseEntity.ok(batimentService.update(request.id(), request.dto()));
   }
 

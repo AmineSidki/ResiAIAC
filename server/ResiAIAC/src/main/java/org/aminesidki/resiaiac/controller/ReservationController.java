@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
@@ -21,12 +22,12 @@ public class ReservationController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody ReservationDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid ReservationDto dto) {
     return ResponseEntity.ok(reservationService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody ReservationUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid ReservationUpdateRequest request) {
     return ResponseEntity.ok(reservationService.update(request.id(), request.dto()));
   }
 

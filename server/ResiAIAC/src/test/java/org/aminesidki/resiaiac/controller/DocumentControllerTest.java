@@ -55,10 +55,13 @@ class DocumentControllerTest {
   @MockitoBean private DocumentService documentService;
 
   private UUID id;
+  private UUID ownerId;
   private DocumentDto dto;
 
   @BeforeEach
   void setUp() {
+    ownerId = UUID.randomUUID();
+
     id = UUID.randomUUID();
     dto = new DocumentDto(id, "cin.pdf", "seal.png", null, null, UUID.randomUUID(), null);
   }
@@ -83,8 +86,8 @@ class DocumentControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, null, null, null, null);
-    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, null, null, null, null);
+    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, null, null, ownerId, null);
+    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, null, null, ownerId, null);
 
     when(documentService.save(inputDto)).thenReturn(resultDto);
 

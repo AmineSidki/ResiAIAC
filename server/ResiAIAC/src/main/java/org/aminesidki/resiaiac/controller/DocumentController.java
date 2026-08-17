@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.DocumentDto;
@@ -21,12 +22,12 @@ public class DocumentController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody DocumentDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid DocumentDto dto) {
     return ResponseEntity.ok(documentService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody DocumentUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid DocumentUpdateRequest request) {
     return ResponseEntity.ok(documentService.update(request.id(), request.dto()));
   }
 

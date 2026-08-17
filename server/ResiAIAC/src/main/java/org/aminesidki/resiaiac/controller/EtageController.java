@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EtageDto;
@@ -21,12 +22,12 @@ public class EtageController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody EtageDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid EtageDto dto) {
     return ResponseEntity.ok(etageService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody EtageUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid EtageUpdateRequest request) {
     return ResponseEntity.ok((etageService.update(request.id(), request.dto())));
   }
 

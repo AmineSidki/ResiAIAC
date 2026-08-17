@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.PromotionDto;
@@ -21,12 +22,12 @@ public class PromotionController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody PromotionDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid PromotionDto dto) {
     return ResponseEntity.ok(promotionService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody PromotionUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid PromotionUpdateRequest request) {
     return ResponseEntity.ok(promotionService.update(request.id(), request.dto()));
   }
 

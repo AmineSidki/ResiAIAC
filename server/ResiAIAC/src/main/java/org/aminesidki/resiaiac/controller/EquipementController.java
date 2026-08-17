@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementDto;
 import org.aminesidki.resiaiac.dto.request.EquipementUpdateRequest;
@@ -20,12 +21,12 @@ public class EquipementController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid EquipementDto dto) {
     return ResponseEntity.ok(equipementService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody EquipementUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid EquipementUpdateRequest request) {
     return ResponseEntity.ok(equipementService.update(request.id(), request.dto()));
   }
 

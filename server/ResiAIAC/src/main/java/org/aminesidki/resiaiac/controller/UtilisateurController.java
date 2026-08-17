@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
@@ -21,12 +22,12 @@ public class UtilisateurController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody UtilisateurDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid UtilisateurDto dto) {
     return ResponseEntity.ok(utilisateurService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody UtilisateurUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid UtilisateurUpdateRequest request) {
     return ResponseEntity.ok(utilisateurService.update(request.id(), request.dto()));
   }
 

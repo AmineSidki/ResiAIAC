@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
@@ -26,12 +27,13 @@ public class UtilisateurPromotionChambreController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody UtilisateurPromotionChambreDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid UtilisateurPromotionChambreDto dto) {
     return ResponseEntity.ok(utilisateurPromotionChambreService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody UtilisateurPromotionChambreUpdateRequest request) {
+  public ResponseEntity<?> update(
+      @RequestBody @Valid UtilisateurPromotionChambreUpdateRequest request) {
     return ResponseEntity.ok(
         utilisateurPromotionChambreService.update(request.id(), request.dto()));
   }

@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ServiceDto;
 import org.aminesidki.resiaiac.dto.request.ServiceUpdateRequest;
@@ -20,12 +21,12 @@ public class ServiceController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody ServiceDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid ServiceDto dto) {
     return ResponseEntity.ok(serviceService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody ServiceUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid ServiceUpdateRequest request) {
     return ResponseEntity.ok(serviceService.update(request.id(), request.dto()));
   }
 

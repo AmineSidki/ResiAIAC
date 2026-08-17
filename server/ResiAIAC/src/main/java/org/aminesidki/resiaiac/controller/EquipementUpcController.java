@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementUpcDto;
@@ -26,12 +27,12 @@ public class EquipementUpcController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementUpcDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid EquipementUpcDto dto) {
     return ResponseEntity.ok(equipementUpcService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementUpcUpdateRequest request) {
+  public ResponseEntity<?> save(@RequestBody @Valid EquipementUpcUpdateRequest request) {
     return ResponseEntity.ok(equipementUpcService.update(request.id(), request.dto()));
   }
 

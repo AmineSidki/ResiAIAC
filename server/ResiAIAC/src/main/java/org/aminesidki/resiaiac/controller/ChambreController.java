@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ChambreDto;
@@ -21,12 +22,12 @@ public class ChambreController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody ChambreDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid ChambreDto dto) {
     return ResponseEntity.ok(chambreService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody ChambreUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid ChambreUpdateRequest request) {
     return ResponseEntity.ok(chambreService.update(request.id(), request.dto()));
   }
 
