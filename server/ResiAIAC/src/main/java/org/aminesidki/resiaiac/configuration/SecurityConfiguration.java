@@ -49,8 +49,14 @@ public class SecurityConfiguration {
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(
                     jwtConfigurer ->
                         jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-        .authorizeHttpRequests(customizer -> customizer.requestMatchers("/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
-                .permitAll().anyRequest().authenticated())
+        .authorizeHttpRequests(
+            customizer ->
+                customizer
+                    .requestMatchers(
+                        "/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
         .build();
   }
 
@@ -71,7 +77,8 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             customizer ->
                 customizer
-                    .requestMatchers("/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
+                    .requestMatchers(
+                        "/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

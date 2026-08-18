@@ -1,7 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
 import jakarta.ws.rs.core.Response;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.UUID;
@@ -30,13 +29,13 @@ public class KeycloakServiceImpl implements KeycloakService {
 
   private final Keycloak keycloak;
 
-  private UUID extractUserIdFromUri(URI uri){
-    if(uri == null) return null;
+  private UUID extractUserIdFromUri(URI uri) {
+    if (uri == null) return null;
 
-    try{
-      String id =  uri.toString().substring(uri.toString().lastIndexOf('/') + 1);
+    try {
+      String id = uri.toString().substring(uri.toString().lastIndexOf('/') + 1);
       return UUID.fromString(id);
-    }catch (IndexOutOfBoundsException | IllegalArgumentException e){
+    } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
       return null;
     }
   }
@@ -48,7 +47,8 @@ public class KeycloakServiceImpl implements KeycloakService {
     UserRepresentation userRepresentation = new UserRepresentation();
     userRepresentation.setEnabled(true);
     userRepresentation.setUsername(username);
-    userRepresentation.setEmail("example@email.com"); //FIXME: Once emails are in place, add them in here.
+    userRepresentation.setEmail(
+        "example@email.com"); // FIXME: Once emails are in place, add them in here.
     userRepresentation.setEmailVerified(true);
 
     CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
@@ -66,11 +66,15 @@ public class KeycloakServiceImpl implements KeycloakService {
       }
 
       UUID keycloakId = extractUserIdFromUri(response.getLocation());
-      if(keycloakId == null){
-        throw new CreatedKeycloakUserIdExtractionFail("Failed to extract id for created user with username " + username);
+      if (keycloakId == null) {
+        throw new CreatedKeycloakUserIdExtractionFail(
+            "Failed to extract id for created user with username " + username);
       }
 
-      log.info("Created user with username {} successfully ! Assigned keycloak ID : {}", username, keycloakId);
+      log.info(
+          "Created user with username {} successfully ! Assigned keycloak ID : {}",
+          username,
+          keycloakId);
       return keycloakId;
     }
   }
@@ -78,8 +82,8 @@ public class KeycloakServiceImpl implements KeycloakService {
   @Override
   public void deleteUser(UUID id) {
     UsersResource usersResource = keycloak.realm(realm).users();
-    try(Response response = usersResource.delete(id.toString())){
-      if(response.getStatus() != HttpStatus.NO_CONTENT.value()){
+    try (Response response = usersResource.delete(id.toString())) {
+      if (response.getStatus() != HttpStatus.NO_CONTENT.value()) {
         throw new KeycloakUserDeletionException("Failed to delete keycloak user with id " + id);
       }
 
