@@ -18,3 +18,18 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+    spring:
+      mail:
+        host: ${}
+        port: ${}
+        username: ${}
+        password: ${}
+        properties:
+          mail:
+             smtp:
+               auth: false
+               starttls:
+                 enable: false
+                 connectiontimeout: 5000ms
+                 timeout: 5000

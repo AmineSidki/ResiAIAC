@@ -8,7 +8,12 @@ services:
       - "6379:6379"
     networks:
       - dev_net
-
+      -
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 # -----------------------------------------------------------------------------------
 
   application:
@@ -82,3 +87,4 @@ networks:
 volumes:
   app_pg_data:
   keycloak_pg_data:
+

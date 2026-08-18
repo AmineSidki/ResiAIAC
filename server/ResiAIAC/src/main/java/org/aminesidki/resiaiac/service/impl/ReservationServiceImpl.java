@@ -6,6 +6,7 @@ import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
+import org.aminesidki.resiaiac.service.EmailService;
 import org.aminesidki.resiaiac.service.ReservationService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.stereotype.Service;
@@ -18,11 +19,17 @@ public class ReservationServiceImpl implements ReservationService {
 
   private final ReservationRepository reservationRepository;
   private final ReservationMapper reservationMapper;
+  private final EmailService emailService;
 
   @Override
   public ReservationDto save(ReservationDto dto) {
     Reservation entity = reservationMapper.toEntity(dto);
     entity = reservationRepository.save(entity);
+      emailService.envoyerEmail(
+              "etudiant@test.com", // Plus tard on récupérera l'email de l'étudiant
+              "Confirmation de Réservation",
+              "Votre réservation a été créée avec succès !"
+      );
     return reservationMapper.toDto(entity);
   }
 
