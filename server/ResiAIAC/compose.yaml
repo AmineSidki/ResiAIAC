@@ -18,6 +18,7 @@ services:
       DB_URL: jdbc:postgresql://application-postgres:5432/resiaiac
       DB_USR: ${DB_USR}
       DB_PWD: ${DB_PWD}
+      SPRING_KC_ADMIN_SECRET: ${SPRING_KC_ADMIN_SECRET}
     ports:
       - "8080:8080"
     networks:

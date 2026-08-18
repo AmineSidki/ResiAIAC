@@ -23,3 +23,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+keycloak:
+  admin:
+    server-url: http://keycloak:8090
+    realm: ResiAIAC
+    client-id: resiaiac-admin-service
+    secret: ${SPRING_KC_ADMIN_SECRET}
