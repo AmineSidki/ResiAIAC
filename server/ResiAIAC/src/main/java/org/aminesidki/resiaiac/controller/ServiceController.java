@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/service")
-@PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
 public class ServiceController {
   private final ServiceService serviceService;
@@ -22,21 +21,25 @@ public class ServiceController {
     return ResponseEntity.ok(serviceService.getAll());
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {
     return ResponseEntity.ok(serviceService.getById(id));
   }
 
+  @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @PostMapping("/")
   public ResponseEntity<?> save(@RequestBody @Valid ServiceDto dto) {
     return ResponseEntity.ok(serviceService.save(dto));
   }
 
+  @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @PutMapping("/")
   public ResponseEntity<?> update(@RequestBody @Valid ServiceUpdateRequest request) {
     return ResponseEntity.ok(serviceService.update(request.id(), request.dto()));
   }
 
+  @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
   public void delete(@PathVariable Long id) {
