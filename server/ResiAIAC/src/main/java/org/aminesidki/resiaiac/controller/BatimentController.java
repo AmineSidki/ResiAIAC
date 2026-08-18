@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/batiment")
 public class BatimentController {
   private final BatimentService batimentService;
-
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(batimentService.getById(id));
