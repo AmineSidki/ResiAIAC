@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.BatimentDto;
@@ -18,6 +19,11 @@ public class BatimentServiceImpl implements BatimentService {
 
   private final BatimentRepository batimentRepository;
   private final BatimentMapper batimentMapper;
+
+  @Override
+  public List<BatimentDto> getAll() {
+    return batimentRepository.findAll().stream().map(batimentMapper::toDto).toList();
+  }
 
   @Override
   public BatimentDto save(BatimentDto dto) {

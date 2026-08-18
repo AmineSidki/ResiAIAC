@@ -1,18 +1,26 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ServiceDto;
 import org.aminesidki.resiaiac.dto.request.ServiceUpdateRequest;
 import org.aminesidki.resiaiac.service.ServiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/service")
+@PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
 public class ServiceController {
   private final ServiceService serviceService;
+
+  @GetMapping("/")
+  public ResponseEntity<?> getAll() {
+    return ResponseEntity.ok(serviceService.getAll());
+  }
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {
@@ -20,12 +28,12 @@ public class ServiceController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody ServiceDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid ServiceDto dto) {
     return ResponseEntity.ok(serviceService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody ServiceUpdateRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid ServiceUpdateRequest request) {
     return ResponseEntity.ok(serviceService.update(request.id(), request.dto()));
   }
 

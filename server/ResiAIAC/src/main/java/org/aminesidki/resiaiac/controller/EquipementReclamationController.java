@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.controller;
 
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
@@ -7,10 +8,12 @@ import org.aminesidki.resiaiac.dto.request.EquipementReclamationRequest;
 import org.aminesidki.resiaiac.service.EquipementReclamationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('MANAGER')")
 @RequestMapping("/api/v1/equipement-reclamation")
 public class EquipementReclamationController {
   private final EquipementReclamationService equipementReclamationService;
@@ -22,12 +25,12 @@ public class EquipementReclamationController {
   }
 
   @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody EquipementReclamationDto dto) {
+  public ResponseEntity<?> save(@RequestBody @Valid EquipementReclamationDto dto) {
     return ResponseEntity.ok(equipementReclamationService.save(dto));
   }
 
   @PutMapping("/")
-  public ResponseEntity<?> update(@RequestBody EquipementReclamationRequest request) {
+  public ResponseEntity<?> update(@RequestBody @Valid EquipementReclamationRequest request) {
     return ResponseEntity.ok(equipementReclamationService.update(request.id(), request.dto()));
   }
 

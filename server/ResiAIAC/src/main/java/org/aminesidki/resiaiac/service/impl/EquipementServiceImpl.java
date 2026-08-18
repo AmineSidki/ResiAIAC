@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementDto;
 import org.aminesidki.resiaiac.entity.Equipement;
@@ -17,6 +18,11 @@ public class EquipementServiceImpl implements EquipementService {
 
   private final EquipementRepository equipementRepository;
   private final EquipementMapper equipementMapper;
+
+  @Override
+  public List<EquipementDto> getAll() {
+    return equipementRepository.findAll().stream().map(equipementMapper::toDto).toList();
+  }
 
   @Override
   public EquipementDto save(EquipementDto dto) {

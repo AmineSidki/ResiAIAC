@@ -49,13 +49,7 @@ public class SecurityConfiguration {
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(
                     jwtConfigurer ->
                         jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-        .authorizeHttpRequests(
-            customizer ->
-                customizer
-                    .requestMatchers("/api/v1/auth-test/public")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
+        .authorizeHttpRequests(customizer -> customizer.anyRequest().authenticated())
         .build();
   }
 

@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ChambreDto;
@@ -18,6 +19,11 @@ public class ChambreServiceImpl implements ChambreService {
 
   private final ChambreRepository chambreRepository;
   private final ChambreMapper chambreMapper;
+
+  @Override
+  public List<ChambreDto> getAll() {
+    return chambreRepository.findAll().stream().map(chambreMapper::toDto).toList();
+  }
 
   @Override
   public ChambreDto save(ChambreDto dto) {

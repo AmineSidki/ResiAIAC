@@ -77,15 +77,7 @@ class ReclamationControllerTest {
     createdAt = new Timestamp(System.currentTimeMillis());
     dto =
         new ReclamationDto(
-            id,
-            "Fuite d'eau",
-            null,
-            utilisateurId,
-            chambreId,
-            serviceId,
-            List.of(),
-            createdAt,
-            null);
+            id, "Fuite d'eau", null, utilisateurId, chambreId, serviceId, List.of(), null, null);
   }
 
   // ---------- getById ----------
@@ -117,7 +109,7 @@ class ReclamationControllerTest {
             chambreId,
             serviceId,
             List.of(),
-            createdAt,
+            null,
             null);
     ReclamationDto resultDto =
         new ReclamationDto(
@@ -160,7 +152,7 @@ class ReclamationControllerTest {
             chambreId,
             serviceId,
             List.of(),
-            createdAt,
+            null,
             null);
 
     when(reclamationService.update(id, dto)).thenReturn(resultDto);
