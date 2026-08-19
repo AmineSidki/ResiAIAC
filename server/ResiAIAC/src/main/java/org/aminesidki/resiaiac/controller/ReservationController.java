@@ -27,7 +27,6 @@ public class ReservationController {
     return ResponseEntity.ok(reservationService.getAll(pageable));
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(reservationService.getById(id));

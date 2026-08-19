@@ -12,6 +12,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +21,18 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/utilisateur")
 public class UtilisateurController {
   private final UtilisateurService utilisateurService;
+
+  //TODO: hook up
+  @GetMapping("/me")
+  public ResponseEntity<?> getMe(@AuthenticationPrincipal Jwt jwt){
+    return ResponseEntity.ok(null);
+  }
+
+  //TODO: hook up
+  @PutMapping("/me")
+  public ResponseEntity<?> updateMe(@RequestBody UtilisateurDto dto){
+    return ResponseEntity.ok(null);
+  }
 
   @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @GetMapping("/")
