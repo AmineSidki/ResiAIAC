@@ -36,162 +36,162 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
  *
- * <p>{@link EmailService} is mocked; {@code save()} triggers a confirmation email as a
- * side-effect, verified separately from the persistence flow.
+ * <p>{@link EmailService} is mocked; {@code save()} triggers a confirmation email as a side-effect,
+ * verified separately from the persistence flow.
  */
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
 
-    @Mock private ReservationRepository reservationRepository;
+  @Mock private ReservationRepository reservationRepository;
 
-    @Mock private ReservationMapper reservationMapper;
+  @Mock private ReservationMapper reservationMapper;
 
-    @Mock private EmailService emailService;
+  @Mock private EmailService emailService;
 
-    private ReservationService reservationService;
+  private ReservationService reservationService;
 
-    private UUID id;
-    private Reservation entity;
-    private ReservationDto dto;
+  private UUID id;
+  private Reservation entity;
+  private ReservationDto dto;
 
-    @BeforeEach
-    void setUp() {
-        reservationService =
-                new ReservationServiceImpl(reservationRepository, reservationMapper, emailService);
+  @BeforeEach
+  void setUp() {
+    reservationService =
+        new ReservationServiceImpl(reservationRepository, reservationMapper, emailService);
 
-        id = UUID.randomUUID();
-        entity = Reservation.builder().id(id).build();
-        dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+    id = UUID.randomUUID();
+    entity = Reservation.builder().id(id).build();
+    dto = new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+  }
+
+  // ---------- save ----------
+
+  @Test
+  void save_shouldMapPersistAndReturnDto() {
+    ReservationDto inputDto =
+        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+    Reservation mappedEntity = Reservation.builder().build();
+    Reservation savedEntity = Reservation.builder().id(id).build();
+    ReservationDto resultDto =
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+
+    when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
+    when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
+
+    ReservationDto result = reservationService.save(inputDto);
+
+    assertThat(result).isEqualTo(resultDto);
+    verify(reservationMapper).toEntity(inputDto);
+    verify(reservationRepository).save(mappedEntity);
+    verify(reservationMapper).toDto(savedEntity);
+    verify(emailService).envoyerEmail(any(EmailResponse.class));
+    verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
+  }
+
+  // ---------- getById ----------
+
+  @Test
+  void getById_shouldFetchAndReturnDto() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenReturn(entity);
+      when(reservationMapper.toDto(entity)).thenReturn(dto);
+
+      ReservationDto result = reservationService.getById(id);
+
+      assertThat(result).isEqualTo(dto);
+      fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
+      verify(reservationMapper).toDto(entity);
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
+  }
 
-    // ---------- save ----------
+  @Test
+  void getById_shouldPropagateExceptionWhenNotFound() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      RuntimeException notFound = new RuntimeException("Reservation not found");
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenThrow(notFound);
 
-    @Test
-    void save_shouldMapPersistAndReturnDto() {
-        ReservationDto inputDto =
-                new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
-        Reservation mappedEntity = Reservation.builder().build();
-        Reservation savedEntity = Reservation.builder().id(id).build();
-        ReservationDto resultDto =
-                new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+      assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
 
-        when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
-        when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
-        when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
-
-        ReservationDto result = reservationService.save(inputDto);
-
-        assertThat(result).isEqualTo(resultDto);
-        verify(reservationMapper).toEntity(inputDto);
-        verify(reservationRepository).save(mappedEntity);
-        verify(reservationMapper).toDto(savedEntity);
-        verify(emailService).envoyerEmail(any(EmailResponse.class));
-        verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
+  }
 
-    // ---------- getById ----------
+  // ---------- update ----------
 
-    @Test
-    void getById_shouldFetchAndReturnDto() {
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenReturn(entity);
-            when(reservationMapper.toDto(entity)).thenReturn(dto);
+  @Test
+  void update_shouldFetchMutateSaveAndReturnDto() {
+    Reservation savedEntity = Reservation.builder().id(id).build();
+    ReservationDto resultDto =
+        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
-            ReservationDto result = reservationService.getById(id);
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenReturn(entity);
+      when(reservationRepository.save(entity)).thenReturn(savedEntity);
+      when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
 
-            assertThat(result).isEqualTo(dto);
-            fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
-            verify(reservationMapper).toDto(entity);
-            verifyNoMoreInteractions(reservationMapper, emailService);
-        }
+      ReservationDto result = reservationService.update(id, dto);
+
+      assertThat(result).isEqualTo(resultDto);
+      fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
+      verify(reservationMapper).updateEntityFromDto(dto, entity);
+      verify(reservationRepository).save(entity);
+      verify(reservationMapper).toDto(savedEntity);
+      verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
     }
+  }
 
-    @Test
-    void getById_shouldPropagateExceptionWhenNotFound() {
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            RuntimeException notFound = new RuntimeException("Reservation not found");
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenThrow(notFound);
+  @Test
+  void update_shouldNotSaveWhenResourceNotFound() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      RuntimeException notFound = new RuntimeException("Reservation not found");
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenThrow(notFound);
 
-            assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
+      assertThatThrownBy(() -> reservationService.update(id, dto)).isSameAs(notFound);
 
-            verifyNoMoreInteractions(reservationMapper, emailService);
-        }
+      verify(reservationRepository, never()).save(any());
+      verifyNoMoreInteractions(reservationMapper, emailService);
     }
+  }
 
-    // ---------- update ----------
+  // ---------- delete ----------
 
-    @Test
-    void update_shouldFetchMutateSaveAndReturnDto() {
-        Reservation savedEntity = Reservation.builder().id(id).build();
-        ReservationDto resultDto =
-                new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+  @Test
+  void delete_shouldFetchAndDeleteEntity() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenReturn(entity);
 
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenReturn(entity);
-            when(reservationRepository.save(entity)).thenReturn(savedEntity);
-            when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
+      reservationService.delete(id);
 
-            ReservationDto result = reservationService.update(id, dto);
-
-            assertThat(result).isEqualTo(resultDto);
-            fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
-            verify(reservationMapper).updateEntityFromDto(dto, entity);
-            verify(reservationRepository).save(entity);
-            verify(reservationMapper).toDto(savedEntity);
-            verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
-        }
+      fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
+      verify(reservationRepository, times(1)).delete(entity);
+      verifyNoMoreInteractions(reservationRepository, emailService);
     }
+  }
 
-    @Test
-    void update_shouldNotSaveWhenResourceNotFound() {
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            RuntimeException notFound = new RuntimeException("Reservation not found");
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenThrow(notFound);
+  @Test
+  void delete_shouldNotDeleteWhenResourceNotFound() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      RuntimeException notFound = new RuntimeException("Reservation not found");
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenThrow(notFound);
 
-            assertThatThrownBy(() -> reservationService.update(id, dto)).isSameAs(notFound);
+      assertThatThrownBy(() -> reservationService.delete(id)).isSameAs(notFound);
 
-            verify(reservationRepository, never()).save(any());
-            verifyNoMoreInteractions(reservationMapper, emailService);
-        }
+      verify(reservationRepository, never()).delete(any());
+      verifyNoMoreInteractions(emailService);
     }
-
-    // ---------- delete ----------
-
-    @Test
-    void delete_shouldFetchAndDeleteEntity() {
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenReturn(entity);
-
-            reservationService.delete(id);
-
-            fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
-            verify(reservationRepository, times(1)).delete(entity);
-            verifyNoMoreInteractions(reservationRepository, emailService);
-        }
-    }
-
-    @Test
-    void delete_shouldNotDeleteWhenResourceNotFound() {
-        try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-            RuntimeException notFound = new RuntimeException("Reservation not found");
-            fetcher
-                    .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-                    .thenThrow(notFound);
-
-            assertThatThrownBy(() -> reservationService.delete(id)).isSameAs(notFound);
-
-            verify(reservationRepository, never()).delete(any());
-            verifyNoMoreInteractions(emailService);
-        }
-    }
+  }
 }

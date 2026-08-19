@@ -24,8 +24,6 @@ public class ReservationServiceImpl implements ReservationService {
   private final ReservationMapper reservationMapper;
   private final EmailService emailService;
 
-
-
   @Override
   public Page<ReservationDto> getAll(Pageable pageable) {
     return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
@@ -35,11 +33,11 @@ public class ReservationServiceImpl implements ReservationService {
   public ReservationDto save(ReservationDto dto) {
     Reservation entity = reservationMapper.toEntity(dto);
     entity = reservationRepository.save(entity);
-      emailService.envoyerEmail(new EmailResponse(
-              "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
-              "Confirmation de Réservation",
-              "Votre réservation a été créée avec succès !"
-      ));
+    emailService.envoyerEmail(
+        new EmailResponse(
+            "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
+            "Confirmation de Réservation",
+            "Votre réservation a été créée avec succès !"));
     return reservationMapper.toDto(entity);
   }
 

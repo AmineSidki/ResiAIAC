@@ -15,22 +15,22 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender javaMailSender;
+  private final JavaMailSender javaMailSender;
 
-    @Override
-    @Async("emailExecutor")
-    public void envoyerEmail(EmailResponse request) {
-        try {
-            SimpleMailMessage email = new SimpleMailMessage();
-            email.setTo(request.destinataire());
-            email.setSubject(request.sujet());
-            email.setText(request.corps());
+  @Override
+  @Async("emailExecutor")
+  public void envoyerEmail(EmailResponse request) {
+    try {
+      SimpleMailMessage email = new SimpleMailMessage();
+      email.setTo(request.destinataire());
+      email.setSubject(request.sujet());
+      email.setText(request.corps());
 
-            javaMailSender.send(email);
-            log.info("Email envoyé à {} avec succès", request.destinataire());
+      javaMailSender.send(email);
+      log.info("Email envoyé à {} avec succès", request.destinataire());
 
-        } catch (MailException e) {
-            log.error("Echec de l'envoi de l'email à {} :{}", request.destinataire(), e.getMessage());
-        }
+    } catch (MailException e) {
+      log.error("Echec de l'envoi de l'email à {} :{}", request.destinataire(), e.getMessage());
     }
+  }
 }

@@ -11,16 +11,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableAsync
 public class AsyncConfiguration implements AsyncConfigurer {
 
-    @Bean(name = "emailExecutor")
-    public Executor emailExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(5);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("email-async-");
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setAwaitTerminationSeconds(20);
-        executor.initialize();
-        return executor;
-    }
+  @Bean(name = "emailExecutor")
+  public Executor emailExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(2);
+    executor.setMaxPoolSize(5);
+    executor.setQueueCapacity(100);
+    executor.setThreadNamePrefix("email-async-");
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(20);
+    executor.initialize();
+    return executor;
+  }
 }

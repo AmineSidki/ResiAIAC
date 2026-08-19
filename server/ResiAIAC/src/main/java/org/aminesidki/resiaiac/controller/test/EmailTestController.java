@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/email-test")
 public class EmailTestController {
 
-    private final EmailService emailService;
+  private final EmailService emailService;
 
-    @PostMapping("/")
-    public ResponseEntity<?> testEndpoint(@RequestBody EmailResponse request) {
-        emailService.envoyerEmail(request);
-        return ResponseEntity.ok("Email envoyé (ou tentative loggée) vers " + request.destinataire());
-    }
+  @PostMapping("/")
+  public ResponseEntity<?> testEndpoint(@RequestBody EmailResponse request) {
+    emailService.envoyerEmail(request);
+    return ResponseEntity.ok("Email envoyé (ou tentative loggée) vers " + request.destinataire());
+  }
 }
