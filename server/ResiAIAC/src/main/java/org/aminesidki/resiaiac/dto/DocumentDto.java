@@ -11,7 +11,7 @@ import org.aminesidki.resiaiac.validator.OptionalNotBlank;
 /** Dto for {@link org.aminesidki.resiaiac.entity.Document } */
 public record DocumentDto(
     UUID id,
-    @NotNull @NotBlank(message = "Nom du fichier ne peut pas etre vide !") String nomFichier,
+    @NotBlank(message = "Nom du fichier ne peut pas etre vide !") String nomFichier,
     String nomSceau,
     EtatDocument etat,
     @OptionalNotBlank String noteSurValidite,

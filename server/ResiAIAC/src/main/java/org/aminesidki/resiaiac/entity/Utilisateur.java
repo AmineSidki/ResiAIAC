@@ -20,6 +20,7 @@ public class Utilisateur {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
+  private UUID keycloakUser;
   private String nom;
   private String prenom;
   private String cin;
