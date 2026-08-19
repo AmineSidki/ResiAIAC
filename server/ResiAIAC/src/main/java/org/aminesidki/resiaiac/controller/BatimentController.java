@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/batiment")
 public class BatimentController {
   private final BatimentService batimentService;
-  
+
   @GetMapping("/")
   public ResponseEntity<?> getAll() {
     return ResponseEntity.ok(batimentService.getAll());

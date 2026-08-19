@@ -8,12 +8,13 @@ services:
       - "6379:6379"
     networks:
       - dev_net
-      -
   mailhog:
     image: mailhog/mailhog
     ports:
       - "1025:1025"
       - "8025:8025"
+    networks:
+      - dev_net
 # -----------------------------------------------------------------------------------
 
   application:
@@ -23,6 +24,10 @@ services:
       DB_URL: jdbc:postgresql://application-postgres:5432/resiaiac
       DB_USR: ${DB_USR}
       DB_PWD: ${DB_PWD}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_PORT: ${MAIL_PORT}
     ports:
       - "8080:8080"
     networks:

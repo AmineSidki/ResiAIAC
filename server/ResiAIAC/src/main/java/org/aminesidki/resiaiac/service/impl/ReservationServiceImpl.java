@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.service.impl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
@@ -34,11 +35,11 @@ public class ReservationServiceImpl implements ReservationService {
   public ReservationDto save(ReservationDto dto) {
     Reservation entity = reservationMapper.toEntity(dto);
     entity = reservationRepository.save(entity);
-      emailService.envoyerEmail(
-              "etudiant@test.com", // Plus tard on récupérera l'email de l'étudiant
+      emailService.envoyerEmail(new EmailResponse(
+              "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
               "Confirmation de Réservation",
               "Votre réservation a été créée avec succès !"
-      );
+      ));
     return reservationMapper.toDto(entity);
   }
 

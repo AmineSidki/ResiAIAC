@@ -1,5 +1,7 @@
 package org.aminesidki.resiaiac.service;
 
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
+
 public interface EmailService {
-    void envoyerEmail(String destinataire, String sujet, String message);
+    void envoyerEmail(EmailResponse request);
 }

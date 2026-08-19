@@ -12,7 +12,6 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://keycloak:8090/realms/ResiAIAC/protocol/openid-connect/certs
-#          issuer-uri: http://keycloak:8090/realms/ResiAIAC
 
   datasource:
     url: ${DB_URL}
@@ -24,17 +23,16 @@ spring:
       ddl-auto: update
     show-sql: true
 
-    spring:
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
       mail:
-        host: ${}
-        port: ${}
-        username: ${}
-        password: ${}
-        properties:
-          mail:
-             smtp:
-               auth: false
-               starttls:
-                 enable: false
-                 connectiontimeout: 5000ms
-                 timeout: 5000
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
