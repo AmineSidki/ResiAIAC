@@ -83,8 +83,8 @@ class ReclamationControllerTest {
     serviceId = 1L;
     createdAt = new Timestamp(System.currentTimeMillis());
     dto =
-            new ReclamationDto(
-                    id, "Fuite d'eau", null, utilisateurId, chambreId, serviceId, List.of(), null, null);
+        new ReclamationDto(
+            id, "Fuite d'eau", null, utilisateurId, chambreId, serviceId, List.of(), null, null);
   }
 
   // ---------- getById ----------
@@ -94,10 +94,10 @@ class ReclamationControllerTest {
     when(reclamationService.getById(id)).thenReturn(dto);
 
     mockMvc
-            .perform(get("/api/v1/reclamation/{id}", id))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.message").value("Fuite d'eau"));
+        .perform(get("/api/v1/reclamation/{id}", id))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.message").value("Fuite d'eau"));
 
     verify(reclamationService).getById(id);
     verifyNoMoreInteractions(reclamationService);
@@ -108,38 +108,38 @@ class ReclamationControllerTest {
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
     ReclamationDto inputDto =
-            new ReclamationDto(
-                    null,
-                    "Chauffage en panne",
-                    null,
-                    utilisateurId,
-                    chambreId,
-                    serviceId,
-                    List.of(),
-                    null,
-                    null);
+        new ReclamationDto(
+            null,
+            "Chauffage en panne",
+            null,
+            utilisateurId,
+            chambreId,
+            serviceId,
+            List.of(),
+            null,
+            null);
     ReclamationDto resultDto =
-            new ReclamationDto(
-                    id,
-                    "Chauffage en panne",
-                    null,
-                    utilisateurId,
-                    chambreId,
-                    serviceId,
-                    List.of(),
-                    createdAt,
-                    null);
+        new ReclamationDto(
+            id,
+            "Chauffage en panne",
+            null,
+            utilisateurId,
+            chambreId,
+            serviceId,
+            List.of(),
+            createdAt,
+            null);
 
     when(reclamationService.save(inputDto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    post("/api/v1/reclamation/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(inputDto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.message").value("Chauffage en panne"));
+        .perform(
+            post("/api/v1/reclamation/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.message").value("Chauffage en panne"));
 
     verify(reclamationService).save(inputDto);
     verifyNoMoreInteractions(reclamationService);
@@ -151,27 +151,27 @@ class ReclamationControllerTest {
   void update_shouldMutateAndReturnDto() throws Exception {
     ReclamationUpdateRequest request = new ReclamationUpdateRequest(id, dto);
     ReclamationDto resultDto =
-            new ReclamationDto(
-                    id,
-                    "Fuite d'eau - resolue",
-                    null,
-                    utilisateurId,
-                    chambreId,
-                    serviceId,
-                    List.of(),
-                    null,
-                    null);
+        new ReclamationDto(
+            id,
+            "Fuite d'eau - resolue",
+            null,
+            utilisateurId,
+            chambreId,
+            serviceId,
+            List.of(),
+            null,
+            null);
 
     when(reclamationService.update(id, dto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    put("/api/v1/reclamation/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.message").value("Fuite d'eau - resolue"));
+        .perform(
+            put("/api/v1/reclamation/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.message").value("Fuite d'eau - resolue"));
 
     verify(reclamationService).update(id, dto);
     verifyNoMoreInteractions(reclamationService);
@@ -192,12 +192,12 @@ class ReclamationControllerTest {
   @Test
   void getAllMyReclamations_shouldReturnPagedResults() throws Exception {
     when(reclamationService.getAllMy(any(), any(Pageable.class)))
-            .thenReturn(new PageImpl<>(List.of(dto)));
+        .thenReturn(new PageImpl<>(List.of(dto)));
 
     mockMvc
-            .perform(get("/api/v1/reclamation/me").with(jwt()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+        .perform(get("/api/v1/reclamation/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(reclamationService).getAllMy(any(), any(Pageable.class));
     verifyNoMoreInteractions(reclamationService);
@@ -208,19 +208,18 @@ class ReclamationControllerTest {
   @Test
   void saveMyReclamation_shouldPersistAndReturnDto() throws Exception {
     MyReclamationRequest request =
-            new MyReclamationRequest(
-                    "Fuite d'eau", serviceId, List.of(new EquipementEntry(1L, 2L)));
+        new MyReclamationRequest("Fuite d'eau", serviceId, List.of(new EquipementEntry(1L, 2L)));
 
     when(reclamationService.saveMy(any(), eq(request))).thenReturn(dto);
 
     mockMvc
-            .perform(
-                    post("/api/v1/reclamation/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()));
+        .perform(
+            post("/api/v1/reclamation/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
 
     verify(reclamationService).saveMy(any(), eq(request));
     verifyNoMoreInteractions(reclamationService);
@@ -233,12 +232,12 @@ class ReclamationControllerTest {
     String bodyMissingService = "{\"message\":\"Fuite d'eau\",\"equipements\":[]}";
 
     mockMvc
-            .perform(
-                    post("/api/v1/reclamation/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(bodyMissingService))
-            .andExpect(status().isBadRequest());
+        .perform(
+            post("/api/v1/reclamation/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyMissingService))
+        .andExpect(status().isBadRequest());
 
     verifyNoMoreInteractions(reclamationService);
   }

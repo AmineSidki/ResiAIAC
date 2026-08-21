@@ -70,12 +70,12 @@ class ReclamationServiceTest {
   @BeforeEach
   void setUp() {
     reclamationService =
-            new ReclamationServiceImpl(
-                    utilisateurService,
-                    utilisateurPromotionChambreService,
-                    equipementReclamationService,
-                    reclamationRepository,
-                    reclamationMapper);
+        new ReclamationServiceImpl(
+            utilisateurService,
+            utilisateurPromotionChambreService,
+            equipementReclamationService,
+            reclamationRepository,
+            reclamationMapper);
 
     id = UUID.randomUUID();
     entity = Reclamation.builder().id(id).message("Fuite d'eau").etat(null).build();
@@ -87,12 +87,12 @@ class ReclamationServiceTest {
   @Test
   void save_shouldMapPersistAndReturnDto() {
     ReclamationDto inputDto =
-            new ReclamationDto(null, "Panne electrique", null, null, null, null, List.of(), null, null);
+        new ReclamationDto(null, "Panne electrique", null, null, null, null, List.of(), null, null);
     Reclamation mappedEntity = Reclamation.builder().message("Panne electrique").etat(null).build();
     Reclamation savedEntity =
-            Reclamation.builder().id(id).message("Panne electrique").etat(null).build();
+        Reclamation.builder().id(id).message("Panne electrique").etat(null).build();
     ReclamationDto resultDto =
-            new ReclamationDto(id, "Panne electrique", null, null, null, null, List.of(), null, null);
+        new ReclamationDto(id, "Panne electrique", null, null, null, null, List.of(), null, null);
 
     when(reclamationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(reclamationRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -113,8 +113,8 @@ class ReclamationServiceTest {
   void getById_shouldFetchAndReturnDto() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenReturn(entity);
       when(reclamationMapper.toDto(entity)).thenReturn(dto);
 
       ReclamationDto result = reclamationService.getById(id);
@@ -131,8 +131,8 @@ class ReclamationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reclamation not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> reclamationService.getById(id)).isSameAs(notFound);
 
@@ -145,15 +145,15 @@ class ReclamationServiceTest {
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
     Reclamation savedEntity =
-            Reclamation.builder().id(id).message("Fuite d'eau - resolue").etat(null).build();
+        Reclamation.builder().id(id).message("Fuite d'eau - resolue").etat(null).build();
     ReclamationDto resultDto =
-            new ReclamationDto(
-                    id, "Fuite d'eau - resolue", null, null, null, null, List.of(), null, null);
+        new ReclamationDto(
+            id, "Fuite d'eau - resolue", null, null, null, null, List.of(), null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenReturn(entity);
       when(reclamationRepository.save(entity)).thenReturn(savedEntity);
       when(reclamationMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -173,8 +173,8 @@ class ReclamationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reclamation not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> reclamationService.update(id, dto)).isSameAs(notFound);
 
@@ -189,8 +189,8 @@ class ReclamationServiceTest {
   void delete_shouldFetchAndDeleteEntity() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenReturn(entity);
 
       reclamationService.delete(id);
 
@@ -205,8 +205,8 @@ class ReclamationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reclamation not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> reclamationService.delete(id)).isSameAs(notFound);
 
@@ -243,11 +243,10 @@ class ReclamationServiceTest {
     Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
     Chambre currentRoom = Chambre.builder().id(UUID.randomUUID()).build();
     List<EquipementEntry> equipements =
-            List.of(new EquipementEntry(1L, 2L), new EquipementEntry(2L, 1L));
-    MyReclamationRequest request =
-            new MyReclamationRequest("Fuite d'eau", 1L, equipements);
+        List.of(new EquipementEntry(1L, 2L), new EquipementEntry(2L, 1L));
+    MyReclamationRequest request = new MyReclamationRequest("Fuite d'eau", 1L, equipements);
     ReclamationDto mappedDto =
-            new ReclamationDto(null, "Fuite d'eau", null, null, null, 1L, null, null, null);
+        new ReclamationDto(null, "Fuite d'eau", null, null, null, 1L, null, null, null);
     Reclamation mappedEntity = Reclamation.builder().message("Fuite d'eau").build();
     Reclamation savedEntity = Reclamation.builder().id(id).message("Fuite d'eau").build();
 
@@ -271,13 +270,12 @@ class ReclamationServiceTest {
     verify(utilisateurPromotionChambreService).getCurrentRoomByUser(me);
 
     ArgumentCaptor<EquipementReclamationDto> captor =
-            ArgumentCaptor.forClass(EquipementReclamationDto.class);
+        ArgumentCaptor.forClass(EquipementReclamationDto.class);
     verify(equipementReclamationService, times(2)).save(captor.capture());
     assertThat(captor.getAllValues())
-            .extracting(EquipementReclamationDto::equipement, EquipementReclamationDto::quantite)
-            .containsExactly(tuple(1L, 2L), tuple(2L, 1L));
-    assertThat(captor.getAllValues())
-            .allSatisfy(e -> assertThat(e.reclamation()).isEqualTo(id));
+        .extracting(EquipementReclamationDto::equipement, EquipementReclamationDto::quantite)
+        .containsExactly(tuple(1L, 2L), tuple(2L, 1L));
+    assertThat(captor.getAllValues()).allSatisfy(e -> assertThat(e.reclamation()).isEqualTo(id));
   }
 
   @Test

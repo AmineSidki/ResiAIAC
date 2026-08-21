@@ -56,7 +56,7 @@ class DocumentServiceTest {
   @BeforeEach
   void setUp() {
     documentService =
-            new DocumentServiceImpl(utilisateurService, documentRepository, documentMapper);
+        new DocumentServiceImpl(utilisateurService, documentRepository, documentMapper);
 
     id = UUID.randomUUID();
     entity = Document.builder().id(id).nomFichier("cin.pdf").build();
@@ -91,8 +91,8 @@ class DocumentServiceTest {
   void getById_shouldFetchAndReturnDto() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenReturn(entity);
       when(documentMapper.toDto(entity)).thenReturn(dto);
 
       DocumentDto result = documentService.getById(id);
@@ -109,8 +109,8 @@ class DocumentServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Document not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> documentService.getById(id)).isSameAs(notFound);
 
@@ -127,8 +127,8 @@ class DocumentServiceTest {
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenReturn(entity);
       when(documentRepository.save(entity)).thenReturn(savedEntity);
       when(documentMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -148,8 +148,8 @@ class DocumentServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Document not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> documentService.update(id, dto)).isSameAs(notFound);
 
@@ -164,8 +164,8 @@ class DocumentServiceTest {
   void delete_shouldFetchAndDeleteEntity() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenReturn(entity);
 
       documentService.delete(id);
 
@@ -180,8 +180,8 @@ class DocumentServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Document not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> documentService.delete(id)).isSameAs(notFound);
 

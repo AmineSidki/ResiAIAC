@@ -86,11 +86,11 @@ class ReservationControllerTest {
     when(reservationService.getById(id)).thenReturn(dto);
 
     mockMvc
-            .perform(get(BASE_PATH + "/{id}", id))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.utilisateur").value(utilisateurId.toString()))
-            .andExpect(jsonPath("$.chambre").value(chambreId.toString()));
+        .perform(get(BASE_PATH + "/{id}", id))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.utilisateur").value(utilisateurId.toString()))
+        .andExpect(jsonPath("$.chambre").value(chambreId.toString()));
 
     verify(reservationService).getById(id);
     verifyNoMoreInteractions(reservationService);
@@ -106,13 +106,13 @@ class ReservationControllerTest {
     when(reservationService.save(inputDto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    post(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(inputDto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.utilisateur").value(utilisateurId.toString()));
+        .perform(
+            post(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.utilisateur").value(utilisateurId.toString()));
 
     verify(reservationService).save(inputDto);
     verifyNoMoreInteractions(reservationService);
@@ -125,18 +125,18 @@ class ReservationControllerTest {
     ReservationUpdateRequest request = new ReservationUpdateRequest(id, dto);
     UUID newChambreId = UUID.randomUUID();
     ReservationDto resultDto =
-            new ReservationDto(id, null, utilisateurId, newChambreId, null, null);
+        new ReservationDto(id, null, utilisateurId, newChambreId, null, null);
 
     when(reservationService.update(id, dto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    put(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.chambre").value(newChambreId.toString()));
+        .perform(
+            put(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.chambre").value(newChambreId.toString()));
 
     verify(reservationService).update(id, dto);
     verifyNoMoreInteractions(reservationService);
@@ -157,12 +157,12 @@ class ReservationControllerTest {
   @Test
   void getAllMyReservations_shouldReturnPagedResults() throws Exception {
     when(reservationService.getAllMy(any(), any(Pageable.class)))
-            .thenReturn(new PageImpl<>(List.of(dto)));
+        .thenReturn(new PageImpl<>(List.of(dto)));
 
     mockMvc
-            .perform(get(BASE_PATH + "/me").with(jwt()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+        .perform(get(BASE_PATH + "/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(reservationService).getAllMy(any(), any(Pageable.class));
     verifyNoMoreInteractions(reservationService);
@@ -177,13 +177,13 @@ class ReservationControllerTest {
     when(reservationService.saveMy(any(), eq(request))).thenReturn(dto);
 
     mockMvc
-            .perform(
-                    post(BASE_PATH + "/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()));
+        .perform(
+            post(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
 
     verify(reservationService).saveMy(any(), eq(request));
     verifyNoMoreInteractions(reservationService);
@@ -192,12 +192,12 @@ class ReservationControllerTest {
   @Test
   void saveMyReservation_shouldReturnBadRequestWhenChambreIsMissing() throws Exception {
     mockMvc
-            .perform(
-                    post(BASE_PATH + "/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{}"))
-            .andExpect(status().isBadRequest());
+        .perform(
+            post(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest());
 
     verifyNoMoreInteractions(reservationService);
   }

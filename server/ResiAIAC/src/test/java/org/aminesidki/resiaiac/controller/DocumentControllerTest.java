@@ -78,10 +78,10 @@ class DocumentControllerTest {
     when(documentService.getById(id)).thenReturn(dto);
 
     mockMvc
-            .perform(get(BASE_PATH + "/{id}", id))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
+        .perform(get(BASE_PATH + "/{id}", id))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
 
     verify(documentService).getById(id);
     verifyNoMoreInteractions(documentService);
@@ -97,13 +97,13 @@ class DocumentControllerTest {
     when(documentService.save(inputDto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    post(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(inputDto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
+        .perform(
+            post(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
 
     verify(documentService).save(inputDto);
     verifyNoMoreInteractions(documentService);
@@ -115,18 +115,18 @@ class DocumentControllerTest {
   void update_shouldMutateAndReturnDto() throws Exception {
     DocumentUpdateRequest request = new DocumentUpdateRequest(id, dto);
     DocumentDto resultDto =
-            new DocumentDto(id, "cin-renamed.pdf", "seal.png", null, null, dto.proprietaire(), null);
+        new DocumentDto(id, "cin-renamed.pdf", "seal.png", null, null, dto.proprietaire(), null);
 
     when(documentService.update(id, dto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    put(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nomFichier").value("cin-renamed.pdf"));
+        .perform(
+            put(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nomFichier").value("cin-renamed.pdf"));
 
     verify(documentService).update(id, dto);
     verifyNoMoreInteractions(documentService);
@@ -147,12 +147,12 @@ class DocumentControllerTest {
   @Test
   void myDocuments_shouldReturnPagedResults() throws Exception {
     when(documentService.getAllMy(any(), any(Pageable.class)))
-            .thenReturn(new PageImpl<>(List.of(dto)));
+        .thenReturn(new PageImpl<>(List.of(dto)));
 
     mockMvc
-            .perform(get(BASE_PATH + "/me").with(jwt()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+        .perform(get(BASE_PATH + "/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(documentService).getAllMy(any(), any(Pageable.class));
     verifyNoMoreInteractions(documentService);

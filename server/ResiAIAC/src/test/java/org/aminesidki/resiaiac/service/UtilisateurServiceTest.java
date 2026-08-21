@@ -64,16 +64,16 @@ class UtilisateurServiceTest {
   @BeforeEach
   void setUp() {
     utilisateurService =
-            new UtilisateurServiceImpl(keycloakService, utilisateurRepository, utilisateurMapper);
+        new UtilisateurServiceImpl(keycloakService, utilisateurRepository, utilisateurMapper);
 
     id = UUID.randomUUID();
     keycloakId = UUID.randomUUID();
     entity =
-            Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     dto =
-            new UtilisateurDto(
-                    id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-                    null, null);
+        new UtilisateurDto(
+            id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
   }
 
   // ---------- save ----------
@@ -81,16 +81,16 @@ class UtilisateurServiceTest {
   @Test
   void save_shouldCreateKeycloakUserThenPersistAndReturnDto() {
     UtilisateurDto inputDto =
-            new UtilisateurDto(
-                    null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-                    null, null);
+        new UtilisateurDto(
+            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     Utilisateur savedEntity =
-            Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     UtilisateurDto resultDto =
-            new UtilisateurDto(
-                    id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-                    null, null);
+        new UtilisateurDto(
+            id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
 
     when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
     when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
@@ -111,9 +111,9 @@ class UtilisateurServiceTest {
   @Test
   void save_shouldNotTouchDbOrRollbackWhenKeycloakCreationFails() {
     UtilisateurDto inputDto =
-            new UtilisateurDto(
-                    null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-                    null, null);
+        new UtilisateurDto(
+            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
     RuntimeException keycloakFailure = new RuntimeException("Keycloak unavailable");
 
     when(keycloakService.createUser(inputDto)).thenThrow(keycloakFailure);
@@ -129,9 +129,9 @@ class UtilisateurServiceTest {
   @Test
   void save_shouldRollbackKeycloakUserWhenDbSaveFails() {
     UtilisateurDto inputDto =
-            new UtilisateurDto(
-                    null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-                    null, null);
+        new UtilisateurDto(
+            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
+            null, null);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     RuntimeException dbFailure = new RuntimeException("DB unavailable");
 
@@ -152,8 +152,8 @@ class UtilisateurServiceTest {
   void getById_shouldFetchAndReturnDto() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenReturn(entity);
       when(utilisateurMapper.toDto(entity)).thenReturn(dto);
 
       UtilisateurDto result = utilisateurService.getById(id);
@@ -171,8 +171,8 @@ class UtilisateurServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Utilisateur not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> utilisateurService.getById(id)).isSameAs(notFound);
 
@@ -186,31 +186,31 @@ class UtilisateurServiceTest {
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
     Utilisateur savedEntity =
-            Utilisateur.builder()
-                    .id(id)
-                    .keycloakUser(keycloakId)
-                    .nom("Sidki")
-                    .prenom("Amine-renamed")
-                    .build();
+        Utilisateur.builder()
+            .id(id)
+            .keycloakUser(keycloakId)
+            .nom("Sidki")
+            .prenom("Amine-renamed")
+            .build();
     UtilisateurDto resultDto =
-            new UtilisateurDto(
-                    id,
-                    "Sidki",
-                    "Amine-renamed",
-                    null,
-                    null,
-                    null,
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine-renamed",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenReturn(entity);
       when(utilisateurRepository.save(entity)).thenReturn(savedEntity);
       when(utilisateurMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -231,8 +231,8 @@ class UtilisateurServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Utilisateur not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> utilisateurService.update(id, dto)).isSameAs(notFound);
 
@@ -248,8 +248,8 @@ class UtilisateurServiceTest {
   void delete_shouldDeleteDbRowBeforeKeycloakUser() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenReturn(entity);
 
       utilisateurService.delete(id);
 
@@ -266,8 +266,8 @@ class UtilisateurServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Utilisateur not found");
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenThrow(notFound);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenThrow(notFound);
 
       assertThatThrownBy(() -> utilisateurService.delete(id)).isSameAs(notFound);
 
@@ -282,8 +282,8 @@ class UtilisateurServiceTest {
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-              .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
-              .thenReturn(entity);
+          .when(() -> ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur"))
+          .thenReturn(entity);
       doThrow(dbFailure).when(utilisateurRepository).delete(entity);
 
       assertThatThrownBy(() -> utilisateurService.delete(id)).isSameAs(dbFailure);
@@ -312,7 +312,7 @@ class UtilisateurServiceTest {
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
-            .isInstanceOf(ResourceNotFoundException.class);
+        .isInstanceOf(ResourceNotFoundException.class);
 
     verifyNoMoreInteractions(utilisateurMapper);
   }
@@ -323,7 +323,7 @@ class UtilisateurServiceTest {
     when(jwt.getClaimAsString("sub")).thenReturn(null);
 
     assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
-            .isInstanceOf(ResourceNotFoundException.class);
+        .isInstanceOf(ResourceNotFoundException.class);
 
     verifyNoInteractions(utilisateurRepository);
   }
@@ -346,18 +346,28 @@ class UtilisateurServiceTest {
     Jwt jwt = jwtWithSub(keycloakId);
     UpdateMeRequest request = new UpdateMeRequest("12 Rue des Fleurs", "+212600000000");
     UtilisateurDto filteredDto =
-            new UtilisateurDto(
-                    null, null, null, null, "12 Rue des Fleurs", "+212600000000", List.of(), List.of(),
-                    List.of(), List.of(), null, null);
+        new UtilisateurDto(
+            null,
+            null,
+            null,
+            null,
+            "12 Rue des Fleurs",
+            "+212600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
     Utilisateur savedEntity =
-            Utilisateur.builder()
-                    .id(id)
-                    .keycloakUser(keycloakId)
-                    .nom("Sidki")
-                    .prenom("Amine")
-                    .adresse("12 Rue des Fleurs")
-                    .telephone("+212600000000")
-                    .build();
+        Utilisateur.builder()
+            .id(id)
+            .keycloakUser(keycloakId)
+            .nom("Sidki")
+            .prenom("Amine")
+            .adresse("12 Rue des Fleurs")
+            .telephone("+212600000000")
+            .build();
 
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
     when(utilisateurMapper.updateMeRequestToDto(request)).thenReturn(filteredDto);
@@ -380,7 +390,7 @@ class UtilisateurServiceTest {
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> utilisateurService.updateMe(jwt, request))
-            .isInstanceOf(ResourceNotFoundException.class);
+        .isInstanceOf(ResourceNotFoundException.class);
 
     verify(utilisateurRepository, never()).save(any());
   }

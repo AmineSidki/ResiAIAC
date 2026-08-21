@@ -67,19 +67,19 @@ class UtilisateurControllerTest {
   void setUp() {
     id = UUID.randomUUID();
     dto =
-            new UtilisateurDto(
-                    id,
-                    "Sidki",
-                    "Amine",
-                    "AB123456",
-                    "Casablanca",
-                    "0600000000",
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
   }
 
   // ---------- getById ----------
@@ -89,11 +89,11 @@ class UtilisateurControllerTest {
     when(utilisateurService.getById(id)).thenReturn(dto);
 
     mockMvc
-            .perform(get(BASE_PATH + "/{id}", id))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nom").value("Sidki"))
-            .andExpect(jsonPath("$.prenom").value("Amine"));
+        .perform(get(BASE_PATH + "/{id}", id))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nom").value("Sidki"))
+        .andExpect(jsonPath("$.prenom").value("Amine"));
 
     verify(utilisateurService).getById(id);
     verifyNoMoreInteractions(utilisateurService);
@@ -104,44 +104,44 @@ class UtilisateurControllerTest {
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
     UtilisateurDto inputDto =
-            new UtilisateurDto(
-                    null,
-                    "Sidki",
-                    "Amine",
-                    "AB123456",
-                    "Casablanca",
-                    "0600000000",
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            null,
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
     UtilisateurDto resultDto =
-            new UtilisateurDto(
-                    id,
-                    "Sidki",
-                    "Amine",
-                    "AB123456",
-                    "Casablanca",
-                    "0600000000",
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     when(utilisateurService.save(inputDto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    post(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(inputDto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nom").value("Sidki"));
+        .perform(
+            post(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nom").value("Sidki"));
 
     verify(utilisateurService).save(inputDto);
     verifyNoMoreInteractions(utilisateurService);
@@ -153,30 +153,30 @@ class UtilisateurControllerTest {
   void update_shouldMutateAndReturnDto() throws Exception {
     UtilisateurUpdateRequest request = new UtilisateurUpdateRequest(id, dto);
     UtilisateurDto resultDto =
-            new UtilisateurDto(
-                    id,
-                    "Sidki",
-                    "Amine - renamed",
-                    "AB123456",
-                    "Casablanca",
-                    "0600000000",
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine - renamed",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     when(utilisateurService.update(id, dto)).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    put(BASE_PATH + "/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.prenom").value("Amine - renamed"));
+        .perform(
+            put(BASE_PATH + "/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.prenom").value("Amine - renamed"));
 
     verify(utilisateurService).update(id, dto);
     verifyNoMoreInteractions(utilisateurService);
@@ -199,10 +199,10 @@ class UtilisateurControllerTest {
     when(utilisateurService.getMyDto(any())).thenReturn(dto);
 
     mockMvc
-            .perform(get(BASE_PATH + "/me").with(jwt()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(id.toString()))
-            .andExpect(jsonPath("$.nom").value("Sidki"));
+        .perform(get(BASE_PATH + "/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nom").value("Sidki"));
 
     verify(utilisateurService).getMyDto(any());
     verifyNoMoreInteractions(utilisateurService);
@@ -214,30 +214,30 @@ class UtilisateurControllerTest {
   void updateMe_shouldMutateAndReturnDto() throws Exception {
     UpdateMeRequest request = new UpdateMeRequest("Rabat", "+212600000000");
     UtilisateurDto resultDto =
-            new UtilisateurDto(
-                    id,
-                    "Sidki",
-                    "Amine",
-                    "AB123456",
-                    "Rabat",
-                    "+212600000000",
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    List.of(),
-                    null,
-                    null);
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Rabat",
+            "+212600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     when(utilisateurService.updateMe(any(), eq(request))).thenReturn(resultDto);
 
     mockMvc
-            .perform(
-                    put(BASE_PATH + "/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.adresse").value("Rabat"));
+        .perform(
+            put(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.adresse").value("Rabat"));
 
     verify(utilisateurService).updateMe(any(), eq(request));
     verifyNoMoreInteractions(utilisateurService);
@@ -250,12 +250,12 @@ class UtilisateurControllerTest {
     String bodyWithInvalidPhone = "{\"adresse\":\"Rabat\",\"telephone\":\"not-a-phone-number\"}";
 
     mockMvc
-            .perform(
-                    put(BASE_PATH + "/me")
-                            .with(jwt())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(bodyWithInvalidPhone))
-            .andExpect(status().isBadRequest());
+        .perform(
+            put(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyWithInvalidPhone))
+        .andExpect(status().isBadRequest());
 
     verifyNoMoreInteractions(utilisateurService);
   }
