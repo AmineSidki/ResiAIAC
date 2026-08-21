@@ -4,8 +4,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
-import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.dto.response.EmailResponse;
+import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
@@ -34,11 +34,6 @@ public class ReservationServiceImpl implements ReservationService {
   private final ReservationRepository reservationRepository;
   private final ReservationMapper reservationMapper;
   private final EmailService emailService;
-
-  @Override
-  public Page<ReservationDto> getAll(Pageable pageable) {
-    return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
-  }
 
   @Transactional(readOnly = true)
   @Override
