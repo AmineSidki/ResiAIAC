@@ -22,7 +22,6 @@ public class BatimentController {
     return ResponseEntity.ok(batimentService.getAll());
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(batimentService.getById(id));

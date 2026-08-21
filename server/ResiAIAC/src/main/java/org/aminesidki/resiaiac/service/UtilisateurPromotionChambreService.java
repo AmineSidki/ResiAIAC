@@ -2,9 +2,12 @@ package org.aminesidki.resiaiac.service;
 
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
+import org.aminesidki.resiaiac.entity.Chambre;
+import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 
 public interface UtilisateurPromotionChambreService {
+  Chambre getCurrentRoomByUser(Utilisateur utilisateur);
 
   UtilisateurPromotionChambreDto save(UtilisateurPromotionChambreDto dto);
 

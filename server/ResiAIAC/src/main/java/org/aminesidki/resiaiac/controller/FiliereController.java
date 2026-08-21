@@ -21,7 +21,6 @@ public class FiliereController {
     return ResponseEntity.ok(filiereService.getAll());
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {
     return ResponseEntity.ok(filiereService.getById(id));

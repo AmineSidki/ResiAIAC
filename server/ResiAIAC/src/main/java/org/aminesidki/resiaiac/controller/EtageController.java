@@ -22,7 +22,6 @@ public class EtageController {
     return ResponseEntity.ok(etageService.getAll());
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(etageService.getById(id));

@@ -3,8 +3,11 @@ package org.aminesidki.resiaiac.service.impl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
+import org.aminesidki.resiaiac.entity.Chambre;
+import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurPromotionChambreMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurPromotionChambreRepository;
 import org.aminesidki.resiaiac.service.UtilisateurPromotionChambreService;
@@ -19,6 +22,18 @@ public class UtilisateurPromotionChambreServiceImpl implements UtilisateurPromot
 
   private final UtilisateurPromotionChambreRepository utilisateurPromotionChambreRepository;
   private final UtilisateurPromotionChambreMapper utilisateurPromotionChambreMapper;
+
+  @Transactional(readOnly = true)
+  @Override
+  public Chambre getCurrentRoomByUser(Utilisateur utilisateur) {
+    return utilisateurPromotionChambreRepository
+        .findTopByUtilisateurOrderByPromotion_AnneeDeFinDesc(utilisateur)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    "Resource not found: Chambre for utilisateur with id " + utilisateur.getId()))
+        .getChambre();
+  }
 
   @Override
   public UtilisateurPromotionChambreDto save(UtilisateurPromotionChambreDto dto) {

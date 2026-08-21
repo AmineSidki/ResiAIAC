@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.dto.request.UtilisateurUpdateRequest;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.springframework.data.domain.Pageable;
@@ -22,16 +23,15 @@ import org.springframework.web.bind.annotation.*;
 public class UtilisateurController {
   private final UtilisateurService utilisateurService;
 
-  //TODO: hook up
   @GetMapping("/me")
-  public ResponseEntity<?> getMe(@AuthenticationPrincipal Jwt jwt){
-    return ResponseEntity.ok(null);
+  public ResponseEntity<?> getMe(@AuthenticationPrincipal Jwt jwt) {
+    return ResponseEntity.ok(utilisateurService.getMyDto(jwt));
   }
 
-  //TODO: hook up
   @PutMapping("/me")
-  public ResponseEntity<?> updateMe(@RequestBody UtilisateurDto dto){
-    return ResponseEntity.ok(null);
+  public ResponseEntity<?> updateMe(
+      @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateMeRequest request) {
+    return ResponseEntity.ok(utilisateurService.updateMe(jwt, request));
   }
 
   @PreAuthorize("hasAnyRole('RESPONSABLE')")

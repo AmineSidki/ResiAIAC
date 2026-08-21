@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class PromotionController {
   private final PromotionService promotionService;
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(promotionService.getById(id));

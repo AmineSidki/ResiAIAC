@@ -4,7 +4,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.exception.InvalidNameException;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.aminesidki.resiaiac.service.KeycloakService;
@@ -13,6 +16,7 @@ import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.aminesidki.resiaiac.util.StringUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +29,39 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   private final KeycloakService keycloakService;
   private final UtilisateurRepository utilisateurRepository;
   private final UtilisateurMapper utilisateurMapper;
+
+  private UUID extractIdFromJwt(Jwt jwt) {
+    String idString = jwt.getClaimAsString("sub");
+    if (idString == null) throw new InvalidNameException("Username");
+    return UUID.fromString(idString);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Utilisateur getMyEntity(Jwt jwt) {
+    UUID keycloakId = extractIdFromJwt(jwt);
+    return utilisateurRepository
+        .findByKeycloakUser(keycloakId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    "Resource not found: Utilisateur with keycloak id " + keycloakId));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public UtilisateurDto getMyDto(Jwt jwt) {
+    return utilisateurMapper.toDto(getMyEntity(jwt));
+  }
+
+  @Override
+  public UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request) {
+    UtilisateurDto filteredDto = utilisateurMapper.updateMeRequestToDto(request);
+    Utilisateur entity = getMyEntity(jwt);
+    utilisateurMapper.updateEntityFromDto(filteredDto, entity);
+    entity = utilisateurRepository.save(entity);
+    return utilisateurMapper.toDto(entity);
+  }
 
   @Override
   public Page<UtilisateurDto> getAll(Pageable pageable) {

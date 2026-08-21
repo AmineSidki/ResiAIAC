@@ -5,6 +5,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.entity.Chambre;
+import org.aminesidki.resiaiac.enumeration.EtatChambre;
 import org.aminesidki.resiaiac.mapper.ChambreMapper;
 import org.aminesidki.resiaiac.repository.ChambreRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
@@ -20,6 +21,19 @@ public class ChambreServiceImpl implements ChambreService {
   private final ChambreRepository chambreRepository;
   private final ChambreMapper chambreMapper;
 
+  @Override
+  public void updateEtatChambre(UUID id, EtatChambre etatChambre) {
+    ChambreDto dto = new ChambreDto(null, null, null, etatChambre, null, null, null, null);
+    update(id, dto);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public Chambre getEntityById(UUID id) {
+    return ResourceFetcher.fetchResource(id, chambreRepository, "Chambre");
+  }
+
+  @Transactional(readOnly = true)
   @Override
   public List<ChambreDto> getAll() {
     return chambreRepository.findAll().stream().map(chambreMapper::toDto).toList();

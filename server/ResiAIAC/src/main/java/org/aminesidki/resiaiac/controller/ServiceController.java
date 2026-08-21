@@ -21,7 +21,6 @@ public class ServiceController {
     return ResponseEntity.ok(serviceService.getAll());
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {
     return ResponseEntity.ok(serviceService.getById(id));
