@@ -3,6 +3,8 @@ package org.aminesidki.resiaiac.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -10,10 +12,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReservationDto;
+import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
 import org.aminesidki.resiaiac.dto.response.EmailResponse;
+import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reservation;
+import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.enumeration.EtatChambre;
+import org.aminesidki.resiaiac.enumeration.EtatReservation;
+import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
 import org.aminesidki.resiaiac.service.impl.ReservationServiceImpl;
@@ -21,9 +30,15 @@ import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * Unit tests for {@link ReservationService}, exercised through its {@link ReservationServiceImpl}
@@ -61,12 +76,12 @@ class ReservationServiceTest {
   @BeforeEach
   void setUp() {
     reservationService =
-        new ReservationServiceImpl(
-            utilisateurService,
-            chambreService,
-            reservationRepository,
-            reservationMapper,
-            emailService);
+            new ReservationServiceImpl(
+                    utilisateurService,
+                    chambreService,
+                    reservationRepository,
+                    reservationMapper,
+                    emailService);
 
     id = UUID.randomUUID();
     entity = Reservation.builder().id(id).build();
@@ -78,11 +93,11 @@ class ReservationServiceTest {
   @Test
   void save_shouldMapPersistAndReturnDto() {
     ReservationDto inputDto =
-        new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+            new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
     Reservation mappedEntity = Reservation.builder().build();
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+            new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -104,8 +119,8 @@ class ReservationServiceTest {
   void getById_shouldFetchAndReturnDto() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenReturn(entity);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenReturn(entity);
       when(reservationMapper.toDto(entity)).thenReturn(dto);
 
       ReservationDto result = reservationService.getById(id);
@@ -122,8 +137,8 @@ class ReservationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reservation not found");
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenThrow(notFound);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenThrow(notFound);
 
       assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
 
@@ -137,12 +152,12 @@ class ReservationServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
-        new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+            new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenReturn(entity);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenReturn(entity);
       when(reservationRepository.save(entity)).thenReturn(savedEntity);
       when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -162,8 +177,8 @@ class ReservationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reservation not found");
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenThrow(notFound);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenThrow(notFound);
 
       assertThatThrownBy(() -> reservationService.update(id, dto)).isSameAs(notFound);
 
@@ -178,8 +193,8 @@ class ReservationServiceTest {
   void delete_shouldFetchAndDeleteEntity() {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenReturn(entity);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenReturn(entity);
 
       reservationService.delete(id);
 
@@ -194,13 +209,151 @@ class ReservationServiceTest {
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       RuntimeException notFound = new RuntimeException("Reservation not found");
       fetcher
-          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
-          .thenThrow(notFound);
+              .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+              .thenThrow(notFound);
 
       assertThatThrownBy(() -> reservationService.delete(id)).isSameAs(notFound);
 
       verify(reservationRepository, never()).delete(any());
       verifyNoMoreInteractions(emailService);
     }
+  }
+
+  // ---------- getAllMy ----------
+
+  @Test
+  void getAllMy_shouldResolveUserFromJwtAndReturnTheirReservations() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(reservationRepository.findAllByUtilisateur(me, pageable)).thenReturn(page);
+    when(reservationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = reservationService.getAllMy(jwt, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(utilisateurService).getMyEntity(jwt);
+    verify(reservationRepository).findAllByUtilisateur(me, pageable);
+  }
+
+  // ---------- saveMy ----------
+
+  @Test
+  void saveMy_shouldRejectWhenRoomIsAlreadyFull() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    UUID chambreId = UUID.randomUUID();
+    Chambre fullRoom =
+            Chambre.builder().id(chambreId).matricule("B1-101").etat(EtatChambre.OCCUPEE).build();
+    MyReservationRequest request = new MyReservationRequest(chambreId);
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(chambreService.getEntityById(chambreId)).thenReturn(fullRoom);
+
+    assertThatThrownBy(() -> reservationService.saveMy(jwt, request))
+            .isInstanceOf(RoomFullException.class);
+
+    verify(reservationRepository, never()).save(any());
+    verify(chambreService, never()).updateEtatChambre(any(), any());
+  }
+
+  /**
+   * Covers the état transition for the room's *first* reservation, across capacities — including
+   * the capacite == 1 edge case, where the room must go straight to OCCUPEE instead of
+   * PARTIELLEMENT_LIBRE.
+   */
+  @ParameterizedTest(name = "capacite={0} -> {1}")
+  @CsvSource({"1,OCCUPEE", "2,PARTIELLEMENT_LIBRE", "4,PARTIELLEMENT_LIBRE"})
+  void saveMy_shouldDeriveRoomEtatFromCapaciteOnFirstReservation(
+          long capacite, EtatChambre expectedEtat) {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    UUID chambreId = UUID.randomUUID();
+    Chambre chambre =
+            Chambre.builder()
+                    .id(chambreId)
+                    .matricule("B1-101")
+                    .etat(EtatChambre.LIBRE)
+                    .capacite(capacite)
+                    .reservations(List.of())
+                    .build();
+    MyReservationRequest request = new MyReservationRequest(chambreId);
+    ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
+    when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
+    when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(reservationMapper.toDto(any(Reservation.class))).thenReturn(dto);
+
+    reservationService.saveMy(jwt, request);
+
+    verify(chambreService).updateEtatChambre(chambreId, expectedEtat);
+  }
+
+  @Test
+  void saveMy_shouldTransitionToOccupeeWhenLastAvailableSpotIsTaken() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    UUID chambreId = UUID.randomUUID();
+    // capacite 2, already 1 active reservation -> this one fills it up
+    Chambre chambre =
+            Chambre.builder()
+                    .id(chambreId)
+                    .matricule("B1-101")
+                    .etat(EtatChambre.PARTIELLEMENT_LIBRE)
+                    .capacite(2L)
+                    .reservations(List.of(Reservation.builder().id(UUID.randomUUID()).build()))
+                    .build();
+    MyReservationRequest request = new MyReservationRequest(chambreId);
+    ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
+    when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
+    when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(reservationMapper.toDto(any(Reservation.class))).thenReturn(dto);
+
+    reservationService.saveMy(jwt, request);
+
+    verify(chambreService).updateEtatChambre(chambreId, EtatChambre.OCCUPEE);
+  }
+
+  @Test
+  void saveMy_shouldPersistWithActiveEtatOwnerAndRoomFromJwt() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    UUID chambreId = UUID.randomUUID();
+    Chambre chambre =
+            Chambre.builder()
+                    .id(chambreId)
+                    .matricule("B1-101")
+                    .etat(EtatChambre.LIBRE)
+                    .capacite(4L)
+                    .reservations(List.of())
+                    .build();
+    MyReservationRequest request = new MyReservationRequest(chambreId);
+    ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
+    when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
+    when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(reservationMapper.toDto(any(Reservation.class))).thenReturn(dto);
+
+    ReservationDto result = reservationService.saveMy(jwt, request);
+
+    assertThat(result).isEqualTo(dto);
+    verify(reservationRepository)
+            .save(
+                    argThat(
+                            r ->
+                                    r.getEtat() == EtatReservation.ACTIVE
+                                            && r.getUtilisateur() == me
+                                            && r.getChambre() == chambre));
+    verifyNoMoreInteractions(emailService);
   }
 }
