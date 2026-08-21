@@ -1,9 +1,12 @@
 package org.aminesidki.resiaiac.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -15,6 +18,8 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
+import org.aminesidki.resiaiac.dto.entry.EquipementEntry;
+import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
 import org.aminesidki.resiaiac.dto.request.ReclamationUpdateRequest;
 import org.aminesidki.resiaiac.enumeration.EtatReclamation;
 import org.aminesidki.resiaiac.service.ReclamationService;
@@ -23,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -177,6 +184,61 @@ class ReclamationControllerTest {
     mockMvc.perform(delete("/api/v1/reclamation/{id}", id)).andExpect(status().isOk());
 
     verify(reclamationService, times(1)).delete(id);
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  // ---------- getAllMyReclamations ----------
+
+  @Test
+  void getAllMyReclamations_shouldReturnPagedResults() throws Exception {
+    when(reclamationService.getAllMy(any(), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get("/api/v1/reclamation/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(reclamationService).getAllMy(any(), any(Pageable.class));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  // ---------- saveMyReclamation ----------
+
+  @Test
+  void saveMyReclamation_shouldPersistAndReturnDto() throws Exception {
+    MyReclamationRequest request =
+        new MyReclamationRequest("Fuite d'eau", serviceId, List.of(new EquipementEntry(1L, 2L)));
+
+    when(reclamationService.saveMy(any(), eq(request))).thenReturn(dto);
+
+    mockMvc
+        .perform(
+            post("/api/v1/reclamation/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
+
+    verify(reclamationService).saveMy(any(), eq(request));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  @Test
+  void saveMyReclamation_shouldReturnBadRequestWhenServiceIsMissing() throws Exception {
+    // "service" is @NotNull on MyReclamationRequest — omitting it must fail validation
+    // before the service layer is ever reached.
+    String bodyMissingService = "{\"message\":\"Fuite d'eau\",\"equipements\":[]}";
+
+    mockMvc
+        .perform(
+            post("/api/v1/reclamation/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyMissingService))
+        .andExpect(status().isBadRequest());
+
     verifyNoMoreInteractions(reclamationService);
   }
 }

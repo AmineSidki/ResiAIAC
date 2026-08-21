@@ -1,9 +1,11 @@
 package org.aminesidki.resiaiac.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.dto.request.DocumentUpdateRequest;
@@ -20,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -134,6 +139,22 @@ class DocumentControllerTest {
     mockMvc.perform(delete(BASE_PATH + "/{id}", id)).andExpect(status().isOk());
 
     verify(documentService, times(1)).delete(id);
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- myDocuments ----------
+
+  @Test
+  void myDocuments_shouldReturnPagedResults() throws Exception {
+    when(documentService.getAllMy(any(), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get(BASE_PATH + "/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(documentService).getAllMy(any(), any(Pageable.class));
     verifyNoMoreInteractions(documentService);
   }
 }

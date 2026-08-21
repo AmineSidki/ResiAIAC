@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -10,9 +11,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.entity.Document;
+import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.mapper.DocumentMapper;
 import org.aminesidki.resiaiac.repository.DocumentRepository;
 import org.aminesidki.resiaiac.service.impl.DocumentServiceImpl;
@@ -23,6 +26,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * Unit tests for {@link DocumentService}, exercised through its {@link DocumentServiceImpl}
@@ -180,5 +187,26 @@ class DocumentServiceTest {
 
       verify(documentRepository, never()).delete(any());
     }
+  }
+
+  // ---------- getAllMy ----------
+
+  @Test
+  void getAllMy_shouldResolveUserFromJwtAndMapEachResultToDto() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(documentRepository.findAllByProprietaire(me, pageable)).thenReturn(page);
+    when(documentMapper.toDto(entity)).thenReturn(dto);
+
+    var result = documentService.getAllMy(jwt, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(utilisateurService).getMyEntity(jwt);
+    verify(documentRepository).findAllByProprietaire(me, pageable);
+    verify(documentMapper).toDto(entity);
   }
 }

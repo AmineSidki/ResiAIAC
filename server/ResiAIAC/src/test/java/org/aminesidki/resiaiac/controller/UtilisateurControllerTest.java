@@ -1,9 +1,12 @@
 package org.aminesidki.resiaiac.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.dto.request.UtilisateurUpdateRequest;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.junit.jupiter.api.BeforeEach;
@@ -185,6 +189,74 @@ class UtilisateurControllerTest {
     mockMvc.perform(delete(BASE_PATH + "/{id}", id)).andExpect(status().isOk());
 
     verify(utilisateurService, times(1)).delete(id);
+    verifyNoMoreInteractions(utilisateurService);
+  }
+
+  // ---------- getMe ----------
+
+  @Test
+  void getMe_shouldReturnCallersDto() throws Exception {
+    when(utilisateurService.getMyDto(any())).thenReturn(dto);
+
+    mockMvc
+        .perform(get(BASE_PATH + "/me").with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nom").value("Sidki"));
+
+    verify(utilisateurService).getMyDto(any());
+    verifyNoMoreInteractions(utilisateurService);
+  }
+
+  // ---------- updateMe ----------
+
+  @Test
+  void updateMe_shouldMutateAndReturnDto() throws Exception {
+    UpdateMeRequest request = new UpdateMeRequest("Rabat", "+212600000000");
+    UtilisateurDto resultDto =
+        new UtilisateurDto(
+            id,
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Rabat",
+            "+212600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
+
+    when(utilisateurService.updateMe(any(), eq(request))).thenReturn(resultDto);
+
+    mockMvc
+        .perform(
+            put(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.adresse").value("Rabat"));
+
+    verify(utilisateurService).updateMe(any(), eq(request));
+    verifyNoMoreInteractions(utilisateurService);
+  }
+
+  @Test
+  void updateMe_shouldReturnBadRequestForInvalidPhoneNumber() throws Exception {
+    // "telephone" must match the phone @Pattern on UpdateMeRequest — this must be rejected
+    // before the service layer is ever reached.
+    String bodyWithInvalidPhone = "{\"adresse\":\"Rabat\",\"telephone\":\"not-a-phone-number\"}";
+
+    mockMvc
+        .perform(
+            put(BASE_PATH + "/me")
+                .with(jwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyWithInvalidPhone))
+        .andExpect(status().isBadRequest());
+
     verifyNoMoreInteractions(utilisateurService);
   }
 }

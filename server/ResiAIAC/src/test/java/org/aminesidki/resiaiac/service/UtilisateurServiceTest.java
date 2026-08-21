@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,9 +14,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.aminesidki.resiaiac.service.impl.UtilisateurServiceImpl;
@@ -27,6 +31,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * Unit tests for {@link UtilisateurService}, exercised through its {@link UtilisateurServiceImpl}
@@ -286,5 +291,113 @@ class UtilisateurServiceTest {
       verify(utilisateurRepository).delete(entity);
       verifyNoInteractions(keycloakService);
     }
+  }
+
+  // ---------- getMyEntity / getMyDto ----------
+
+  @Test
+  void getMyEntity_shouldResolveUserByKeycloakSubClaim() {
+    Jwt jwt = jwtWithSub(keycloakId);
+    when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
+
+    Utilisateur result = utilisateurService.getMyEntity(jwt);
+
+    assertThat(result).isEqualTo(entity);
+    verify(utilisateurRepository).findByKeycloakUser(keycloakId);
+  }
+
+  @Test
+  void getMyEntity_shouldThrowWhenNoUserMatchesTheKeycloakId() {
+    Jwt jwt = jwtWithSub(keycloakId);
+    when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verifyNoMoreInteractions(utilisateurMapper);
+  }
+
+  @Test
+  void getMyEntity_shouldThrowWhenJwtHasNoSubClaim() {
+    Jwt jwt = mock(Jwt.class);
+    when(jwt.getClaimAsString("sub")).thenReturn(null);
+
+    assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verifyNoInteractions(utilisateurRepository);
+  }
+
+  @Test
+  void getMyDto_shouldMapResolvedEntity() {
+    Jwt jwt = jwtWithSub(keycloakId);
+    when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
+    when(utilisateurMapper.toDto(entity)).thenReturn(dto);
+
+    UtilisateurDto result = utilisateurService.getMyDto(jwt);
+
+    assertThat(result).isEqualTo(dto);
+  }
+
+  // ---------- updateMe ----------
+
+  @Test
+  void updateMe_shouldFilterMutateSaveAndReturnDto() {
+    Jwt jwt = jwtWithSub(keycloakId);
+    UpdateMeRequest request = new UpdateMeRequest("12 Rue des Fleurs", "+212600000000");
+    UtilisateurDto filteredDto =
+        new UtilisateurDto(
+            null,
+            null,
+            null,
+            null,
+            "12 Rue des Fleurs",
+            "+212600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
+    Utilisateur savedEntity =
+        Utilisateur.builder()
+            .id(id)
+            .keycloakUser(keycloakId)
+            .nom("Sidki")
+            .prenom("Amine")
+            .adresse("12 Rue des Fleurs")
+            .telephone("+212600000000")
+            .build();
+
+    when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
+    when(utilisateurMapper.updateMeRequestToDto(request)).thenReturn(filteredDto);
+    when(utilisateurRepository.save(entity)).thenReturn(savedEntity);
+    when(utilisateurMapper.toDto(savedEntity)).thenReturn(dto);
+
+    UtilisateurDto result = utilisateurService.updateMe(jwt, request);
+
+    assertThat(result).isEqualTo(dto);
+    verify(utilisateurMapper).updateMeRequestToDto(request);
+    verify(utilisateurMapper).updateEntityFromDto(filteredDto, entity);
+    verify(utilisateurRepository).save(entity);
+  }
+
+  @Test
+  void updateMe_shouldPropagateExceptionWhenUserNotFound() {
+    Jwt jwt = jwtWithSub(keycloakId);
+    UpdateMeRequest request = new UpdateMeRequest("12 Rue des Fleurs", null);
+
+    when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> utilisateurService.updateMe(jwt, request))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(utilisateurRepository, never()).save(any());
+  }
+
+  private Jwt jwtWithSub(UUID sub) {
+    Jwt jwt = mock(Jwt.class);
+    when(jwt.getClaimAsString("sub")).thenReturn(sub.toString());
+    return jwt;
   }
 }
