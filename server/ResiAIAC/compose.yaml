@@ -19,6 +19,10 @@ services:
       DB_USR: ${DB_USR}
       DB_PWD: ${DB_PWD}
       SPRING_KC_ADMIN_SECRET: ${SPRING_KC_ADMIN_SECRET}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_PORT: ${MAIL_PORT}
     ports:
       - "8080:8080"
     networks:

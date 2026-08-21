@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
 import org.aminesidki.resiaiac.entity.Chambre;
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
@@ -13,6 +14,7 @@ import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
+import org.aminesidki.resiaiac.service.EmailService;
 import org.aminesidki.resiaiac.service.ReservationService;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
@@ -31,6 +33,12 @@ public class ReservationServiceImpl implements ReservationService {
   private final ChambreService chambreService;
   private final ReservationRepository reservationRepository;
   private final ReservationMapper reservationMapper;
+  private final EmailService emailService;
+
+  @Override
+  public Page<ReservationDto> getAll(Pageable pageable) {
+    return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
+  }
 
   @Transactional(readOnly = true)
   @Override
@@ -82,6 +90,11 @@ public class ReservationServiceImpl implements ReservationService {
     Reservation entity = reservationMapper.toEntity(dto);
     entity.setEtat(EtatReservation.ACTIVE);
     entity = reservationRepository.save(entity);
+    emailService.envoyerEmail(
+        new EmailResponse(
+            "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
+            "Confirmation de Réservation",
+            "Votre réservation a été créée avec succès !"));
     return reservationMapper.toDto(entity);
   }
 
