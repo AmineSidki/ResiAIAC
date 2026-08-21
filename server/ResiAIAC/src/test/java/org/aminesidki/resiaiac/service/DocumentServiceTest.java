@@ -38,6 +38,8 @@ class DocumentServiceTest {
 
   @Mock private DocumentMapper documentMapper;
 
+  @Mock private UtilisateurService utilisateurService;
+
   private DocumentService documentService;
 
   private UUID id;
@@ -46,7 +48,8 @@ class DocumentServiceTest {
 
   @BeforeEach
   void setUp() {
-    documentService = new DocumentServiceImpl(documentRepository, documentMapper);
+    documentService =
+        new DocumentServiceImpl(utilisateurService, documentRepository, documentMapper);
 
     id = UUID.randomUUID();
     entity = Document.builder().id(id).nomFichier("cin.pdf").build();

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
-import org.aminesidki.resiaiac.exception.InvalidNameException;
 import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
@@ -32,7 +31,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   private UUID extractIdFromJwt(Jwt jwt) {
     String idString = jwt.getClaimAsString("sub");
-    if (idString == null) throw new InvalidNameException("Username");
+    if (idString == null) throw new ResourceNotFoundException("Keycloak id for user is null !");
     return UUID.fromString(idString);
   }
 

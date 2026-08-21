@@ -1,7 +1,6 @@
 package org.aminesidki.resiaiac.repository;
 
 import java.util.UUID;
-import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.entity.Document;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.springframework.data.domain.Page;

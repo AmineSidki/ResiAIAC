@@ -25,6 +25,7 @@ public class DocumentServiceImpl implements DocumentService {
   private final DocumentRepository documentRepository;
   private final DocumentMapper documentMapper;
 
+  @Transactional(readOnly = true)
   @Override
   public Page<DocumentDto> getAllMy(Jwt jwt, Pageable pageable) {
     Utilisateur id = utilisateurService.getMyEntity(jwt);

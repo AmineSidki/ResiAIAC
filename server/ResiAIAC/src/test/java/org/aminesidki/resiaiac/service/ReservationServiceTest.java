@@ -42,6 +42,10 @@ class ReservationServiceTest {
 
   @Mock private ReservationMapper reservationMapper;
 
+  @Mock private UtilisateurService utilisateurService;
+
+  @Mock private ChambreService chambreService;
+
   private ReservationService reservationService;
 
   private UUID id;
@@ -50,7 +54,9 @@ class ReservationServiceTest {
 
   @BeforeEach
   void setUp() {
-    reservationService = new ReservationServiceImpl(reservationRepository, reservationMapper);
+    reservationService =
+        new ReservationServiceImpl(
+            utilisateurService, chambreService, reservationRepository, reservationMapper);
 
     id = UUID.randomUUID();
     entity = Reservation.builder().id(id).build();
