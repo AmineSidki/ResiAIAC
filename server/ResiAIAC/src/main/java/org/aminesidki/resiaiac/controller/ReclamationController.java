@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
+import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
 import org.aminesidki.resiaiac.dto.request.ReclamationUpdateRequest;
 import org.aminesidki.resiaiac.service.ReclamationService;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +23,19 @@ import org.springframework.web.bind.annotation.*;
 public class ReclamationController {
   private final ReclamationService reclamationService;
 
+  @GetMapping("/me")
+  public ResponseEntity<?> getAllMyReclamations(
+      @AuthenticationPrincipal Jwt jwt,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(reclamationService.getAllMy(jwt, pageable));
+  }
+
+  @PostMapping("/me")
+  public ResponseEntity<?> saveMyReclamation(
+      @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid MyReclamationRequest request) {
+    return ResponseEntity.ok(reclamationService.saveMy(jwt, request));
+  }
+
   @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/")
   public ResponseEntity<?> getAll(
@@ -27,12 +43,12 @@ public class ReclamationController {
     return ResponseEntity.ok(reclamationService.getAll(pageable));
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(reclamationService.getById(id));
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @PostMapping("/")
   public ResponseEntity<?> save(@RequestBody @Valid ReclamationDto dto) {
     return ResponseEntity.ok(reclamationService.save(dto));

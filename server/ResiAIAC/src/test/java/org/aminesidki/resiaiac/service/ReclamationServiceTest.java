@@ -42,6 +42,12 @@ class ReclamationServiceTest {
 
   @Mock private ReclamationMapper reclamationMapper;
 
+  @Mock private UtilisateurService utilisateurService;
+
+  @Mock private UtilisateurPromotionChambreService utilisateurPromotionChambreService;
+
+  @Mock private EquipementReclamationService equipementReclamationService;
+
   private ReclamationService reclamationService;
 
   private UUID id;
@@ -50,7 +56,13 @@ class ReclamationServiceTest {
 
   @BeforeEach
   void setUp() {
-    reclamationService = new ReclamationServiceImpl(reclamationRepository, reclamationMapper);
+    reclamationService =
+        new ReclamationServiceImpl(
+            utilisateurService,
+            utilisateurPromotionChambreService,
+            equipementReclamationService,
+            reclamationRepository,
+            reclamationMapper);
 
     id = UUID.randomUUID();
     entity = Reclamation.builder().id(id).message("Fuite d'eau").etat(null).build();

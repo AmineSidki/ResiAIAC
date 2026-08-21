@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.mapper;
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
+import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
 import org.aminesidki.resiaiac.entity.*;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 import org.aminesidki.resiaiac.repository.ChambreRepository;
@@ -10,6 +11,7 @@ import org.aminesidki.resiaiac.repository.EquipementReclamationRepository;
 import org.aminesidki.resiaiac.repository.ServiceRepository;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,10 @@ public abstract class ReclamationMapper {
 
   // Update entity with Dto
   public abstract void updateEntityFromDto(ReclamationDto dto, @MappingTarget Reclamation entity);
+
+  // Map MyReclamationRequest to Dto
+  @Mapping(target = "equipements", ignore = true)
+  public abstract ReclamationDto myReclamationToDto(MyReclamationRequest request);
 
   protected Utilisateur mapIdToUtilisateur(UUID id) {
     if (id == null) {

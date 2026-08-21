@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.mapper;
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.*;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 import org.aminesidki.resiaiac.repository.DocumentRepository;
@@ -33,6 +34,9 @@ public abstract class UtilisateurMapper {
 
   // Update entity with Dto
   public abstract void updateEntityFromDto(UtilisateurDto dto, @MappingTarget Utilisateur entity);
+
+  // Map UpdateMeRequest to Dto
+  public abstract UtilisateurDto updateMeRequestToDto(UpdateMeRequest request);
 
   protected List<Reservation> mapIdToReservations(List<UUID> ids) {
     if (ids == null) {

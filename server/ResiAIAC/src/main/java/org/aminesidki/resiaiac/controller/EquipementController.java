@@ -21,7 +21,6 @@ public class EquipementController {
     return ResponseEntity.ok(equipementService.getAll());
   }
 
-  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable Long id) {
     return ResponseEntity.ok(equipementService.getById(id));
