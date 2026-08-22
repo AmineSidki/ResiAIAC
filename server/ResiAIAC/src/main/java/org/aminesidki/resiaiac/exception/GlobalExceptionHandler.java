@@ -1,11 +1,8 @@
-package org.aminesidki.resiaiac.exception.handler;
+package org.aminesidki.resiaiac.exception;
 
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.aminesidki.resiaiac.dto.response.ErrorResponse;
-import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
-import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
-import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -36,15 +33,18 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(RoomFullException.class)
-  public ResponseEntity<?> handleRoomFullException(RoomFullException ex){
-    ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), LocalDateTime.now());
+  public ResponseEntity<?> handleRoomFullException(RoomFullException ex) {
+    ErrorResponse error =
+        new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), LocalDateTime.now());
     log.warn(error.message());
     return ResponseEntity.status(error.status()).body(error);
   }
 
   @ExceptionHandler(ResourceOwnershipMismatchException.class)
-  public ResponseEntity<?> handleResourceOwnershipMismatchException(ResourceOwnershipMismatchException ex){
-    ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), LocalDateTime.now());
+  public ResponseEntity<?> handleResourceOwnershipMismatchException(
+      ResourceOwnershipMismatchException ex) {
+    ErrorResponse error =
+        new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage(), LocalDateTime.now());
     log.warn(error.message());
     return ResponseEntity.status(error.status()).body(error);
   }

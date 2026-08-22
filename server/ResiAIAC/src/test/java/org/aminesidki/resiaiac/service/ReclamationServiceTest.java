@@ -22,6 +22,7 @@ import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatReclamation;
+import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.mapper.ReclamationMapper;
 import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.aminesidki.resiaiac.service.impl.ReclamationServiceImpl;
@@ -137,6 +138,67 @@ class ReclamationServiceTest {
       assertThatThrownBy(() -> reclamationService.getById(id)).isSameAs(notFound);
 
       verifyNoMoreInteractions(reclamationMapper);
+    }
+  }
+
+  // ---------- getMyById ----------
+
+  @Test
+  void getMyById_shouldReturnDtoWhenCallerOwnsTheResource() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Reclamation owned = Reclamation.builder().id(id).message("Fuite d'eau").utilisateur(me).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenReturn(owned);
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(reclamationMapper.toDto(owned)).thenReturn(dto);
+
+      ReclamationDto result = reclamationService.getMyById(jwt, id);
+
+      assertThat(result).isEqualTo(dto);
+      fetcher.verify(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"));
+      verify(utilisateurService).getMyEntity(jwt);
+      verify(reclamationMapper).toDto(owned);
+    }
+  }
+
+  @Test
+  void getMyById_shouldThrowOwnershipMismatchWhenCallerDoesNotOwnTheResource() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Utilisateur someoneElse = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Reclamation notOwned =
+        Reclamation.builder().id(id).message("Fuite d'eau").utilisateur(someoneElse).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenReturn(notOwned);
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+
+      assertThatThrownBy(() -> reclamationService.getMyById(jwt, id))
+          .isInstanceOf(ResourceOwnershipMismatchException.class);
+
+      verifyNoMoreInteractions(reclamationMapper);
+    }
+  }
+
+  @Test
+  void getMyById_shouldPropagateExceptionWhenNotFound() {
+    Jwt jwt = mock(Jwt.class);
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      RuntimeException notFound = new RuntimeException("Reclamation not found");
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
+          .thenThrow(notFound);
+
+      assertThatThrownBy(() -> reclamationService.getMyById(jwt, id)).isSameAs(notFound);
+
+      verifyNoMoreInteractions(reclamationMapper, utilisateurService);
     }
   }
 

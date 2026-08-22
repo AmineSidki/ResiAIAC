@@ -31,7 +31,7 @@ public class ReservationController {
   }
 
   @GetMapping("/me/{id}")
-  public ResponseEntity<?> getMyById(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id) {
+  public ResponseEntity<?> getMyById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
     return ResponseEntity.ok(reservationService.getMyById(jwt, id));
   }
 
@@ -48,6 +48,7 @@ public class ReservationController {
     return ResponseEntity.ok(reservationService.getAll(pageable));
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(reservationService.getById(id));

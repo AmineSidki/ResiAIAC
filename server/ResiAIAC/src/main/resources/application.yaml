@@ -11,7 +11,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${SPRING_KC_JWT_URI}
+          jwk-set-uri: ${SPRING_KC_JWT_URI:http://keycloak:8090/realms/ResiAIAC/protocol/openid-connect/certs}
 #          issuer-uri: http://keycloak:8090/realms/ResiAIAC
 
   datasource:

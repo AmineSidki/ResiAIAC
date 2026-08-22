@@ -3,5 +3,4 @@ package org.aminesidki.resiaiac.service.impl;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SeaweedFsServiceImpl {
-}
+public class SeaweedFsServiceImpl {}

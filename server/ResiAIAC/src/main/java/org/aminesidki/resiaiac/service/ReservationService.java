@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public interface ReservationService {
   Page<ReservationDto> getAllMy(Jwt jwt, Pageable pageable);
 
-  ReservationDto getMyById(Jwt jwt,UUID id);
+  ReservationDto getMyById(Jwt jwt, UUID id);
 
   ReservationDto saveMy(Jwt jwt, MyReservationRequest request);
 

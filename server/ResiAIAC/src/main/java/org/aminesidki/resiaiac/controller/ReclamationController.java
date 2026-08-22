@@ -37,7 +37,7 @@ public class ReclamationController {
   }
 
   @GetMapping("/me/{id}")
-  public ResponseEntity<?> getMyById(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id) {
+  public ResponseEntity<?> getMyById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
     return ResponseEntity.ok(reclamationService.getMyById(jwt, id));
   }
 
@@ -48,6 +48,7 @@ public class ReclamationController {
     return ResponseEntity.ok(reclamationService.getAll(pageable));
   }
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(reclamationService.getById(id));

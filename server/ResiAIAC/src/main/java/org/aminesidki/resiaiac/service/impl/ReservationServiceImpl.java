@@ -45,13 +45,14 @@ public class ReservationServiceImpl implements ReservationService {
 
   @Transactional(readOnly = true)
   @Override
-  public ReservationDto getMyById(Jwt jwt,UUID id) {
+  public ReservationDto getMyById(Jwt jwt, UUID id) {
     Reservation entity = ResourceFetcher.fetchResource(id, reservationRepository, "Reservation");
     Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
-    if(entity.getUtilisateur().getId().equals(utilisateur.getId())){
+    if (entity.getUtilisateur().getId().equals(utilisateur.getId())) {
       return reservationMapper.toDto(entity);
     }
-    throw new ResourceOwnershipMismatchException("Queried resource does not belong to querying user !");
+    throw new ResourceOwnershipMismatchException(
+        "Queried resource does not belong to querying user !");
   }
 
   @Override

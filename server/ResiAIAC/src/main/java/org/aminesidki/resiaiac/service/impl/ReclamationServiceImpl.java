@@ -67,10 +67,11 @@ public class ReclamationServiceImpl implements ReclamationService {
   public ReclamationDto getMyById(Jwt jwt, UUID id) {
     Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
     Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
-    if(entity.getUtilisateur().getId().equals(utilisateur.getId())){
+    if (entity.getUtilisateur().getId().equals(utilisateur.getId())) {
       return reclamationMapper.toDto(entity);
     }
-    throw new ResourceOwnershipMismatchException("Queried resource does not belong to querying user !");
+    throw new ResourceOwnershipMismatchException(
+        "Queried resource does not belong to querying user !");
   }
 
   @Override
