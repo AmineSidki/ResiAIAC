@@ -12,6 +12,8 @@ public interface ReclamationService {
 
   ReclamationDto saveMy(Jwt jwt, MyReclamationRequest dto);
 
+  ReclamationDto getMyById(Jwt jwt, UUID id);
+
   Page<ReclamationDto> getAll(Pageable pageable);
 
   ReclamationDto save(ReclamationDto dto);

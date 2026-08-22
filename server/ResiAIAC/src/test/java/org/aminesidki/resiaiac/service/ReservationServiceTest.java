@@ -22,6 +22,7 @@ import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
 import org.aminesidki.resiaiac.enumeration.EtatReservation;
+import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
@@ -143,6 +144,66 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
 
       verifyNoMoreInteractions(reservationMapper, emailService);
+    }
+  }
+
+  // ---------- getMyById ----------
+
+  @Test
+  void getMyById_shouldReturnDtoWhenCallerOwnsTheResource() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Reservation owned = Reservation.builder().id(id).utilisateur(me).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenReturn(owned);
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(reservationMapper.toDto(owned)).thenReturn(dto);
+
+      ReservationDto result = reservationService.getMyById(jwt, id);
+
+      assertThat(result).isEqualTo(dto);
+      fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
+      verify(utilisateurService).getMyEntity(jwt);
+      verify(reservationMapper).toDto(owned);
+    }
+  }
+
+  @Test
+  void getMyById_shouldThrowOwnershipMismatchWhenCallerDoesNotOwnTheResource() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Utilisateur someoneElse = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Reservation notOwned = Reservation.builder().id(id).utilisateur(someoneElse).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenReturn(notOwned);
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+
+      assertThatThrownBy(() -> reservationService.getMyById(jwt, id))
+          .isInstanceOf(ResourceOwnershipMismatchException.class);
+
+      verifyNoMoreInteractions(reservationMapper, emailService);
+    }
+  }
+
+  @Test
+  void getMyById_shouldPropagateExceptionWhenNotFound() {
+    Jwt jwt = mock(Jwt.class);
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      RuntimeException notFound = new RuntimeException("Reservation not found");
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
+          .thenThrow(notFound);
+
+      assertThatThrownBy(() -> reservationService.getMyById(jwt, id)).isSameAs(notFound);
+
+      verifyNoMoreInteractions(reservationMapper, utilisateurService, emailService);
     }
   }
 

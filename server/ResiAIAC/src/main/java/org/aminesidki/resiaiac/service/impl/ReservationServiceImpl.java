@@ -10,6 +10,7 @@ import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
 import org.aminesidki.resiaiac.enumeration.EtatReservation;
+import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
@@ -44,8 +45,14 @@ public class ReservationServiceImpl implements ReservationService {
 
   @Transactional(readOnly = true)
   @Override
-  public Page<ReservationDto> getAll(Pageable pageable) {
-    return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
+  public ReservationDto getMyById(Jwt jwt, UUID id) {
+    Reservation entity = ResourceFetcher.fetchResource(id, reservationRepository, "Reservation");
+    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    if (entity.getUtilisateur().getId().equals(utilisateur.getId())) {
+      return reservationMapper.toDto(entity);
+    }
+    throw new ResourceOwnershipMismatchException(
+        "Queried resource does not belong to querying user !");
   }
 
   @Override
@@ -78,6 +85,12 @@ public class ReservationServiceImpl implements ReservationService {
 
       return reservationMapper.toDto(entity);
     }
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public Page<ReservationDto> getAll(Pageable pageable) {
+    return reservationRepository.findAll(pageable).map(reservationMapper::toDto);
   }
 
   @Override

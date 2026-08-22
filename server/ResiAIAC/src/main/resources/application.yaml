@@ -11,7 +11,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://keycloak:8090/realms/ResiAIAC/protocol/openid-connect/certs
+          jwk-set-uri: ${SPRING_KC_JWT_URI:http://keycloak:8090/realms/ResiAIAC/protocol/openid-connect/certs}
 #          issuer-uri: http://keycloak:8090/realms/ResiAIAC
 
   datasource:
@@ -40,7 +40,14 @@ spring:
           
 keycloak:
   admin:
-    server-url: http://keycloak:8090
+    server-url: ${SPRING_KC_URL}
     realm: ResiAIAC
     client-id: resiaiac-admin-service
     secret: ${SPRING_KC_ADMIN_SECRET}
+
+seaweedfs:
+  s3:
+    endpoint: ${SPRING_S3_ENDPOINT}
+    region: us-east-1 # Dummy value required by AWS SDK
+    access-key: ${SPRING_S3_ACCESS_KEY}
+    secret-key: ${SPRING_S3_SECRET_KEY}
