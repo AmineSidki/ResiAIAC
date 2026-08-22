@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "spring-boot-app",
+      "credentials": [
+        {
+          "accessKey": "app_prod_access_key_xyz",
+          "secretKey": "super_secret_high_entropy_key_987654321"
+        }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

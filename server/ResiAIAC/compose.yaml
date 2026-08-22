@@ -1,4 +1,17 @@
 services:
+  seaweed-fs:
+    image: chrislusf/seaweedfs
+    ports:
+      - "9333:9333" # Master HTTP
+      - "8081:8080" # Volume HTTP
+      - "8888:8888" # Filer HTTP
+      - "8333:8333" # S3 API
+    volumes:
+      - seaweed_data:/data
+    command: "server -dir=/data -s3"
+    restart: unless-stopped
+
+# -----------------------------------------------------------------------------------
 
   redis:
     image: redis:8.8.0
@@ -19,6 +32,8 @@ services:
       DB_USR: ${DB_USR}
       DB_PWD: ${DB_PWD}
       SPRING_KC_ADMIN_SECRET: ${SPRING_KC_ADMIN_SECRET}
+      SPRING_KC_URL: ${SPRING_KC_URL}
+      SPRING_KC_JWT_URI: ${SPRING_KC_JWT_URI}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
@@ -85,5 +100,6 @@ networks:
     driver: bridge
 
 volumes:
+  seaweed_data:
   app_pg_data:
   keycloak_pg_data:
