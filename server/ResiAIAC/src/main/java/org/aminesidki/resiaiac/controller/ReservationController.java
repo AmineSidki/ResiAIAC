@@ -30,6 +30,11 @@ public class ReservationController {
     return ResponseEntity.ok(reservationService.getAllMy(jwt, pageable));
   }
 
+  @GetMapping("/me/{id}")
+  public ResponseEntity<?> getMyById(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID id) {
+    return ResponseEntity.ok(reservationService.getMyById(jwt, id));
+  }
+
   @PostMapping("/me")
   public ResponseEntity<?> saveMyReservation(
       @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid MyReservationRequest request) {

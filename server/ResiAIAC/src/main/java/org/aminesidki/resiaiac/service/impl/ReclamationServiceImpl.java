@@ -9,6 +9,7 @@ import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.enumeration.EtatReclamation;
+import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.mapper.ReclamationMapper;
 import org.aminesidki.resiaiac.repository.ReclamationRepository;
 import org.aminesidki.resiaiac.service.*;
@@ -59,6 +60,17 @@ public class ReclamationServiceImpl implements ReclamationService {
                 equipementReclamationService.save(
                     new EquipementReclamationDto(null, e.quantite(), e.id(), entityId)));
     return reclamationMapper.toDto(entity);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public ReclamationDto getMyById(Jwt jwt, UUID id) {
+    Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
+    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    if(entity.getUtilisateur().getId().equals(utilisateur.getId())){
+      return reclamationMapper.toDto(entity);
+    }
+    throw new ResourceOwnershipMismatchException("Queried resource does not belong to querying user !");
   }
 
   @Override
