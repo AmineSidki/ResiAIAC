@@ -8,8 +8,11 @@ services:
       - "8333:8333" # S3 API
     volumes:
       - seaweed_data:/data
-    command: "server -dir=/data -s3"
+      - ./seaweedfs:/etc/seaweedfs/
+    command: "server -dir=/data -s3.config=/etc/seaweedfs/s3.json -s3"
     restart: unless-stopped
+    networks:
+      - dev_net
 
 # -----------------------------------------------------------------------------------
 
@@ -34,6 +37,10 @@ services:
       SPRING_KC_ADMIN_SECRET: ${SPRING_KC_ADMIN_SECRET}
       SPRING_KC_URL: ${SPRING_KC_URL}
       SPRING_KC_JWT_URI: ${SPRING_KC_JWT_URI}
+      SPRING_S3_INT_ENDPOINT: ${SPRING_S3_INT_ENDPOINT}
+      SPRING_S3_EXT_ENDPOINT: ${SPRING_S3_EXT_ENDPOINT}
+      SPRING_S3_ACCESS_KEY: ${SPRING_S3_ACCESS_KEY}
+      SPRING_S3_SECRET_KEY: ${SPRING_S3_SECRET_KEY}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
