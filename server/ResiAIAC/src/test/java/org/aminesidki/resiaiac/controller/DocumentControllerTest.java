@@ -1,6 +1,7 @@
 package org.aminesidki.resiaiac.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -8,15 +9,15 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.dto.request.DocumentUpdateRequest;
+import org.aminesidki.resiaiac.enumeration.FileType;
 import org.aminesidki.resiaiac.service.DocumentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -39,7 +41,8 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>Security filters are disabled ({@code addFilters = false}) since Keycloak-backed
  * authentication is out of scope for these tests; adjust if endpoint-level authorization rules need
- * coverage too.
+ * coverage too. {@code .with(jwt())} is still applied on self-service routes so
+ * {@code @AuthenticationPrincipal Jwt} has something to resolve.
  *
  * <p>{@code ObjectMapper} is instantiated directly rather than {@code @Autowired}, to keep this
  * test independent of how Jackson auto-configuration wires beans in the app context.
@@ -60,13 +63,10 @@ class DocumentControllerTest {
   @MockitoBean private DocumentService documentService;
 
   private UUID id;
-  private UUID ownerId;
   private DocumentDto dto;
 
   @BeforeEach
   void setUp() {
-    ownerId = UUID.randomUUID();
-
     id = UUID.randomUUID();
     dto = new DocumentDto(id, "cin.pdf", "seal.png", null, null, UUID.randomUUID(), null);
   }
@@ -87,25 +87,19 @@ class DocumentControllerTest {
     verifyNoMoreInteractions(documentService);
   }
 
-  // ---------- save ----------
+  // ---------- getDocumentUrlById ----------
 
   @Test
-  void save_shouldPersistAndReturnDto() throws Exception {
-    DocumentDto inputDto = new DocumentDto(null, "cin.pdf", null, null, null, ownerId, null);
-    DocumentDto resultDto = new DocumentDto(id, "cin.pdf", null, null, null, ownerId, null);
-
-    when(documentService.save(inputDto)).thenReturn(resultDto);
+  void getDocumentUrlById_shouldReturnUrl() throws Exception {
+    String url = "https://seaweed.local/cin/cin.pdf?signed=1";
+    when(documentService.getFileUrlById(id)).thenReturn(url);
 
     mockMvc
-        .perform(
-            post(BASE_PATH + "/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(inputDto)))
+        .perform(get(BASE_PATH + "/{id}/url", id))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(id.toString()))
-        .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
+        .andExpect(content().string(url));
 
-    verify(documentService).save(inputDto);
+    verify(documentService).getFileUrlById(id);
     verifyNoMoreInteractions(documentService);
   }
 
@@ -155,6 +149,71 @@ class DocumentControllerTest {
         .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(documentService).getAllMy(any(), any(Pageable.class));
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- myDocument (url) ----------
+
+  @Test
+  void myDocument_shouldReturnUrl() throws Exception {
+    String url = "https://seaweed.local/cin/cin.pdf?signed=1";
+    when(documentService.getMyFileUrlById(any(), eq(id))).thenReturn(url);
+
+    mockMvc
+        .perform(get(BASE_PATH + "/me/{id}/url", id).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(content().string(url));
+
+    verify(documentService).getMyFileUrlById(any(), eq(id));
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- uploadMyDocument routes ----------
+
+  @Test
+  void uploadProfileImage_shouldUploadAsImageType() throws Exception {
+    MockMultipartFile file =
+        new MockMultipartFile("file", "pfp.png", MediaType.IMAGE_PNG_VALUE, "content".getBytes());
+    when(documentService.uploadMyDocument(any(), eq(FileType.IMAGE), any())).thenReturn(dto);
+
+    mockMvc
+        .perform(multipart(BASE_PATH + "/me/upload/pfp").file(file).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
+
+    verify(documentService).uploadMyDocument(any(), eq(FileType.IMAGE), any());
+    verifyNoMoreInteractions(documentService);
+  }
+
+  @Test
+  void uploadCin_shouldUploadAsCinType() throws Exception {
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "cin.pdf", MediaType.APPLICATION_PDF_VALUE, "content".getBytes());
+    when(documentService.uploadMyDocument(any(), eq(FileType.CIN), any())).thenReturn(dto);
+
+    mockMvc
+        .perform(multipart(BASE_PATH + "/me/upload/cin").file(file).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
+
+    verify(documentService).uploadMyDocument(any(), eq(FileType.CIN), any());
+    verifyNoMoreInteractions(documentService);
+  }
+
+  @Test
+  void uploadDiploma_shouldUploadAsDiplomaType() throws Exception {
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "dip.pdf", MediaType.APPLICATION_PDF_VALUE, "content".getBytes());
+    when(documentService.uploadMyDocument(any(), eq(FileType.DIPLOMA), any())).thenReturn(dto);
+
+    mockMvc
+        .perform(multipart(BASE_PATH + "/me/upload/dip").file(file).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()));
+
+    verify(documentService).uploadMyDocument(any(), eq(FileType.DIPLOMA), any());
     verifyNoMoreInteractions(documentService);
   }
 }

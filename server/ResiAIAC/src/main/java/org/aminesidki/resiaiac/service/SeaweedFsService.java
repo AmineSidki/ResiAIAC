@@ -12,5 +12,7 @@ public interface SeaweedFsService {
 
   void createBucket(String bucketName);
 
+  void deleteBucket(String bucketName);
+
   boolean bucketExists(String bucketName);
 }

@@ -1,10 +1,11 @@
 package org.aminesidki.resiaiac.controller;
 
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.dto.request.DocumentUpdateRequest;
+import org.aminesidki.resiaiac.enumeration.FileType;
 import org.aminesidki.resiaiac.service.DocumentService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,21 +31,42 @@ public class DocumentController {
     return ResponseEntity.ok(documentService.getAllMy(jwt, pageable));
   }
 
-  @PostMapping("/upload")
-  public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
-    return ResponseEntity.ok(null);
+  @GetMapping("/me/{id}/url")
+  public ResponseEntity<?> myDocument(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+    return ResponseEntity.ok(documentService.getMyFileUrlById(jwt, id));
+  }
+
+  @PostMapping("/me/upload/pfp")
+  public ResponseEntity<?> uploadProfileImage(
+      @AuthenticationPrincipal Jwt jwt, @RequestParam("file") MultipartFile file)
+      throws IOException {
+    return ResponseEntity.ok(documentService.uploadMyDocument(jwt, FileType.IMAGE, file));
+  }
+
+  @PostMapping("/me/upload/cin")
+  public ResponseEntity<?> uploadCin(
+      @AuthenticationPrincipal Jwt jwt, @RequestParam("file") MultipartFile file)
+      throws IOException {
+    return ResponseEntity.ok(documentService.uploadMyDocument(jwt, FileType.CIN, file));
+  }
+
+  @PostMapping("/me/upload/dip")
+  public ResponseEntity<?> uploadDiploma(
+      @AuthenticationPrincipal Jwt jwt, @RequestParam("file") MultipartFile file)
+      throws IOException {
+    return ResponseEntity.ok(documentService.uploadMyDocument(jwt, FileType.DIPLOMA, file));
+  }
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/{id}/url")
+  public ResponseEntity<?> getDocumentUrlById(@PathVariable UUID id) {
+    return ResponseEntity.ok(documentService.getFileUrlById(id));
   }
 
   @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
   public ResponseEntity<?> getById(@PathVariable UUID id) {
     return ResponseEntity.ok(documentService.getById(id));
-  }
-
-  @PreAuthorize("hasAnyRole('RESPONSABLE')")
-  @PostMapping("/")
-  public ResponseEntity<?> save(@RequestBody @Valid DocumentDto dto) {
-    return ResponseEntity.ok(documentService.save(dto));
   }
 
   @PreAuthorize("hasAnyRole('MANAGER')")

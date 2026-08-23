@@ -20,7 +20,7 @@ public class SeaweedFsTestController {
     seaweedFsService.createBucket(value);
   }
 
-  @GetMapping("/{bucket}/{key}/")
+  @GetMapping("/{bucket}/{key}")
   public ResponseEntity<?> get(@PathVariable String bucket, @PathVariable String key) {
     return ResponseEntity.ok(seaweedFsService.getFileUrl(bucket, key, 300));
   }
