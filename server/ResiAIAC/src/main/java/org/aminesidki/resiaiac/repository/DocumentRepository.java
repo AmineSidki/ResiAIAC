@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
   Page<Document> findAllByProprietaire(Utilisateur proprietaire, Pageable pageable);
+
+  Document findFirstByNomSceauAndProprietaire(String nomSceau, Utilisateur proprietaire);
 }

@@ -62,6 +62,11 @@ public class SeaweedFsServiceImpl implements SeaweedFsService {
   }
 
   @Override
+  public void deleteBucket(String bucketName) {
+    client.deleteBucket(DeleteBucketRequest.builder().bucket(bucketName).build());
+  }
+
+  @Override
   public boolean bucketExists(String bucketName) {
     try {
       client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
