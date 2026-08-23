@@ -1,8 +1,11 @@
-package org.aminesidki.resiaiac.exception;
+package org.aminesidki.resiaiac.exception.handler;
 
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.aminesidki.resiaiac.dto.response.ErrorResponse;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
+import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
+import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

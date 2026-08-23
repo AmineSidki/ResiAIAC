@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/email-test")
 public class EmailTestController {
-
   private final EmailService emailService;
 
   @PostMapping("/")

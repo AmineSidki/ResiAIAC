@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.aminesidki.resiaiac.dto.response.ErrorResponse;
-import org.aminesidki.resiaiac.exception.GlobalExceptionHandler;
 import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.exception.RoomFullException;
