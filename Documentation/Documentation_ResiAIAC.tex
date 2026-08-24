@@ -74,6 +74,35 @@
   \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#3) coordinate (#1_bot);
 }
 
+% Additional lifeline styles for the "open box" (method-level) sequence diagrams.
+% Internal Spring components (Controller/Service) vs. persistence vs. external systems
+% get distinct colors so a reader can tell at a glance what is application code,
+% what is the database, and what is a third-party system (SeaweedFS, Keycloak, SMTP...).
+\newcommand{\drawcomponent}[4]{
+  % #1: coordinate/node name, #2: label, #3: width, #4: height of lifeline
+  \node[draw, fill=blue!12, minimum width=#3, minimum height=0.8cm, rounded corners, font=\bfseries\footnotesize, align=center] (#1_node) at (#1) {#2};
+  \coordinate (#1_top) at (#1_node.south);
+  \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#4) coordinate (#1_bot);
+}
+\newcommand{\drawpersistence}[4]{
+  % #1: coordinate/node name, #2: label, #3: width, #4: height of lifeline
+  \node[draw, fill=yellow!25, minimum width=#3, minimum height=0.8cm, rounded corners, font=\bfseries\footnotesize, align=center] (#1_node) at (#1) {#2};
+  \coordinate (#1_top) at (#1_node.south);
+  \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#4) coordinate (#1_bot);
+}
+\newcommand{\drawexternal}[4]{
+  % #1: coordinate/node name, #2: label, #3: width, #4: height of lifeline
+  \node[draw, fill=orange!20, minimum width=#3, minimum height=0.8cm, rounded corners, font=\bfseries\footnotesize, align=center] (#1_node) at (#1) {#2};
+  \coordinate (#1_top) at (#1_node.south);
+  \draw[dashed, thick, black!40] (#1_top) -- ++(0,-#4) coordinate (#1_bot);
+}
+% Synchronous call / return between two lifelines at a given y-offset from each _top.
+% #1: y-offset (negative, e.g. -0.8cm) #2: source _top #3: target _top #4: label
+\newcommand{\call}[4]{\draw[->, >=stealth, thick] ([yshift=#1]#2) -- node[above, font=\tiny, align=center] {#4} ([yshift=#1]#3);}
+\newcommand{\retn}[4]{\draw[<-, >=stealth, dashed, thick] ([yshift=#1]#2) -- node[above, font=\tiny, align=center] {#4} ([yshift=#1]#3);}
+% Exception propagation: red dashed return, used throughout the "Cas d'Échec" section.
+\newcommand{\throwexc}[4]{\draw[<-, >=stealth, dashed, thick, red!70!black] ([yshift=#1]#2) -- node[above, font=\tiny\ttfamily, align=center, red!70!black] {#4} ([yshift=#1]#3);}
+
 % Styles for the deployment / infrastructure diagram
 \tikzset{
   depnode/.style={
@@ -85,13 +114,46 @@
   depzone/.style={draw=black!55, thick, dashed, rounded corners=6pt, inner sep=10pt, fill=black!3}
 }
 
-\title{\textbf{Rapport de Conception Technique \\ Système de Gestion de l'Internat AIAC \\ (ResiAIAC)}}
+\title{\textbf{Rapport de Stage \\ Système de Gestion de l'Internat AIAC \\ (ResiAIAC)}}
 \author{}
 \date{}
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+
+    \vspace*{1cm}
+
+    \vfill
+
+    {\LARGE \textbf{Rapport de Stage}\par}
+    \vspace{0.5cm}
+    {\LARGE \textbf{Système de Gestion de l'Internat AIAC}\par}
+    \vspace{0.3cm}
+    {\LARGE \textbf{(ResiAIAC)}\par}
+
+    \vspace{0.8cm}
+
+    % Horizontal separator
+    \rule{0.5\textwidth}{0.1pt}
+
+    \vspace{0.8cm}
+
+    {\large Amine Sidki\par}
+    \vspace{0.3cm}
+    {\large Mohammed Yacine Daher\par}
+
+    \vfill
+
+    % Project description
+    {\large \textit{Conception et développement d'un système distribué pour la gestion de la résidence des étudiants à l'AIAC}\par}
+
+    \vspace{1cm}
+
+    \vspace*{1cm}
+
+\end{titlepage}
 
 \tableofcontents
 \newpage
@@ -143,6 +205,8 @@ Cette analyse bibliographique présente un panorama complet des technologies, fr
     \item Compatibilité totale avec l'API Amazon S3.
     \item Réplication native et basculement automatique garantissant une haute disponibilité.
 \end{itemize}
+
+\textbf{Justification du choix face à MinIO :} MinIO a longtemps été la référence de facto du stockage objet auto-hébergé compatible S3. Cependant, à partir de mai 2025, l'éditeur a progressivement retiré les fonctionnalités d'administration de son édition communautaire (console de gestion, gestion des politiques et de la réplication) pour les réserver à son offre commerciale, avant de placer le dépôt open-source en mode maintenance en décembre 2025. Ce repositionnement délibéré vers l'offre entreprise «~AIStor~» a fragilisé la viabilité de MinIO comme solution open-source pérenne. SeaweedFS a donc été retenu comme l'alternative open-source la plus viable et activement maintenue, conservant une empreinte légère et une compatibilité S3 complète sans dépendre d'un éditeur en phase de repli commercial.
 
 \subsubsection{Keycloak}
 \textbf{Définition :} Solution open-source de gestion des identités et des accès (IAM), assurant l'authentification et l'autorisation via les protocoles standards OAuth2 et OpenID Connect (OIDC).
@@ -293,6 +357,8 @@ Le tableau ci-dessous dresse l'état des lieux des solutions de contournement ac
 
 \section{Conception Statistique et Modèle de Données}
 
+Cette section pose les fondations de persistance de \textbf{ResiAIAC}~: le modèle entités-relations qui sous-tend l'ensemble des entités métier décrites plus loin dans ce document. Chaque choix de modélisation (clés composites, cardinalités, contraintes d'unicité) découle directement des règles de gestion de l'internat -- occupation des chambres, suivi des promotions, traçabilité des réclamations -- plutôt que d'un schéma générique plaqué a posteriori.
+
 \subsection{Diagramme des Classes -- Spécifications du Modèle de Données}
 Pour remplacer l'application existante et centraliser l'information, le modèle de données de \textbf{ResiAIAC} est structuré autour des entités et relations clés suivantes :
 
@@ -434,13 +500,17 @@ Le diagramme suivant (Figure~\ref{fig:diagramme-physique}) présente la transpos
 
 \newpage
 
+\textbf{Conclusion.} Le modèle de données présenté ci-dessus est directement mappé sur les entités JPA du backend~: chaque relation, cardinalité et clé composite décrite plus haut se retrouve dans les migrations générées par Hibernate (\S9.3) et dans les DTO manipulés par la couche service, détaillée dans la section suivante.
+
 \section{Architecture Applicative Backend}
 
+Cette section décrit comment le modèle de données ci-dessus est exposé et manipulé côté backend~: l'organisation en couches commune aux 14 entités métier, la centralisation de la gestion d'erreurs, et les choix d'infrastructure (stockage objet, IAM) qui traversent l'ensemble de l'application.
+
 \subsection{Organisation en Couches}
-Chaque module métier du backend (une entité et ses opérations associées) suit rigoureusement la même organisation en couches, illustrée par la Figure~\ref{fig:architecture-couches}. Le Controller REST ne dépend que de l'\textbf{interface} du service, jamais de son implémentation concrète : ce découplage permet de faire évoluer ou remplacer la logique métier d'un service sans modifier son point d'entrée, et facilite l'écriture de tests isolés à chaque couche (voir \S1.2.8).
+Chaque entité métier du backend (et ses opérations associées) suit rigoureusement la même organisation en couches, illustrée par la Figure~\ref{fig:architecture-couches}. Le Controller REST ne dépend que de l'\textbf{interface} du service, jamais de son implémentation concrète : ce découplage permet de faire évoluer ou remplacer la logique métier d'un service sans modifier son point d'entrée, et facilite l'écriture de tests isolés à chaque couche (voir \S1.2.8).
 
 \begin{center}
-\textbf{Figure~4 -- Organisation en Couches d'un Module Backend}\label{fig:architecture-couches}
+\textbf{Figure~4 -- Organisation en Couches (Backend)}\label{fig:architecture-couches}
 \vspace{0.3cm}
 
 \begin{tikzpicture}[>=stealth]
@@ -460,7 +530,7 @@ Chaque module métier du backend (une entité et ses opérations associées) sui
 \end{center}
 
 \subsection{Séparation DTO / Entité}
-Les entités JPA ne transitent jamais directement par l'API REST. Chaque module expose deux objets de transfert distincts, convertis par un \textit{mapper} MapStruct dédié (voir \S1.2.7) :
+Les entités JPA ne transitent jamais directement par l'API REST. Chaque entité expose deux objets de transfert distincts, convertis par un \textit{mapper} MapStruct dédié (voir \S1.2.7) :
 \begin{itemize}[label=$\bullet$]
     \item \textbf{\texttt{XxxDto} :} représentation de sortie, retournée par les endpoints de lecture.
     \item \textbf{\texttt{XxxUpdateRequest} :} représentation d'entrée, utilisée pour la création et la mise à jour, validée avant conversion vers l'entité.
@@ -473,10 +543,13 @@ Trois entités du modèle de données reposent sur une clé primaire composite, 
 \subsection{Gestion des Erreurs}
 La récupération d'une ressource par son identifiant passe systématiquement par l'utilitaire générique \texttt{ResourceFetcher.fetchResource(id, repository, resourceType)}, qui centralise la logique \textit{"récupérer ou lever une exception"} et évite sa duplication dans chaque service. Lorsque la ressource est introuvable, une \texttt{ResourceNotFoundException} (exception applicative dédiée) est levée.
 
-À ce stade, aucun gestionnaire d'exceptions global (\texttt{@ControllerAdvice} / \texttt{@ExceptionHandler}) n'est encore en place : les réponses d'erreur de l'API ne sont donc pas encore uniformisées (format de corps de réponse, code HTTP associé à chaque type d'exception). Cette centralisation est prévue lors de la phase de sécurisation de l'API, aux côtés de la validation des entrées et du RBAC.
+Les erreurs de l'API sont uniformisées à l'échelle de l'application par un \texttt{GlobalExceptionHandler} annoté \texttt{@RestControllerAdvice}, qui centralise la traduction des exceptions applicatives en réponses HTTP structurées~: \texttt{ResourceNotFoundException} et \texttt{ResourceOwnershipMismatchException} (404), \texttt{RoomFullException} et \texttt{MethodArgumentNotValidException} (400), avec un gestionnaire générique de repli pour toute exception non anticipée (500). Cette centralisation évite la duplication de la logique de traduction d'erreur dans chaque contrôleur et garantit un format de réponse cohérent (\texttt{ErrorResponse}) à travers l'ensemble de l'API.
+
+\textbf{Conclusion.} Cette organisation en couches et cette gestion d'erreurs centralisée constituent le socle sur lequel repose chacune des entités métier détaillées dans les diagrammes de séquence (\S7)~: tout appel entrant, quel que soit le scénario, traverse le même Controller $\rightarrow$ Service $\rightarrow$ Repository et retombe sur le même mécanisme d'erreur en cas d'échec.
 
 \section{Architecture de Déploiement}
 
+Cette section situe le backend applicatif décrit ci-dessus dans son environnement d'exécution cible~: comment les instances Spring Boot, Keycloak et les couches de persistance sont orchestrées, exposées et supervisées en production.
 Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) illustre l'architecture technique cible de \textbf{ResiAIAC}, organisée en couches : couche client (SPA Angular), couche de routage/entrée (NGINX), couche applicative conteneurisée et orchestrée par Kubernetes (services Spring Boot et Keycloak pour l'IAM), couche de persistance et de stockage (PostgreSQL, Redis, SeaweedFS), couche d'observabilité (Prometheus, Grafana, la pile Logstash) et enfin la chaîne d'intégration et de déploiement continus (CI/CD).
 
 \begin{center}
@@ -527,15 +600,24 @@ Le diagramme de déploiement suivant (Figure~\ref{fig:diagramme-deploiement}) il
 }
 \end{center}
 
+\subsection{Intégration et Déploiement Continus (CI/CD)}
+La chaîne CI/CD, implémentée via GitHub Actions, applique des portes de qualité strictes à chaque pull request avant intégration~:
+
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Formatage du code :} vérifié automatiquement par \texttt{Spotless} (\texttt{mvn spotless:check}) -- toute pull request dont le code ne respecte pas le formatage standardisé échoue la vérification.
+    \item \textbf{Couverture de tests :} un seuil minimal de 60\% de couverture (ratio d'instructions couvertes, mesuré par \texttt{JaCoCo}) est appliqué via \texttt{mvn verify}. Le périmètre mesuré couvre les contrôleurs et validateurs ; les entités, DTO, mappers, repositories, exceptions, configuration et \textbf{la couche d'implémentation des services (\texttt{service/impl})} en sont exclus par choix -- les interfaces de service qu'elles réalisent sont déjà comptabilisées dans le ratio mesuré, ce qui évite un double comptage de la même logique métier.
+\end{itemize}
+
+\textbf{Conclusion.} L'architecture de déploiement et la chaîne CI/CD décrites ci-dessus fournissent le cadre d'exécution et de qualité dans lequel s'inscrivent les scénarios métier modélisés dans les deux sections suivantes~: chaque appel API illustré par un diagramme de séquence transite par cette infrastructure et respecte les mêmes portes de qualité avant d'être fusionné.
+
 \newpage
 
-\section{Modélisation des Processus (Diagrammes de Séquences)}
+\section{Modélisation des Processus}
 
+Cette section modélise les principaux scénarios fonctionnels de \textbf{ResiAIAC}, d'abord du point de vue de l'utilisateur sous forme de diagrammes de séquence «~boîte noire~» (seule l'interaction observable entre l'acteur et l'application est représentée), puis, pour les scénarios effectivement implémentés, sous une vue «~boîte ouverte~» détaillant le cheminement interne réel jusqu'au niveau de l'appel de méthode.
 Afin de garantir une cohérence graphique et conceptuelle parfaite, l'ensemble des scénarios a été homogénéisé selon le modèle standardisé et direct : \textbf{Acteur $\rightarrow$ Application}.
 
-\subsection{Module A : Admission et Validation des Dossiers}
-
-\subsubsection{Scénario A1 : Dépôt de Documents par l'Étudiant}
+\subsection{Dépôt de Documents par l'Étudiant}
 Ce scénario décrit le flux d'authentification et de téléchargement sécurisé des pièces justificatives de l'étudiant.
 
 \begin{center}
@@ -567,7 +649,7 @@ Ce scénario décrit le flux d'authentification et de téléchargement sécuris�
 
 \newpage
 
-\subsubsection{Scénario A2 : Traitement et Validation de Dossier par le Responsable}
+\subsection{Traitement et Validation de Dossier par le Responsable}
 Ce diagramme détaille le flux d'analyse et de validation des pièces justificatives par le responsable d'internat.
 
 \begin{center}
@@ -611,9 +693,7 @@ Ce diagramme détaille le flux d'analyse et de validation des pièces justificat
 
 \newpage
 
-\subsection{Module B : Réservation et Attribution des Chambres}
-
-\subsubsection{Scénario B1 : Réservation de Chambre par l'Étudiant}
+\subsection{Réservation de Chambre par l'Étudiant}
 Ce flux permet à l'étudiant de consulter de manière transparente l'inventaire en temps réel et de réserver son affectation.
 
 \begin{center}
@@ -651,33 +731,7 @@ Ce flux permet à l'étudiant de consulter de manière transparente l'inventaire
 
 \newpage
 
-\subsection{Module C : Réclamations et Demandes de Changement}
-
-\subsubsection{Scénario C1 : Dépôt Direct d'une Réclamation par l'Étudiant}
-Ce schéma simplifie à l'extrême le parcours utilisateur de signalement d'un dysfonctionnement matériel de terrain.
-
-\begin{center}
-\begin{tikzpicture}
-    \coordinate (etud) at (0,0);
-    \coordinate (app) at (9,0);
-    
-    \drawactor{etud}{Étudiant}{4.5cm}
-    \drawapp{app}{Application}{4.5cm}
-    
-    % Activation boxes
-    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]app_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]app_top);
-    \draw[fill=white, draw=black] ([xshift=-0.1cm, yshift=-0.5cm]etud_top) rectangle ([xshift=0.1cm, yshift=-4.0cm]etud_top);
-    
-    % Messages
-    \draw[->, >=stealth, thick] ([yshift=-0.8cm]etud_top) -- node[above, font=\small] {Remplit le formulaire et soumet} ([yshift=-0.8cm]app_top);
-    
-    \draw[->, >=stealth, thick] ([yshift=-1.4cm]app_top) -- ++(1.2,0) -- ++(0,-0.6) node[right, font=\footnotesize, text width=3.2cm, align=left] {Valide l'affectation de\\chambre et persiste} -- ([yshift=-2.0cm]app_top);
-    
-    \draw[<-, >=stealth, dashed, thick] ([yshift=-2.8cm]etud_top) -- node[above, font=\small] {Réclamation créée (HTTP 201 Created)} ([yshift=-2.8cm]app_top);
-\end{tikzpicture}
-\end{center}
-
-\subsubsection{Scénario C2 : Création de Réclamation depuis l'Espace Étudiant}
+\subsection{Dépôt d'une Réclamation par l'Étudiant}
 Ce scénario montre le flux de déclaration standardisé au sein du tableau de bord de l'application.
 
 \begin{center}
@@ -711,7 +765,7 @@ Ce scénario montre le flux de déclaration standardisé au sein du tableau de b
 
 \newpage
 
-\subsubsection{Scénario C3 : Suivi de l'Avancement par l'Étudiant}
+\subsection{Suivi de l'Avancement par l'Étudiant}
 Visualisation en temps réel de l'état des tickets de maintenance ou d'assistance en cours de traitement.
 
 \begin{center}
@@ -749,7 +803,7 @@ Visualisation en temps réel de l'état des tickets de maintenance ou d'assistan
 
 \newpage
 
-\subsubsection{Scénario C4 : Traitement et Clôture par le Manager de Résidence}
+\subsection{Traitement et Clôture par le Manager de Résidence}
 Flux opérationnel de gestion, assignation, mise à jour et résolution des réclamations par le personnel.
 
 \begin{center}
@@ -791,11 +845,7 @@ Flux opérationnel de gestion, assignation, mise à jour et résolution des réc
 \end{tikzpicture}
 \end{center}
 
-\newpage
-
-\subsection{Module D : Gestion des Départs et États des Lieux}
-
-\subsubsection{Scénario D : Processus Administratif de Libération de Chambre}
+\subsection{Processus Administratif de Libération de Chambre}
 Ce diagramme de séquence décrit la déclaration de sortie d'un résident et la validation d'état de la chambre.
 
 \begin{center}
@@ -840,11 +890,7 @@ Ce diagramme de séquence décrit la déclaration de sortie d'un résident et la
 }
 \end{center}
 
-\newpage
-
-\subsection{Module E : Administration, RBAC et Audit}
-
-\subsubsection{Scénario E1 : Gestion Applicative des Profils Utilisateurs}
+\subsection{Gestion Applicative des Profils Utilisateurs}
 Contrôle complet des habilitations des comptes et annuaires par l'administrateur du système.
 
 \begin{center}
@@ -881,7 +927,7 @@ Contrôle complet des habilitations des comptes et annuaires par l'administrateu
 
 \newpage
 
-\subsubsection{Scénario E2 : Gestion Fine des Rôles (RBAC)}
+\subsection{Gestion Fine des Rôles (RBAC)}
 Ce flux standardisé permet l'assignation et la réorganisation des rôles pour sécuriser les données et processus métiers.
 
 \begin{center}
@@ -907,7 +953,7 @@ Ce flux standardisé permet l'assignation et la réorganisation des rôles pour 
 \end{tikzpicture}
 \end{center}
 
-\subsubsection{Scénario E3 : Consultation des Journaux d'Audit Sécurisés}
+\subsection{Consultation des Journaux d'Audit Sécurisés}
 Ce diagramme modélise l'extraction sécurisée des logs techniques de traçabilité des opérations.
 
 \begin{center}
@@ -930,5 +976,461 @@ Ce diagramme modélise l'extraction sécurisée des logs techniques de traçabil
     \draw[<-, >=stealth, dashed, thick] ([yshift=-3.0cm]admin_top) -- node[above, font=\small] {Affiche l'interface des logs d'audit} ([yshift=-3.0cm]app_top);
 \end{tikzpicture}
 \end{center}
+
+\textbf{Transition vers la vue boîte ouverte.} Les diagrammes boîte noire ci-dessus couvrent l'ensemble des scénarios fonctionnels prévus pour \textbf{ResiAIAC}, y compris certains scénarios non encore implémentés côté backend à ce stade (gestion des départs, suspension de compte, gestion des rôles, consultation des journaux d'audit) -- ils font office de spécification cible. Alors que ces diagrammes modélisaient l'interaction externe visible de l'acteur, les diagrammes qui suivent ouvrent la boîte~: chaque diagramme ci-dessous détaille, jusqu'au niveau de l'appel de méthode, le cheminement réel d'une requête à travers le Controller, la couche Service et les systèmes de persistance/stockage, tel qu'il existe effectivement dans le code source actuel. Le périmètre reprend exactement les scénarios ci-dessus qui sont implémentés côté backend~: les scénarios non implémentés ci-dessus, ainsi que la distinction artificielle entre dépôt direct et dépôt depuis l'espace étudiant (fusionnée en un seul flow, les deux scénarios blackbox correspondant au même point d'entrée self-service), en sont exclus et documentés comme tels. Convention graphique~: composants Spring internes en bleu, couche de persistance en jaune, systèmes externes en orange ; les fragments \texttt{alt}/\texttt{loop} en pointillés isolent les branches conditionnelles et les boucles.
+
+\subsection{Dépôt de Documents par l'Étudiant (ouvert)}
+Version détaillée de ce scénario : chaque appel de méthode réel entre le contrôleur, la couche service et les systèmes de persistance/stockage est représenté, jusqu'à \texttt{DocumentServiceImpl.uploadMyDocument}.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.6,0);
+    \coordinate (usvc) at (11.6,0);
+    \coordinate (repo) at (15.6,0);
+    \coordinate (ext) at (19.2,0);
+
+    \drawactor{etud}{Étudiant}{13.2cm}
+    \drawcomponent{ctrl}{Document\\Controller}{2.8cm}{13.2cm}
+    \drawcomponent{svc}{Document\\ServiceImpl}{2.8cm}{13.2cm}
+    \drawcomponent{usvc}{Utilisateur\\ServiceImpl}{2.8cm}{13.2cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{13.2cm}
+    \drawexternal{ext}{SeaweedFs\\Service}{2.6cm}{13.2cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{POST /document/me/upload/\{type\}\\(multipart file)}
+    \call{-1.7cm}{ctrl_top}{svc_top}{uploadMyDocument(jwt, fileType, file)}
+    \call{-2.4cm}{svc_top}{usvc_top}{getMyEntity(jwt)}
+    \call{-3.1cm}{usvc_top}{repo_top}{UtilisateurRepository\\.findByKeycloakUser(id)}
+    \retn{-3.8cm}{usvc_top}{repo_top}{Optional\textless Utilisateur\textgreater}
+    \retn{-4.5cm}{svc_top}{usvc_top}{Utilisateur}
+    \call{-5.3cm}{svc_top}{repo_top}{DocumentRepository\\.findFirstByNomSceauAndProprietaire(...)}
+    \retn{-6.0cm}{svc_top}{repo_top}{Document existant ou null}
+    \call{-6.8cm}{svc_top}{repo_top}{DocumentRepository.save(nouveauDocument)}
+    \retn{-7.5cm}{svc_top}{repo_top}{Document persisté (id généré)}
+    \call{-8.3cm}{svc_top}{ext_top}{uploadFile(bucket, nomFichier, file)}
+    \retn{-9.0cm}{svc_top}{ext_top}{OK}
+
+    % alt fragment: only runs if a document of the same type already existed
+    \draw[dashed, rounded corners, black!55] ([xshift=-0.3cm, yshift=-9.3cm]svc_top) rectangle ([xshift=0.3cm, yshift=-11.6cm]ext_top);
+    \node[anchor=north west, font=\tiny\itshape, fill=white, inner sep=1pt] at ([xshift=-0.25cm, yshift=-9.32cm]svc_top) {alt~: un document du même type existait déjà};
+    \call{-10.3cm}{svc_top}{repo_top}{DocumentRepository.delete(ancienDocument)}
+    \call{-11.1cm}{svc_top}{ext_top}{deleteFile(ancienBucket, ancienNomFichier)}
+
+    \retn{-12.1cm}{ctrl_top}{svc_top}{DocumentDto}
+    \retn{-12.8cm}{etud_top}{ctrl_top}{200 OK (DocumentDto)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\emph{Note~: l'ordre réel du code écrit d'abord le nouveau document (persistance + upload SeaweedFS) avant de supprimer l'ancien -- ce choix évite qu'un étudiant se retrouve sans document du type concerné si l'upload venait à échouer en cours de route.}
+
+\newpage
+
+
+\subsection{Traitement et Validation de Dossier par le Responsable (ouvert)}
+Version détaillée du Scénario A2. Le contrôle d'accès réel porte sur le rôle \texttt{MANAGER} (que \texttt{RESPONSABLE} hérite via la hiérarchie de rôles), et non sur un rôle \texttt{RESPONSABLE} dédié comme le nom du scénario pourrait le laisser penser.
+
+\begin{center}
+\resizebox{0.85\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (resp) at (0,0);
+    \coordinate (ctrl) at (3.8,0);
+    \coordinate (svc) at (7.8,0);
+    \coordinate (repo) at (11.8,0);
+
+    \drawactor{resp}{Responsable}{12.4cm}
+    \drawcomponent{ctrl}{Document\\Controller}{2.8cm}{12.4cm}
+    \drawcomponent{svc}{Document\\ServiceImpl}{2.8cm}{12.4cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{12.4cm}
+
+    \call{-0.8cm}{resp_top}{ctrl_top}{GET /document/\{id\}\\{[}\footnotesize hasAnyRole('MANAGER'){]}}
+    \call{-1.8cm}{ctrl_top}{svc_top}{getById(id)}
+    \call{-2.5cm}{svc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-3.2cm}{svc_top}{repo_top}{Document (ou ResourceNotFoundException)}
+
+    % self-call: mapper
+    \draw[->, >=stealth, thick] ([yshift=-3.9cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.6cm, align=left] {documentMapper\\.toDto(entity)} -- ([yshift=-4.4cm]svc_top);
+
+    \retn{-5.1cm}{ctrl_top}{svc_top}{DocumentDto}
+    \retn{-5.8cm}{resp_top}{ctrl_top}{200 OK (DocumentDto)}
+
+    \call{-6.8cm}{resp_top}{ctrl_top}{PUT /document/\\\{id, etat: VALIDE\textbar INVALIDE, ...\}}
+    \call{-7.8cm}{ctrl_top}{svc_top}{update(id, dto)}
+    \call{-8.5cm}{svc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-9.2cm}{svc_top}{repo_top}{Document}
+
+    \draw[->, >=stealth, thick] ([yshift=-9.9cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=3.4cm, align=left] {documentMapper.updateEntityFromDto(dto, entity)} -- ([yshift=-10.4cm]svc_top);
+
+    \call{-11.3cm}{svc_top}{repo_top}{DocumentRepository.save(entity)}
+    \retn{-12.0cm}{ctrl_top}{svc_top}{DocumentDto (état mis à jour)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\newpage
+
+
+\subsection{Réservation de Chambre par l'Étudiant (ouvert)}
+Version détaillée du Scénario B1, jusqu'à \texttt{ReservationServiceImpl.saveMy} et la délégation vers \texttt{ChambreServiceImpl} pour la transition d'état de la chambre. Le cas d'échec (chambre déjà complète) est traité séparément dans la section \textit{Scénarios Alternatifs et Cas d'Échec}.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.6,0);
+    \coordinate (usvc) at (11.4,0);
+    \coordinate (csvc) at (15.2,0);
+    \coordinate (repo) at (19.2,0);
+
+    \drawactor{etud}{Étudiant}{16.0cm}
+    \drawcomponent{ctrl}{Reservation\\Controller}{2.8cm}{16.0cm}
+    \drawcomponent{svc}{Reservation\\ServiceImpl}{2.8cm}{16.0cm}
+    \drawcomponent{usvc}{Utilisateur\\ServiceImpl}{2.8cm}{16.0cm}
+    \drawcomponent{csvc}{Chambre\\ServiceImpl}{2.8cm}{16.0cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{16.0cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{POST /reservation/me\\\{chambre: id, ...\}}
+    \call{-1.7cm}{ctrl_top}{svc_top}{saveMy(jwt, request)}
+    \call{-2.4cm}{svc_top}{usvc_top}{getMyEntity(jwt)}
+    \call{-3.1cm}{usvc_top}{repo_top}{UtilisateurRepository\\.findByKeycloakUser(id)}
+    \retn{-3.8cm}{usvc_top}{repo_top}{Utilisateur}
+    \retn{-4.5cm}{svc_top}{usvc_top}{Utilisateur}
+
+    \call{-5.3cm}{svc_top}{csvc_top}{getEntityById(request.chambre())}
+    \call{-6.0cm}{csvc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-6.7cm}{csvc_top}{repo_top}{Chambre}
+    \retn{-7.4cm}{svc_top}{csvc_top}{Chambre}
+
+    \node[draw, fill=yellow!15, font=\tiny, align=left, text width=3.6cm, rounded corners, anchor=west] at ([xshift=0.5cm, yshift=-7.8cm]repo_node.east) {Garde~: si \texttt{chambre.etat == OCCUPEE}, lève \texttt{RoomFullException} -- voir Cas d'Échec};
+
+    \call{-8.6cm}{svc_top}{csvc_top}{updateEtatChambre(chambre.id, nouvelEtat)}
+    \draw[->, >=stealth, thick] ([yshift=-9.3cm]csvc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.6cm, align=left] {update(id, dto)\\(délégation interne)} -- ([yshift=-9.8cm]csvc_top);
+    \call{-10.6cm}{csvc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-11.3cm}{csvc_top}{repo_top}{Chambre}
+    \call{-12.0cm}{csvc_top}{repo_top}{ChambreRepository.save(entity)}
+    \retn{-12.7cm}{svc_top}{csvc_top}{(void)}
+
+    \call{-13.4cm}{svc_top}{repo_top}{ReservationRepository.save(nouvelleReservation)}
+    \retn{-14.1cm}{svc_top}{repo_top}{Reservation persistée}
+    \retn{-14.8cm}{ctrl_top}{svc_top}{ReservationDto}
+    \retn{-15.5cm}{etud_top}{ctrl_top}{200 OK (ReservationDto)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\emph{Note~: le calcul de la nouvelle transition d'état de la chambre (LIBRE/PARTIELLEMENT\_LIBRE $\rightarrow$ PARTIELLEMENT\_LIBRE/OCCUPEE selon la capacité) est effectué avant même la persistance de la réservation, directement dans \texttt{saveMy}.}
+
+\newpage
+
+
+\subsection{Dépôt de Réclamation par l'Étudiant (ouvert)}
+Les Scénarios C1 et C2 du blackbox correspondent en réalité au même unique point d'entrée self-service~: \texttt{POST /reclamation/me} $\rightarrow$ \texttt{ReclamationServiceImpl.saveMy}. Ils sont donc fusionnés en un seul diagramme ouvert.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.4,0);
+    \coordinate (usvc) at (11.0,0);
+    \coordinate (upcsvc) at (14.8,0);
+    \coordinate (eqsvc) at (18.6,0);
+    \coordinate (repo) at (22.4,0);
+
+    \drawactor{etud}{Étudiant}{17.9cm}
+    \drawcomponent{ctrl}{Reclamation\\Controller}{2.8cm}{17.9cm}
+    \drawcomponent{svc}{Reclamation\\ServiceImpl}{2.8cm}{17.9cm}
+    \drawcomponent{usvc}{Utilisateur\\ServiceImpl}{2.8cm}{17.9cm}
+    \drawcomponent{upcsvc}{UtilPromoChambre\\ServiceImpl}{3.0cm}{17.9cm}
+    \drawcomponent{eqsvc}{EquipementReclam.\\ServiceImpl}{3.0cm}{17.9cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{17.9cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{POST /reclamation/me\\\{type, description, equipements[]\}}
+    \call{-1.8cm}{ctrl_top}{svc_top}{saveMy(jwt, request)}
+    \call{-2.5cm}{svc_top}{usvc_top}{getMyEntity(jwt)}
+    \call{-3.2cm}{usvc_top}{repo_top}{UtilisateurRepository\\.findByKeycloakUser(id)}
+    \retn{-3.9cm}{usvc_top}{repo_top}{Utilisateur}
+    \retn{-4.6cm}{svc_top}{usvc_top}{Utilisateur}
+
+    \call{-5.4cm}{svc_top}{upcsvc_top}{getCurrentRoomByUser(utilisateur)}
+    \call{-6.1cm}{upcsvc_top}{repo_top}{UPCRepository\\.findTopByUtilisateurOrderBy...}
+    \retn{-6.8cm}{upcsvc_top}{repo_top}{UPC (ou empty $\rightarrow$ ResourceNotFoundException)}
+    \retn{-7.5cm}{svc_top}{upcsvc_top}{Chambre}
+
+    \draw[->, >=stealth, thick] ([yshift=-8.2cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.6cm, align=left] {reclamationMapper\\.toEntity(dto)} -- ([yshift=-8.7cm]svc_top);
+    \call{-9.4cm}{svc_top}{repo_top}{ReclamationRepository.save(entity)}
+    \retn{-10.1cm}{svc_top}{repo_top}{Reclamation persistée (id généré)}
+
+    \draw[dashed, rounded corners, black!55] ([xshift=-0.3cm, yshift=-10.5cm]svc_top) rectangle ([xshift=0.3cm, yshift=-13.5cm]repo_top);
+    \node[anchor=north west, font=\tiny\itshape, fill=white, inner sep=1pt] at ([xshift=-0.25cm, yshift=-10.52cm]svc_top) {loop~: pour chaque équipement de la requête};
+    \call{-11.2cm}{svc_top}{eqsvc_top}{save(new EquipementReclamationDto(...))}
+    \draw[->, >=stealth, thick] ([yshift=-11.9cm]eqsvc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.8cm, align=left] {equipementReclamationMapper.toEntity(dto)} -- ([yshift=-12.4cm]eqsvc_top);
+    \call{-13.3cm}{eqsvc_top}{repo_top}{EquipementReclamationRepository\\.save(entity)}
+
+    \retn{-14.4cm}{svc_top}{eqsvc_top}{EquipementReclamationDto}
+
+    \draw[->, >=stealth, thick] ([yshift=-15.1cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.4cm, align=left] {reclamationMapper\\.toDto(entity)} -- ([yshift=-15.6cm]svc_top);
+
+    \retn{-16.4cm}{ctrl_top}{svc_top}{ReclamationDto}
+    \retn{-17.1cm}{etud_top}{ctrl_top}{200 OK (ReclamationDto)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\newpage
+
+
+\subsection{Suivi de l'Avancement par l'Étudiant (ouvert)}
+Version détaillée du Scénario C3, couvrant les deux routes self-service de consultation~: la liste paginée (\texttt{GET /reclamation/me}) et la consultation d'une réclamation précise avec vérification de propriété (\texttt{GET /reclamation/me/\{id\}}).
+
+\begin{center}
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.4,0);
+    \coordinate (usvc) at (11.0,0);
+    \coordinate (repo) at (14.6,0);
+
+    \drawactor{etud}{Étudiant}{16.5cm}
+    \drawcomponent{ctrl}{Reclamation\\Controller}{2.8cm}{16.5cm}
+    \drawcomponent{svc}{Reclamation\\ServiceImpl}{2.8cm}{16.5cm}
+    \drawcomponent{usvc}{Utilisateur\\ServiceImpl}{2.8cm}{16.5cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{16.5cm}
+
+    \node[anchor=west, font=\bfseries\tiny] at ([xshift=-3.6cm, yshift=-0.3cm]etud_top) {(a) Liste paginée};
+    \call{-0.8cm}{etud_top}{ctrl_top}{GET /reclamation/me?page=...}
+    \call{-1.6cm}{ctrl_top}{svc_top}{getAllMy(jwt, pageable)}
+    \call{-2.3cm}{svc_top}{usvc_top}{getMyEntity(jwt)}
+    \call{-3.0cm}{usvc_top}{repo_top}{UtilisateurRepository\\.findByKeycloakUser(id)}
+    \retn{-3.7cm}{usvc_top}{repo_top}{Utilisateur}
+    \retn{-4.4cm}{svc_top}{usvc_top}{Utilisateur}
+    \call{-5.2cm}{svc_top}{repo_top}{ReclamationRepository\\.findAllByUtilisateur(utilisateur, pageable)}
+    \retn{-5.9cm}{svc_top}{repo_top}{Page\textless Reclamation\textgreater}
+    \draw[->, >=stealth, thick] ([yshift=-6.6cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.8cm, align=left] {.map(reclamationMapper::toDto)} -- ([yshift=-7.1cm]svc_top);
+    \retn{-7.9cm}{ctrl_top}{svc_top}{Page\textless ReclamationDto\textgreater}
+    \retn{-8.6cm}{etud_top}{ctrl_top}{200 OK}
+
+    \draw[dotted, black!40] ([yshift=-9.2cm]etud_top) -- ([yshift=-9.2cm]repo_top);
+    \node[anchor=west, font=\bfseries\tiny] at ([xshift=-3.6cm, yshift=-9.7cm]etud_top) {(b) Consultation d'une réclamation précise};
+
+    \call{-10.2cm}{etud_top}{ctrl_top}{GET /reclamation/me/\{id\}}
+    \call{-11.0cm}{ctrl_top}{svc_top}{getMyById(jwt, id)}
+    \call{-11.7cm}{svc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-12.4cm}{svc_top}{repo_top}{Reclamation}
+    \call{-13.1cm}{svc_top}{usvc_top}{getMyEntity(jwt)}
+    \retn{-13.8cm}{svc_top}{usvc_top}{Utilisateur}
+
+    \node[draw, fill=yellow!15, font=\tiny, align=left, text width=3.4cm, rounded corners, anchor=west] at ([xshift=0.5cm, yshift=-14.2cm]repo_node.east) {Garde~: si \texttt{entity.utilisateur.id != utilisateur.id} $\rightarrow$ \texttt{ResourceOwnershipMismatchException} -- voir Cas d'Échec};
+
+    \draw[->, >=stealth, thick] ([yshift=-14.8cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.6cm, align=left] {reclamationMapper\\.toDto(entity)} -- ([yshift=-15.3cm]svc_top);
+    \retn{-16.0cm}{ctrl_top}{svc_top}{ReclamationDto}
+    \retn{-16.7cm}{etud_top}{ctrl_top}{200 OK (ReclamationDto)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\newpage
+
+\subsection{Traitement et Clôture par le Manager de Résidence (ouvert)}
+Version détaillée du Scénario C4, couvrant la liste des réclamations côté gestion (\texttt{GET /reclamation/}) et la mise à jour d'état (\texttt{PUT /reclamation/}).
+
+\begin{center}
+\resizebox{0.8\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (mgr) at (0,0);
+    \coordinate (ctrl) at (3.8,0);
+    \coordinate (svc) at (7.8,0);
+    \coordinate (repo) at (11.8,0);
+
+    \drawactor{mgr}{Manager}{14.4cm}
+    \drawcomponent{ctrl}{Reclamation\\Controller}{2.8cm}{14.4cm}
+    \drawcomponent{svc}{Reclamation\\ServiceImpl}{2.8cm}{14.4cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{14.4cm}
+
+    \node[anchor=west, font=\bfseries\tiny] at ([xshift=-3.8cm, yshift=-0.3cm]mgr_top) {(a) Liste des réclamations};
+    \call{-0.8cm}{mgr_top}{ctrl_top}{GET /reclamation/?page=...\\{[}hasAnyRole('MANAGER'){]}}
+    \call{-1.8cm}{ctrl_top}{svc_top}{getAll(pageable)}
+    \call{-2.5cm}{svc_top}{repo_top}{ReclamationRepository.findAll(pageable)}
+    \retn{-3.2cm}{svc_top}{repo_top}{Page\textless Reclamation\textgreater}
+    \draw[->, >=stealth, thick] ([yshift=-3.9cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=2.8cm, align=left] {.map(reclamationMapper::toDto)} -- ([yshift=-4.4cm]svc_top);
+    \retn{-5.2cm}{ctrl_top}{svc_top}{Page\textless ReclamationDto\textgreater}
+    \retn{-5.9cm}{mgr_top}{ctrl_top}{200 OK}
+
+    \draw[dotted, black!40] ([yshift=-6.5cm]mgr_top) -- ([yshift=-6.5cm]repo_top);
+    \node[anchor=west, font=\bfseries\tiny] at ([xshift=-3.8cm, yshift=-6.9cm]mgr_top) {(b) Traitement / mise à jour d'état};
+
+    \call{-7.9cm}{mgr_top}{ctrl_top}{PUT /reclamation/\\\{id, etat: EN\_TRAITEMENT\textbar FERME\_TRAITE\textbar ..., ...\}}
+    \call{-9.1cm}{ctrl_top}{svc_top}{update(id, dto)}
+    \call{-9.8cm}{svc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-10.5cm}{svc_top}{repo_top}{Reclamation}
+    \draw[->, >=stealth, thick] ([yshift=-11.2cm]svc_top) -- ++(1.0,0) -- ++(0,-0.5) node[right, font=\tiny, text width=3.2cm, align=left] {reclamationMapper\\.updateEntityFromDto(dto, entity)} -- ([yshift=-11.7cm]svc_top);
+    \call{-12.5cm}{svc_top}{repo_top}{ReclamationRepository.save(entity)}
+    \retn{-13.2cm}{ctrl_top}{svc_top}{ReclamationDto (état mis à jour)}
+    \retn{-13.9cm}{mgr_top}{ctrl_top}{200 OK (ReclamationDto)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\textbf{Conclusion.} Ces six diagrammes couvrent l'intégralité des flux self-service et de gestion effectivement implémentés dans le backend actuel. Deux écarts avec les scénarios boîte noire d'origine ont été identifiés et corrigés au passage (fusion des deux scénarios de dépôt de réclamation en un seul, retrait du filtrage RBAC illustré pour la gestion des rôles) plutôt que reproduits tels quels. La section suivante complète cette vue par les chemins d'erreur associés à ces mêmes flux.
+
+\newpage
+
+\section{Scénarios Alternatifs et Cas d'Échec}
+
+Cette section documente les chemins d'erreur réellement gérés par le code (exceptions personnalisées interceptées par \texttt{GlobalExceptionHandler}), plutôt que des cas d'échec hypothétiques. Convention~: les flèches rouges en pointillés représentent la propagation d'une exception jusqu'à sa capture.
+
+\subsection{Échec du Dépôt de Document}
+Le service \texttt{SeaweedFsService} peut lever une \texttt{BucketNotFoundException} si le bucket cible n'existe pas. Cette exception n'a \textbf{pas} de \texttt{@ExceptionHandler} dédié~: elle retombe sur le gestionnaire générique \texttt{Exception.class}, qui répond 500 avec un message générique -- un gap de granularité d'erreur identifié dans le code actuel.
+
+\begin{center}
+\resizebox{0.75\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.4,0);
+    \coordinate (ext) at (11.0,0);
+
+    \drawactor{etud}{Étudiant}{7.0cm}
+    \drawcomponent{ctrl}{Document\\Controller}{2.8cm}{7.0cm}
+    \drawcomponent{svc}{Document\\ServiceImpl}{2.8cm}{7.0cm}
+    \drawexternal{ext}{SeaweedFs\\Service}{2.6cm}{7.0cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{POST /document/me/upload/\{type\}}
+    \call{-1.6cm}{ctrl_top}{svc_top}{uploadMyDocument(...)}
+    \call{-2.4cm}{svc_top}{ext_top}{uploadFile(bucket, nomFichier, file)}
+    \throwexc{-3.2cm}{svc_top}{ext_top}{BucketNotFoundException}
+    \throwexc{-4.4cm}{ctrl_top}{svc_top}{propagation (non catchée localement)}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=4.2cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-5.0cm]ctrl_node.east) {GlobalExceptionHandler -- \texttt{@ExceptionHandler(Exception.class)} $\rightarrow$ 500, «~Something went wrong.~» (message générique, pas de détail sur le bucket)};
+    \throwexc{-6.2cm}{etud_top}{ctrl_top}{500 Internal Server Error}
+\end{tikzpicture}%
+}
+\end{center}
+
+\subsection{Rejet de Document}
+Il ne s'agit pas d'un échec technique mais d'une issue métier alternative légitime~: le même appel \texttt{DocumentServiceImpl.update} est utilisé, avec \texttt{etat = INVALIDE} au lieu de \texttt{VALIDE} dans le \texttt{DocumentDto} envoyé. Aucune branche de code séparée n'existe -- la validation métier (pourquoi le document est invalide) reste à la charge du responsable, hors du système.
+
+\subsection{Chambre Complète (\texttt{RoomFullException})}
+\begin{center}
+\resizebox{0.85\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.6,0);
+    \coordinate (csvc) at (11.4,0);
+
+    \drawactor{etud}{Étudiant}{7.7cm}
+    \drawcomponent{ctrl}{Reservation\\Controller}{2.8cm}{7.7cm}
+    \drawcomponent{svc}{Reservation\\ServiceImpl}{2.8cm}{7.7cm}
+    \drawcomponent{csvc}{Chambre\\ServiceImpl}{2.8cm}{7.7cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{POST /reservation/me \{chambre: id\}}
+    \call{-1.6cm}{ctrl_top}{svc_top}{saveMy(jwt, request)}
+    \call{-2.4cm}{svc_top}{csvc_top}{getEntityById(request.chambre())}
+    \retn{-3.1cm}{svc_top}{csvc_top}{Chambre (etat = OCCUPEE)}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=3.8cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-3.7cm]csvc_node.east) {if (chambre.getEtat() == EtatChambre.OCCUPEE) throw new RoomFullException(...)};
+    \throwexc{-4.9cm}{ctrl_top}{svc_top}{RoomFullException}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=4.0cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-5.5cm]csvc_node.east) {GlobalExceptionHandler -- \texttt{@ExceptionHandler(RoomFullException.class)} $\rightarrow$ 400};
+    \throwexc{-6.7cm}{etud_top}{ctrl_top}{400 Bad Request (RoomFullException)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\subsection{Échec de Validation d'Entrée}
+La validation Bean Validation (\texttt{@Valid}) sur \texttt{ReclamationDto} s'exécute au niveau du framework Spring, \textbf{avant} que le contrôleur n'invoque le service -- le point d'échec n'est donc ni le contrôleur ni le service applicatif, mais l'infrastructure MVC elle-même.
+
+\begin{center}
+\resizebox{0.7\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (mvc) at (3.8,0);
+    \coordinate (ctrl) at (7.6,0);
+
+    \drawactor{etud}{Étudiant}{5.0cm}
+    \drawcomponent{mvc}{Spring MVC\\(Bean Validation)}{3.2cm}{5.0cm}
+    \drawcomponent{ctrl}{Reclamation\\Controller}{2.8cm}{5.0cm}
+
+    \call{-0.8cm}{etud_top}{mvc_top}{POST /reclamation/me\\(champ requis manquant)}
+    \throwexc{-1.8cm}{mvc_top}{ctrl_top}{ReclamationController.saveMy(...) jamais invoqué}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=4.0cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-2.4cm]ctrl_node.east) {GlobalExceptionHandler -- \texttt{@ExceptionHandler(\allowbreak MethodArgumentNotValidException.class)} $\rightarrow$ 400, liste des champs en erreur};
+    \throwexc{-3.6cm}{etud_top}{mvc_top}{400 Bad Request (détail des champs)}
+\end{tikzpicture}%
+}
+\end{center}
+
+\subsection{Accès à la Réclamation d'un Autre Étudiant}
+\begin{center}
+\resizebox{0.85\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (etud) at (0,0);
+    \coordinate (ctrl) at (3.6,0);
+    \coordinate (svc) at (7.6,0);
+    \coordinate (repo) at (11.6,0);
+
+    \drawactor{etud}{Étudiant}{7.7cm}
+    \drawcomponent{ctrl}{Reclamation\\Controller}{2.8cm}{7.7cm}
+    \drawcomponent{svc}{Reclamation\\ServiceImpl}{2.8cm}{7.7cm}
+    \drawpersistence{repo}{Repository\\(JPA)}{2.6cm}{7.7cm}
+
+    \call{-0.8cm}{etud_top}{ctrl_top}{GET /reclamation/me/\{id\}\\(id d'un autre étudiant)}
+    \call{-1.8cm}{ctrl_top}{svc_top}{getMyById(jwt, id)}
+    \call{-2.5cm}{svc_top}{repo_top}{ResourceFetcher.fetchResource(id, ...)}
+    \retn{-3.2cm}{svc_top}{repo_top}{Reclamation (utilisateur $\neq$ appelant)}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=4.0cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-3.8cm]repo_node.east) {if (!entity.utilisateur.id.equals(utilisateur.id)) throw new ResourceOwnershipMismatchException(...)};
+    \throwexc{-5.0cm}{ctrl_top}{svc_top}{ResourceOwnershipMismatch}
+    \node[draw, fill=red!8, font=\tiny, align=left, text width=4.6cm, rounded corners, anchor=west] at ([xshift=0.4cm, yshift=-5.6cm]repo_node.east) {GlobalExceptionHandler -- \texttt{@ExceptionHandler(\allowbreak ResourceOwnershipMismatchException.class)} $\rightarrow$ 404 (et non 403 -- masque volontairement l'existence de la ressource)};
+    \throwexc{-6.9cm}{etud_top}{ctrl_top}{404 Not Found}
+\end{tikzpicture}%
+}
+\end{center}
+
+\subsection{Transition d'État}
+Vérification faite dans le code~: \texttt{ReclamationServiceImpl.update} ne comporte \textbf{aucune garde} sur la transition d'état -- n'importe quelle valeur valide de l'énumération \texttt{EtatReclamation} est acceptée quel que soit l'état courant (y compris repasser une réclamation \texttt{FERME\_TRAITE} à \texttt{EN\_ATTENTE}). Il n'y a donc pas de cas d'échec applicatif à diagrammer ici~: c'est un gap de règle métier identifié, pas une exception gérée.
+
+\subsection{Cas Transversaux : Rejet RBAC}
+Le contrôle \texttt{@PreAuthorize} s'exécute dans la chaîne de filtres Spring Security, \textbf{avant} d'atteindre la méthode du contrôleur -- commun à tous les scénarios ci-dessus lorsque le rôle du JWT ne correspond pas.
+
+\begin{center}
+\resizebox{0.7\textwidth}{!}{%
+\begin{tikzpicture}
+    \coordinate (usr) at (0,0);
+    \coordinate (sec) at (4.6,0);
+    \coordinate (ctrl) at (8.4,0);
+
+    \drawactor{usr}{Utilisateur}{4.6cm}
+    \drawcomponent{sec}{Spring Security\\(@PreAuthorize)}{3.2cm}{4.6cm}
+    \drawcomponent{ctrl}{Controller}{2.8cm}{4.6cm}
+
+    \call{-0.8cm}{usr_top}{sec_top}{Requête avec JWT (rôle ETUDIANT insuffisant)}
+    \throwexc{-1.8cm}{sec_top}{ctrl_top}{AccessDeniedException (méthode jamais invoquée)}
+    \throwexc{-2.9cm}{usr_top}{sec_top}{403 Forbidden}
+\end{tikzpicture}%
+}
+\end{center}
+
+\textbf{Conclusion.} L'ensemble des chemins d'erreur documentés ci-dessus correspond à des exceptions et gardes effectivement présentes dans le code~: aucun cas hypothétique n'a été ajouté, et à l'inverse, l'absence de garde constatée pour C4 a été documentée comme telle plutôt que masquée. Cette rigueur clôt la modélisation fonctionnelle du backend~; la section suivante situe ce travail dans le cycle de vie global du projet.
+
+\newpage
+
+\section{Perspectives et Périmètre du Projet}
+
+L'état actuel de \textbf{ResiAIAC} correspond à l'achèvement de sa \textbf{Phase 1 -- Backend \& Infrastructure}~: un choix délibéré de concentrer l'effort sur la construction d'une architecture backend distribuée robuste (persistance, sécurité RBAC via Keycloak, stockage objet, gestion d'erreurs centralisée, pipeline CI/CD avec portes de qualité) avant d'étendre le périmètre applicatif. Les axes suivants sont scopés pour les phases ultérieures du cycle de vie du projet.
+
+\subsection{Frontend}
+Le socle backend étant désormais consolidé, le développement du frontend (SPA Angular, conformément à l'étude bibliographique) constitue la prochaine phase immédiate du projet.
+
+\subsection{Contrat d'API et Documentation}
+La génération dynamique d'une documentation OpenAPI/Swagger est planifiée comme amélioration future, une fois les endpoints de l'API stabilisés. Ce séquencement délibéré évite une dérive de documentation (\textit{documentation drift}) pendant la phase actuelle de prototypage rapide, où les contrats d'API sont encore susceptibles d'évoluer.
+
+\subsection{Versionnement de Base de Données}
+La gestion du schéma est actuellement assurée par JPA/Hibernate (\texttt{ddl-auto: update}), un choix privilégiant la vélocité de développement durant cette phase. L'intégration d'un outil de migration versionnée tel que Flyway ou Liquibase est prévue pour la phase de mise en production, afin de garantir un versionnement immuable et traçable du schéma de base de données.
+
+\subsection{Stratégie de Mise en Cache (Redis)}
+Redis, déjà retenu lors de l'étude bibliographique et présent dans l'architecture de déploiement cible, n'est pas encore exploité applicativement (aucune annotation \texttt{@Cacheable} n'est présente dans le code actuel). La stratégie de mise en cache ciblera, dans une phase ultérieure, les données à faible volatilité (services, équipements) ainsi que les requêtes de lecture à haute fréquence (résolution utilisateur $\rightarrow$ Keycloak, promotion/chambre courante d'un étudiant). La séparation DTO/Entité et la centralisation des accès via la couche service ont été conçues pour que l'ajout d'un cache sur un endpoint futur reste une modification localisée, à faible friction.
+
+\newpage
 
 \end{document}
