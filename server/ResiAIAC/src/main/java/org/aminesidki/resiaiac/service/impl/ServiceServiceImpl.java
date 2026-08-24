@@ -8,22 +8,28 @@ import org.aminesidki.resiaiac.mapper.ServiceMapper;
 import org.aminesidki.resiaiac.repository.ServiceRepository;
 import org.aminesidki.resiaiac.service.ServiceService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @RequiredArgsConstructor
 @org.springframework.stereotype.Service
+@CacheConfig(cacheNames = "services")
 public class ServiceServiceImpl implements ServiceService {
 
   private final ServiceRepository serviceRepository;
   private final ServiceMapper serviceMapper;
 
   @Override
+  @Cacheable(key = "'all'")
   public List<ServiceDto> getAll() {
     return serviceRepository.findAll().stream().map(serviceMapper::toDto).toList();
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public ServiceDto save(ServiceDto dto) {
     Service entity = serviceMapper.toEntity(dto);
     entity = serviceRepository.save(entity);
@@ -32,12 +38,14 @@ public class ServiceServiceImpl implements ServiceService {
 
   @Transactional(readOnly = true)
   @Override
+  @Cacheable(key = "#id")
   public ServiceDto getById(Long id) {
     Service entity = ResourceFetcher.fetchResource(id, serviceRepository, "Service");
     return serviceMapper.toDto(entity);
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public ServiceDto update(Long id, ServiceDto dto) {
     Service entity = ResourceFetcher.fetchResource(id, serviceRepository, "Service");
     serviceMapper.updateEntityFromDto(dto, entity);
@@ -46,6 +54,7 @@ public class ServiceServiceImpl implements ServiceService {
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public void delete(Long id) {
     serviceRepository.delete(ResourceFetcher.fetchResource(id, serviceRepository, "Service"));
   }

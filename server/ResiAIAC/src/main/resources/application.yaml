@@ -6,13 +6,20 @@ spring:
     web:
       pageable:
         max-page-size: 20
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+  cache:
+    type: redis
 
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: ${SPRING_KC_JWT_URI:http://keycloak:8090/realms/ResiAIAC/protocol/openid-connect/certs}
-#          issuer-uri: http://keycloak:8090/realms/ResiAIAC
+  #          issuer-uri: http://keycloak:8090/realms/ResiAIAC
 
   datasource:
     url: ${DB_URL}
@@ -37,7 +44,7 @@ spring:
             enable: true
           connectiontimeout: 5000
           timeout: 5000
-          
+
 keycloak:
   admin:
     server-url: ${SPRING_KC_URL}
