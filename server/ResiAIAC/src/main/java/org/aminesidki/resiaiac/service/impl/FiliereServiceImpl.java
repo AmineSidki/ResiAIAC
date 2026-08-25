@@ -8,23 +8,29 @@ import org.aminesidki.resiaiac.mapper.FiliereMapper;
 import org.aminesidki.resiaiac.repository.FiliereRepository;
 import org.aminesidki.resiaiac.service.FiliereService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Transactional
 @Service
+@CacheConfig(cacheNames = "filieres")
 public class FiliereServiceImpl implements FiliereService {
 
   private final FiliereRepository filiereRepository;
   private final FiliereMapper filiereMapper;
 
   @Override
+  @Cacheable(key = "'all'")
   public List<FiliereDto> getAll() {
     return filiereRepository.findAll().stream().map(filiereMapper::toDto).toList();
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public FiliereDto save(FiliereDto dto) {
     Filiere entity = filiereMapper.toEntity(dto);
     entity = filiereRepository.save(entity);
@@ -33,12 +39,14 @@ public class FiliereServiceImpl implements FiliereService {
 
   @Transactional(readOnly = true)
   @Override
+  @Cacheable(key = "#id")
   public FiliereDto getById(Long id) {
     Filiere entity = ResourceFetcher.fetchResource(id, filiereRepository, "Filiere");
     return filiereMapper.toDto(entity);
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public FiliereDto update(Long id, FiliereDto dto) {
     Filiere entity = ResourceFetcher.fetchResource(id, filiereRepository, "Filiere");
     filiereMapper.updateEntityFromDto(dto, entity);
@@ -47,6 +55,7 @@ public class FiliereServiceImpl implements FiliereService {
   }
 
   @Override
+  @CacheEvict(allEntries = true)
   public void delete(Long id) {
     filiereRepository.delete(ResourceFetcher.fetchResource(id, filiereRepository, "Filiere"));
   }
