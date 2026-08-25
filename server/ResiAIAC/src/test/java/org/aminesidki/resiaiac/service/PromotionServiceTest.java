@@ -42,6 +42,8 @@ class PromotionServiceTest {
 
   @Mock private PromotionMapper promotionMapper;
 
+  @Mock private FiliereService filiereService;
+
   private PromotionService promotionService;
 
   private UUID id;
@@ -50,7 +52,8 @@ class PromotionServiceTest {
 
   @BeforeEach
   void setUp() {
-    promotionService = new PromotionServiceImpl(promotionRepository, promotionMapper);
+    promotionService =
+        new PromotionServiceImpl(filiereService, promotionRepository, promotionMapper);
 
     id = UUID.randomUUID();
     entity = Promotion.builder().id(id).anneeDeDepart(2024L).anneeDeFin(2027L).niveau(1).build();

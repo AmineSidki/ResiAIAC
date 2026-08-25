@@ -55,6 +55,24 @@ public class DocumentServiceImpl implements DocumentService {
 
   @Transactional(readOnly = true)
   @Override
+  public DocumentDto getMyById(Jwt jwt, UUID id) {
+    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    Document entity = ResourceFetcher.fetchResource(id, documentRepository, "Document");
+    if (entity.getProprietaire().equals(utilisateur)) return documentMapper.toDto(entity);
+    throw new ResourceOwnershipMismatchException(
+        "Queried resource does not belong to querying user !");
+  }
+
+  @Override
+  public Page<DocumentDto> getAllMyByStatus(Jwt jwt, EtatDocument etat, Pageable pageable) {
+    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    return documentRepository
+        .getAllByProprietaireAndEtat(id, etat, pageable)
+        .map(documentMapper::toDto);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
   public Page<DocumentDto> getAllMy(Jwt jwt, Pageable pageable) {
     Utilisateur id = utilisateurService.getMyEntity(jwt);
     return documentRepository.findAllByProprietaire(id, pageable).map(documentMapper::toDto);
@@ -77,6 +95,16 @@ public class DocumentServiceImpl implements DocumentService {
     seaweedFsService.uploadFile(fileType.getBucketName(), randomizedName, file);
     if (sameTypeUploadedDocument != null) deleteAlreadyFetched(sameTypeUploadedDocument);
     return documentMapper.toDto(entity);
+  }
+
+  @Override
+  public Page<DocumentDto> getAll(Pageable pageable) {
+    return documentRepository.findAllBy(pageable).map(documentMapper::toDto);
+  }
+
+  @Override
+  public Page<DocumentDto> getAllByStatus(EtatDocument etatDocument, Pageable pageable) {
+    return documentRepository.findAllByEtat(etatDocument, pageable).map(documentMapper::toDto);
   }
 
   @Transactional(readOnly = true)

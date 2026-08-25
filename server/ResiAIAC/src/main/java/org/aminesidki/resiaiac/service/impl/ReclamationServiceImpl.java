@@ -31,6 +31,16 @@ public class ReclamationServiceImpl implements ReclamationService {
   private final ReclamationRepository reclamationRepository;
   private final ReclamationMapper reclamationMapper;
 
+  @Transactional(readOnly = true)
+  @Override
+  public Page<ReclamationDto> getAllMyByStatus(Jwt jwt, EtatReclamation etat, Pageable pageable) {
+    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    return reclamationRepository
+        .findAllByUtilisateurAndEtat(id, etat, pageable)
+        .map(reclamationMapper::toDto);
+  }
+
+  @Transactional(readOnly = true)
   @Override
   public Page<ReclamationDto> getAllMy(Jwt jwt, Pageable pageable) {
     Utilisateur id = utilisateurService.getMyEntity(jwt);
@@ -72,6 +82,11 @@ public class ReclamationServiceImpl implements ReclamationService {
     }
     throw new ResourceOwnershipMismatchException(
         "Queried resource does not belong to querying user !");
+  }
+
+  @Override
+  public Page<ReclamationDto> getAllByStatus(EtatReclamation etat, Pageable pageable) {
+    return reclamationRepository.findAllByEtat(etat, pageable).map(reclamationMapper::toDto);
   }
 
   @Override

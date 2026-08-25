@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
 import org.aminesidki.resiaiac.dto.request.ReclamationUpdateRequest;
+import org.aminesidki.resiaiac.enumeration.EtatReclamation;
 import org.aminesidki.resiaiac.service.ReclamationService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,6 +31,14 @@ public class ReclamationController {
     return ResponseEntity.ok(reclamationService.getAllMy(jwt, pageable));
   }
 
+  @GetMapping("/me/by-etat/{etat}")
+  public ResponseEntity<?> getAllMyReclamationsByStatus(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable EtatReclamation etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(reclamationService.getAllMyByStatus(jwt, etat, pageable));
+  }
+
   @PostMapping("/me")
   public ResponseEntity<?> saveMyReclamation(
       @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid MyReclamationRequest request) {
@@ -46,6 +55,14 @@ public class ReclamationController {
   public ResponseEntity<?> getAll(
       @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(reclamationService.getAll(pageable));
+  }
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/by-etat/{etat}")
+  public ResponseEntity<?> getAllByEtat(
+      @PathVariable EtatReclamation etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(reclamationService.getAllByStatus(etat, pageable));
   }
 
   @PreAuthorize("hasAnyRole('MANAGER')")

@@ -1,11 +1,14 @@
 package org.aminesidki.resiaiac.service;
 
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.PromotionDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PromotionService {
-  List<PromotionDto> getAll();
+  Page<PromotionDto> getAll(Pageable pageable);
+
+  Page<PromotionDto> getAllByFiliere(Long id, Pageable pageable);
 
   PromotionDto save(PromotionDto dto);
 

@@ -19,9 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @CacheConfig(cacheNames = "filieres")
 public class FiliereServiceImpl implements FiliereService {
-
   private final FiliereRepository filiereRepository;
   private final FiliereMapper filiereMapper;
+
+  @Override
+  public Filiere getEntity(Long id) {
+    return ResourceFetcher.fetchResource(id, filiereRepository, "Filiere");
+  }
 
   @Override
   @Cacheable(key = "'all'")

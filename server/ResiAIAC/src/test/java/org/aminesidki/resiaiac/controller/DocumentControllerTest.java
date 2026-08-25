@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.DocumentDto;
 import org.aminesidki.resiaiac.dto.request.DocumentUpdateRequest;
+import org.aminesidki.resiaiac.enumeration.EtatDocument;
 import org.aminesidki.resiaiac.enumeration.FileType;
 import org.aminesidki.resiaiac.service.DocumentService;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,6 +88,37 @@ class DocumentControllerTest {
     verifyNoMoreInteractions(documentService);
   }
 
+  // ---------- getAll ----------
+
+  @Test
+  void getAll_shouldReturnPagedResults() throws Exception {
+    when(documentService.getAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get(BASE_PATH + "/"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(documentService).getAll(any(Pageable.class));
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- getAllByStatus ----------
+
+  @Test
+  void getAllByStatus_shouldReturnPagedResultsFilteredByStatus() throws Exception {
+    when(documentService.getAllByStatus(eq(EtatDocument.VALIDE), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get(BASE_PATH + "/by-etat/{etat}", EtatDocument.VALIDE))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(documentService).getAllByStatus(eq(EtatDocument.VALIDE), any(Pageable.class));
+    verifyNoMoreInteractions(documentService);
+  }
+
   // ---------- getDocumentUrlById ----------
 
   @Test
@@ -149,6 +181,39 @@ class DocumentControllerTest {
         .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(documentService).getAllMy(any(), any(Pageable.class));
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- getAllMyDocumentsByStatus ----------
+
+  @Test
+  void getAllMyDocumentsByStatus_shouldReturnPagedResults() throws Exception {
+    when(documentService.getAllMyByStatus(any(), eq(EtatDocument.EN_ATTENTE), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get(BASE_PATH + "/me/by-etat/{etat}", EtatDocument.EN_ATTENTE).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(documentService)
+        .getAllMyByStatus(any(), eq(EtatDocument.EN_ATTENTE), any(Pageable.class));
+    verifyNoMoreInteractions(documentService);
+  }
+
+  // ---------- myDocument (details) ----------
+
+  @Test
+  void myDocument_shouldReturnDto() throws Exception {
+    when(documentService.getMyById(any(), eq(id))).thenReturn(dto);
+
+    mockMvc
+        .perform(get(BASE_PATH + "/me/{id}", id).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nomFichier").value("cin.pdf"));
+
+    verify(documentService).getMyById(any(), eq(id));
     verifyNoMoreInteractions(documentService);
   }
 
