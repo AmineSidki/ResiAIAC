@@ -122,6 +122,50 @@ class DocumentServiceTest {
     }
   }
 
+  // ---------- getMyById ----------
+
+  @Test
+  void getMyById_shouldReturnDtoWhenOwnerMatches() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur owner = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Document owned =
+        Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").proprietaire(owner).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(owner);
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenReturn(owned);
+      when(documentMapper.toDto(owned)).thenReturn(dto);
+
+      DocumentDto result = documentService.getMyById(jwt, id);
+
+      assertThat(result).isEqualTo(dto);
+      verify(documentMapper).toDto(owned);
+    }
+  }
+
+  @Test
+  void getMyById_shouldThrowOwnershipMismatchWhenOwnerDoesNotMatch() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur owner = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Utilisateur requester = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Document owned =
+        Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").proprietaire(owner).build();
+
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      when(utilisateurService.getMyEntity(jwt)).thenReturn(requester);
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
+          .thenReturn(owned);
+
+      assertThatThrownBy(() -> documentService.getMyById(jwt, id))
+          .isInstanceOf(ResourceOwnershipMismatchException.class);
+
+      verifyNoMoreInteractions(documentMapper);
+    }
+  }
+
   // ---------- uploadMyDocument ----------
 
   @Test
@@ -227,6 +271,40 @@ class DocumentServiceTest {
     // old document must survive an upload failure — nothing was torn down
     verify(documentRepository, never()).delete(any());
     verify(seaweedFsService, never()).deleteFile(any(), any());
+  }
+
+  // ---------- getAll ----------
+
+  @Test
+  void getAll_shouldReturnAllMappedResults() {
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(documentRepository.findAllBy(pageable)).thenReturn(page);
+    when(documentMapper.toDto(entity)).thenReturn(dto);
+
+    var result = documentService.getAll(pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(documentRepository).findAllBy(pageable);
+    verify(documentMapper).toDto(entity);
+  }
+
+  // ---------- getAllByStatus ----------
+
+  @Test
+  void getAllByStatus_shouldFilterByStatusAndMapResults() {
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(documentRepository.findAllByEtat(EtatDocument.VALIDE, pageable)).thenReturn(page);
+    when(documentMapper.toDto(entity)).thenReturn(dto);
+
+    var result = documentService.getAllByStatus(EtatDocument.VALIDE, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(documentRepository).findAllByEtat(EtatDocument.VALIDE, pageable);
+    verify(documentMapper).toDto(entity);
   }
 
   // ---------- getById ----------
@@ -372,6 +450,28 @@ class DocumentServiceTest {
     assertThat(result.getContent()).containsExactly(dto);
     verify(utilisateurService).getMyEntity(jwt);
     verify(documentRepository).findAllByProprietaire(me, pageable);
+    verify(documentMapper).toDto(entity);
+  }
+
+  // ---------- getAllMyByStatus ----------
+
+  @Test
+  void getAllMyByStatus_shouldResolveUserFromJwtFilterByStatusAndMapResults() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(documentRepository.getAllByProprietaireAndEtat(me, EtatDocument.EN_ATTENTE, pageable))
+        .thenReturn(page);
+    when(documentMapper.toDto(entity)).thenReturn(dto);
+
+    var result = documentService.getAllMyByStatus(jwt, EtatDocument.EN_ATTENTE, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(utilisateurService).getMyEntity(jwt);
+    verify(documentRepository).getAllByProprietaireAndEtat(me, EtatDocument.EN_ATTENTE, pageable);
     verify(documentMapper).toDto(entity);
   }
 }

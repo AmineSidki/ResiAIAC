@@ -103,6 +103,38 @@ class ReclamationControllerTest {
     verifyNoMoreInteractions(reclamationService);
   }
 
+  // ---------- getAll ----------
+
+  @Test
+  void getAll_shouldReturnPagedResults() throws Exception {
+    when(reclamationService.getAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get("/api/v1/reclamation/"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(reclamationService).getAll(any(Pageable.class));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  // ---------- getAllByEtat ----------
+
+  @Test
+  void getAllByEtat_shouldReturnPagedResultsFilteredByStatus() throws Exception {
+    when(reclamationService.getAllByStatus(eq(EtatReclamation.EN_TRAITEMENT), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(get("/api/v1/reclamation/by-etat/{etat}", EtatReclamation.EN_TRAITEMENT))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(reclamationService)
+        .getAllByStatus(eq(EtatReclamation.EN_TRAITEMENT), any(Pageable.class));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
   // ---------- save ----------
 
   @Test
@@ -200,6 +232,41 @@ class ReclamationControllerTest {
         .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
     verify(reclamationService).getAllMy(any(), any(Pageable.class));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  // ---------- getAllMyReclamationsByStatus ----------
+
+  @Test
+  void getAllMyReclamationsByStatus_shouldReturnPagedResults() throws Exception {
+    when(reclamationService.getAllMyByStatus(
+            any(), eq(EtatReclamation.EN_ATTENTE), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(dto)));
+
+    mockMvc
+        .perform(
+            get("/api/v1/reclamation/me/by-etat/{etat}", EtatReclamation.EN_ATTENTE).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+    verify(reclamationService)
+        .getAllMyByStatus(any(), eq(EtatReclamation.EN_ATTENTE), any(Pageable.class));
+    verifyNoMoreInteractions(reclamationService);
+  }
+
+  // ---------- getMyById ----------
+
+  @Test
+  void getMyById_shouldReturnDto() throws Exception {
+    when(reclamationService.getMyById(any(), eq(id))).thenReturn(dto);
+
+    mockMvc
+        .perform(get("/api/v1/reclamation/me/{id}", id).with(jwt()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.message").value("Fuite d'eau"));
+
+    verify(reclamationService).getMyById(any(), eq(id));
     verifyNoMoreInteractions(reclamationService);
   }
 

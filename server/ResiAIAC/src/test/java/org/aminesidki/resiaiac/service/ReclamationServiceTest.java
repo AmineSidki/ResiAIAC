@@ -202,6 +202,65 @@ class ReclamationServiceTest {
     }
   }
 
+  // ---------- getAll ----------
+
+  @Test
+  void getAll_shouldReturnAllMappedResults() {
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(reclamationRepository.findAll(pageable)).thenReturn(page);
+    when(reclamationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = reclamationService.getAll(pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(reclamationRepository).findAll(pageable);
+    verify(reclamationMapper).toDto(entity);
+  }
+
+  // ---------- getAllByStatus ----------
+
+  @Test
+  void getAllByStatus_shouldFilterByStatusAndMapResults() {
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(reclamationRepository.findAllByEtat(EtatReclamation.EN_TRAITEMENT, pageable))
+        .thenReturn(page);
+    when(reclamationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = reclamationService.getAllByStatus(EtatReclamation.EN_TRAITEMENT, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(reclamationRepository).findAllByEtat(EtatReclamation.EN_TRAITEMENT, pageable);
+    verify(reclamationMapper).toDto(entity);
+  }
+
+  // ---------- getAllMyByStatus ----------
+
+  @Test
+  void getAllMyByStatus_shouldResolveUserFromJwtFilterByStatusAndMapResults() {
+    Jwt jwt = mock(Jwt.class);
+    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(reclamationRepository.findAllByUtilisateurAndEtat(
+            me, EtatReclamation.EN_ATTENTE, pageable))
+        .thenReturn(page);
+    when(reclamationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = reclamationService.getAllMyByStatus(jwt, EtatReclamation.EN_ATTENTE, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(utilisateurService).getMyEntity(jwt);
+    verify(reclamationRepository)
+        .findAllByUtilisateurAndEtat(me, EtatReclamation.EN_ATTENTE, pageable);
+    verify(reclamationMapper).toDto(entity);
+  }
+
   // ---------- update ----------
 
   @Test
