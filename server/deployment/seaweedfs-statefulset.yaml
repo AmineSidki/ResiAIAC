@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+  namespace: resiaiac
+spec:
+  serviceName: seaweedfs
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seaweedfs
+  template:
+    metadata:
+      labels:
+        app: seaweedfs
+    spec:
+      containers:
+        - name: seaweedfs
+          image: chrislusf/seaweedfs:latest
+          args:
+            - "server"
+            - "-s3"
+            - "-s3.config=/etc/seaweedfs/s3.config"
+            - "-dir=/data"
+            - "-s3.port=8333"
+            - "-filer.port=8888"
+            - "-master.port=9333"
+            - "-volume.port=8080"
+          ports:
+            - containerPort: 8080
+              name: volume
+            - containerPort: 8333
+              name: s3
+            - containerPort: 8888
+              name: filer
+            - containerPort: 9333
+              name: master
+          volumeMounts:
+            - name: s3-config-vol
+              mountPath: /etc/seaweedfs
+            - name: seaweedfs-data
+              mountPath: /data
+      volumes:
+        - name: s3-config-vol
+          secret:
+            secretName: seaweedfs-s3-credentials
+  volumeClaimTemplates:
+    - metadata:
+        name: seaweedfs-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
