@@ -55,19 +55,20 @@ public class DocumentServiceImpl implements DocumentService {
 
   @Transactional(readOnly = true)
   @Override
-  public DocumentDto getMyById(Jwt jwt, UUID id){
+  public DocumentDto getMyById(Jwt jwt, UUID id) {
     Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
     Document entity = ResourceFetcher.fetchResource(id, documentRepository, "Document");
-    if (entity.getProprietaire().equals(utilisateur))
-      return documentMapper.toDto(entity);
+    if (entity.getProprietaire().equals(utilisateur)) return documentMapper.toDto(entity);
     throw new ResourceOwnershipMismatchException(
-            "Queried resource does not belong to querying user !");
+        "Queried resource does not belong to querying user !");
   }
 
   @Override
   public Page<DocumentDto> getAllMyByStatus(Jwt jwt, EtatDocument etat, Pageable pageable) {
     Utilisateur id = utilisateurService.getMyEntity(jwt);
-    return documentRepository.getAllByProprietaireAndEtat(id, etat, pageable).map(documentMapper::toDto);
+    return documentRepository
+        .getAllByProprietaireAndEtat(id, etat, pageable)
+        .map(documentMapper::toDto);
   }
 
   @Transactional(readOnly = true)

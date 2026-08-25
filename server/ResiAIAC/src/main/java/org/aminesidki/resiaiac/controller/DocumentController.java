@@ -32,18 +32,23 @@ public class DocumentController {
     return ResponseEntity.ok(documentService.getAllMy(jwt, pageable));
   }
 
-  @GetMapping("/me/{etat}")
-  public ResponseEntity<?> getAllMyDocumentsByStatus(@AuthenticationPrincipal Jwt jwt, @PathVariable EtatDocument etat, @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-    return ResponseEntity.ok(documentService.getAllMyByStatus(jwt,etat,pageable));
+  @GetMapping("/me/by-etat/{etat}")
+  public ResponseEntity<?> getAllMyDocumentsByStatus(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable EtatDocument etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(documentService.getAllMyByStatus(jwt, etat, pageable));
   }
 
   @GetMapping("/me/{id}/url")
-  public ResponseEntity<?> getMyDocumentUrlById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+  public ResponseEntity<?> getMyDocumentUrlById(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
     return ResponseEntity.ok(documentService.getMyFileUrlById(jwt, id));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<?> getMyDocumentById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+  public ResponseEntity<?> getMyDocumentById(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
     return ResponseEntity.ok(documentService.getMyById(jwt, id));
   }
 
@@ -82,14 +87,17 @@ public class DocumentController {
 
   @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @GetMapping("/")
-  public ResponseEntity<?> getAll(@PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+  public ResponseEntity<?> getAll(
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(documentService.getAll(pageable));
   }
 
   @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @GetMapping("/{etat}")
-  public ResponseEntity<?> getAllByStatus(@PathVariable EtatDocument etat, @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-    return ResponseEntity.ok(documentService.getAllByStatus(etat,pageable));
+  public ResponseEntity<?> getAllByStatus(
+      @PathVariable EtatDocument etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(documentService.getAllByStatus(etat, pageable));
   }
 
   @PreAuthorize("hasAnyRole('MANAGER')")

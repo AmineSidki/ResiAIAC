@@ -35,7 +35,9 @@ public class ReclamationServiceImpl implements ReclamationService {
   @Override
   public Page<ReclamationDto> getAllMyByStatus(Jwt jwt, EtatReclamation etat, Pageable pageable) {
     Utilisateur id = utilisateurService.getMyEntity(jwt);
-    return reclamationRepository.findAllByUtilisateurAndEtat(id, etat, pageable).map(reclamationMapper::toDto);
+    return reclamationRepository
+        .findAllByUtilisateurAndEtat(id, etat, pageable)
+        .map(reclamationMapper::toDto);
   }
 
   @Transactional(readOnly = true)

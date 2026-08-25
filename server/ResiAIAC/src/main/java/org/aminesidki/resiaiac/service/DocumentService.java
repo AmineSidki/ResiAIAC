@@ -32,5 +32,4 @@ public interface DocumentService {
   DocumentDto update(UUID id, DocumentDto dto);
 
   void delete(UUID id);
-
 }

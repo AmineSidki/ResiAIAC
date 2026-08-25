@@ -33,9 +33,9 @@ public class ReclamationController {
 
   @GetMapping("/me/{etat}")
   public ResponseEntity<?> getAllMyReclamationsByStatus(
-          @AuthenticationPrincipal Jwt jwt,
-          @PathVariable EtatReclamation etat,
-          @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable EtatReclamation etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(reclamationService.getAllMyByStatus(jwt, etat, pageable));
   }
 
@@ -58,10 +58,10 @@ public class ReclamationController {
   }
 
   @PreAuthorize("hasAnyRole('MANAGER')")
-  @GetMapping("/{etat}")
+  @GetMapping("/by-etat/{etat}")
   public ResponseEntity<?> getAllByEtat(
-          @PathVariable EtatReclamation etat,
-          @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+      @PathVariable EtatReclamation etat,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
     return ResponseEntity.ok(reclamationService.getAllByStatus(etat, pageable));
   }
 

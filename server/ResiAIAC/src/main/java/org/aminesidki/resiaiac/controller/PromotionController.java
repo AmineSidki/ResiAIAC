@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.PromotionDto;
 import org.aminesidki.resiaiac.dto.request.PromotionUpdateRequest;
 import org.aminesidki.resiaiac.service.PromotionService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +19,21 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PromotionController {
   private final PromotionService promotionService;
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/")
+  public ResponseEntity<?> getAll(
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(promotionService.getAll(pageable));
+  }
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/by-filiere/{id}")
+  public ResponseEntity<?> getAllByFiliere(
+      @PathVariable Long id,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(promotionService.getAllByFiliere(id, pageable));
+  }
 
   @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/{id}")
