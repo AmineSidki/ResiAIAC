@@ -31,7 +31,7 @@ public class ReclamationController {
     return ResponseEntity.ok(reclamationService.getAllMy(jwt, pageable));
   }
 
-  @GetMapping("/me/{etat}")
+  @GetMapping("/me/by-etat/{etat}")
   public ResponseEntity<?> getAllMyReclamationsByStatus(
       @AuthenticationPrincipal Jwt jwt,
       @PathVariable EtatReclamation etat,

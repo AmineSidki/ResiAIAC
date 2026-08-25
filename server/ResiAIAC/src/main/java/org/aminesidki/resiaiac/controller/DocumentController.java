@@ -46,7 +46,7 @@ public class DocumentController {
     return ResponseEntity.ok(documentService.getMyFileUrlById(jwt, id));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/me/{id}")
   public ResponseEntity<?> getMyDocumentById(
       @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
     return ResponseEntity.ok(documentService.getMyById(jwt, id));
@@ -93,7 +93,7 @@ public class DocumentController {
   }
 
   @PreAuthorize("hasAnyRole('RESPONSABLE')")
-  @GetMapping("/{etat}")
+  @GetMapping("/by-etat/{etat}")
   public ResponseEntity<?> getAllByStatus(
       @PathVariable EtatDocument etat,
       @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
