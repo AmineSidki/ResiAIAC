@@ -10,6 +10,7 @@ import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.aminesidki.resiaiac.service.KeycloakService;
+import org.aminesidki.resiaiac.service.UtilisateurLookupService;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.aminesidki.resiaiac.util.StringUtil;
@@ -28,6 +29,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   private final KeycloakService keycloakService;
   private final UtilisateurRepository utilisateurRepository;
   private final UtilisateurMapper utilisateurMapper;
+  private final UtilisateurLookupService utilisateurLookupService;
 
   private UUID extractIdFromJwt(Jwt jwt) {
     String idString = jwt.getClaimAsString("sub");
@@ -39,18 +41,16 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   @Transactional(readOnly = true)
   public Utilisateur getMyEntity(Jwt jwt) {
     UUID keycloakId = extractIdFromJwt(jwt);
-    return utilisateurRepository
-        .findByKeycloakUser(keycloakId)
-        .orElseThrow(
-            () ->
-                new ResourceNotFoundException(
-                    "Resource not found: Utilisateur with keycloak id " + keycloakId));
+    UUID id = utilisateurLookupService.getUtilisateurIdByKeycloakId(keycloakId);
+    return ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
   }
 
   @Override
   @Transactional(readOnly = true)
   public UtilisateurDto getMyDto(Jwt jwt) {
-    return utilisateurMapper.toDto(getMyEntity(jwt));
+    UUID keycloakId = extractIdFromJwt(jwt);
+    UUID id = utilisateurLookupService.getUtilisateurIdByKeycloakId(keycloakId);
+    return utilisateurLookupService.getUtilisateurDtoById(id);
   }
 
   @Override
@@ -59,6 +59,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     Utilisateur entity = getMyEntity(jwt);
     utilisateurMapper.updateEntityFromDto(filteredDto, entity);
     entity = utilisateurRepository.save(entity);
+    utilisateurLookupService.evictUtilisateurDtoById(entity.getId());
     return utilisateurMapper.toDto(entity);
   }
 
@@ -90,8 +91,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   @Transactional(readOnly = true)
   @Override
   public UtilisateurDto getById(UUID id) {
-    Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
-    return utilisateurMapper.toDto(entity);
+    return utilisateurLookupService.getUtilisateurDtoById(id);
   }
 
   @Override
@@ -99,6 +99,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
     utilisateurMapper.updateEntityFromDto(dto, entity);
     entity = utilisateurRepository.save(entity);
+    utilisateurLookupService.evictUtilisateurDtoById(id);
     return utilisateurMapper.toDto(entity);
   }
 
@@ -106,9 +107,12 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   public void delete(UUID id) {
     Utilisateur utilisateur =
         ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
+    UUID keycloakId = utilisateur.getKeycloakUser();
     try {
       utilisateurRepository.delete(utilisateur);
-      keycloakService.deleteUser(utilisateur.getKeycloakUser());
+      keycloakService.deleteUser(keycloakId);
+      utilisateurLookupService.evictUtilisateurIdByKeycloakId(keycloakId);
+      utilisateurLookupService.evictUtilisateurDtoById(id);
     } catch (Exception e) {
       log.error("An error occurred whilst deleting user with id {} !", id);
       throw e;

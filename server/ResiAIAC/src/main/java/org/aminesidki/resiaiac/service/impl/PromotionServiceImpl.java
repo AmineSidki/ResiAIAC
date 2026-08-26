@@ -28,13 +28,16 @@ public class PromotionServiceImpl implements PromotionService {
   private final PromotionMapper promotionMapper;
 
   @Override
-  @Cacheable(key = "'page-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+  @Cacheable(
+      key = "'page-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
   public Page<PromotionDto> getAll(Pageable pageable) {
     return promotionRepository.findAllBy(pageable).map(promotionMapper::toDto);
   }
 
   @Override
-  @Cacheable(key = "'filiere-' + #id + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+  @Cacheable(
+      key =
+          "'filiere-' + #id + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
   public Page<PromotionDto> getAllByFiliere(Long id, Pageable pageable) {
     Filiere filiere = filiereService.getEntity(id);
     return promotionRepository.findAllByFiliere(filiere, pageable).map(promotionMapper::toDto);
