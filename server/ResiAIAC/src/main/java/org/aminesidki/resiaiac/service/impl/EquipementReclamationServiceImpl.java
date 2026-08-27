@@ -6,13 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
-import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 import org.aminesidki.resiaiac.mapper.EquipementReclamationMapper;
 import org.aminesidki.resiaiac.repository.EquipementReclamationRepository;
 import org.aminesidki.resiaiac.service.EquipementReclamationService;
 import org.aminesidki.resiaiac.service.EquipementService;
-import org.aminesidki.resiaiac.service.ReclamationService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +38,10 @@ public class EquipementReclamationServiceImpl implements EquipementReclamationSe
   @Transactional(readOnly = true)
   @Override
   public List<EquipementReclamationDto> getAllByReclamationId(UUID id) {
-    // This is different from the rest of the getBy_ methods for the sole reason that having ReclamationService
-    // imported created a cyclical dependency, to break that, I opted for having this service fetch following
+    // This is different from the rest of the getBy_ methods for the sole reason that having
+    // ReclamationService
+    // imported created a cyclical dependency, to break that, I opted for having this service fetch
+    // following
     // the id alone
     return equipementReclamationRepository.findAllByReclamation_Id(id).stream()
         .map(equipementReclamationMapper::toDto)

@@ -15,7 +15,6 @@ import java.util.UUID;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
-import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 import org.aminesidki.resiaiac.mapper.EquipementReclamationMapper;
 import org.aminesidki.resiaiac.repository.EquipementReclamationRepository;
@@ -72,9 +71,7 @@ class EquipementReclamationServiceTest {
   void setUp() {
     equipementReclamationService =
         new EquipementReclamationServiceImpl(
-            equipementService,
-            equipementReclamationRepository,
-            equipementReclamationMapper);
+            equipementService, equipementReclamationRepository, equipementReclamationMapper);
 
     equipementId = 1L;
     reclamationId = UUID.randomUUID();
