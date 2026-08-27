@@ -9,9 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UtilisateurService {
-  Utilisateur getMyEntity(Jwt jwt);
+  Utilisateur getMyEntityById(UUID id);
 
-  UtilisateurDto getMyDto(Jwt jwt);
+  Utilisateur getMyEntityByJwt(Jwt jwt);
+
+  UtilisateurDto getMyDtoByJwt(Jwt jwt);
 
   UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request);
 

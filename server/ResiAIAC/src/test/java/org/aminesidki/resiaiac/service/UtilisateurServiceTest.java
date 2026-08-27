@@ -72,8 +72,19 @@ class UtilisateurServiceTest {
         Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     dto =
         new UtilisateurDto(
-            id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            id,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
   }
 
   // ---------- save ----------
@@ -82,15 +93,37 @@ class UtilisateurServiceTest {
   void save_shouldCreateKeycloakUserThenPersistAndReturnDto() {
     UtilisateurDto inputDto =
         new UtilisateurDto(
-            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            null,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     Utilisateur savedEntity =
         Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
     UtilisateurDto resultDto =
         new UtilisateurDto(
-            id, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            id,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
     when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
@@ -112,8 +145,19 @@ class UtilisateurServiceTest {
   void save_shouldNotTouchDbOrRollbackWhenKeycloakCreationFails() {
     UtilisateurDto inputDto =
         new UtilisateurDto(
-            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            null,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
     RuntimeException keycloakFailure = new RuntimeException("Keycloak unavailable");
 
     when(keycloakService.createUser(inputDto)).thenThrow(keycloakFailure);
@@ -130,8 +174,19 @@ class UtilisateurServiceTest {
   void save_shouldRollbackKeycloakUserWhenDbSaveFails() {
     UtilisateurDto inputDto =
         new UtilisateurDto(
-            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            null,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     RuntimeException dbFailure = new RuntimeException("DB unavailable");
 
@@ -195,6 +250,7 @@ class UtilisateurServiceTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine-renamed",
             null,
@@ -293,48 +349,48 @@ class UtilisateurServiceTest {
     }
   }
 
-  // ---------- getMyEntity / getMyDto ----------
+  // ---------- getMyEntityByJwt / getMyDtoByJwt ----------
 
   @Test
-  void getMyEntity_shouldResolveUserByKeycloakSubClaim() {
+  void getMyEntity_ByJwt_shouldResolveUserByKeycloakSubClaim() {
     Jwt jwt = jwtWithSub(keycloakId);
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
 
-    Utilisateur result = utilisateurService.getMyEntity(jwt);
+    Utilisateur result = utilisateurService.getMyEntityByJwt(jwt);
 
     assertThat(result).isEqualTo(entity);
     verify(utilisateurRepository).findByKeycloakUser(keycloakId);
   }
 
   @Test
-  void getMyEntity_shouldThrowWhenNoUserMatchesTheKeycloakId() {
+  void getMyEntity_ByJwt_shouldThrowWhenNoUserMatchesTheKeycloakId() {
     Jwt jwt = jwtWithSub(keycloakId);
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
+    assertThatThrownBy(() -> utilisateurService.getMyEntityByJwt(jwt))
         .isInstanceOf(ResourceNotFoundException.class);
 
     verifyNoMoreInteractions(utilisateurMapper);
   }
 
   @Test
-  void getMyEntity_shouldThrowWhenJwtHasNoSubClaim() {
+  void getMyEntity_ByJwt_shouldThrowWhenJwtHasNoSubClaim() {
     Jwt jwt = mock(Jwt.class);
     when(jwt.getClaimAsString("sub")).thenReturn(null);
 
-    assertThatThrownBy(() -> utilisateurService.getMyEntity(jwt))
+    assertThatThrownBy(() -> utilisateurService.getMyEntityByJwt(jwt))
         .isInstanceOf(ResourceNotFoundException.class);
 
     verifyNoInteractions(utilisateurRepository);
   }
 
   @Test
-  void getMyDto_shouldMapResolvedEntity() {
+  void getMyDto_ByJwt_shouldMapResolvedEntity() {
     Jwt jwt = jwtWithSub(keycloakId);
     when(utilisateurRepository.findByKeycloakUser(keycloakId)).thenReturn(Optional.of(entity));
     when(utilisateurMapper.toDto(entity)).thenReturn(dto);
 
-    UtilisateurDto result = utilisateurService.getMyDto(jwt);
+    UtilisateurDto result = utilisateurService.getMyDtoByJwt(jwt);
 
     assertThat(result).isEqualTo(dto);
   }
@@ -347,6 +403,7 @@ class UtilisateurServiceTest {
     UpdateMeRequest request = new UpdateMeRequest("12 Rue des Fleurs", "+212600000000");
     UtilisateurDto filteredDto =
         new UtilisateurDto(
+            null,
             null,
             null,
             null,

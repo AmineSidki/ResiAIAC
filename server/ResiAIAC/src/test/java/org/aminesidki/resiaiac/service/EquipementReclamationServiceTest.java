@@ -10,9 +10,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
+import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
+import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
 import org.aminesidki.resiaiac.mapper.EquipementReclamationMapper;
 import org.aminesidki.resiaiac.repository.EquipementReclamationRepository;
@@ -24,6 +27,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Unit tests for {@link EquipementReclamationService}, exercised through its {@link
@@ -40,9 +46,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
  *
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
+ *
+ * <p>{@code EquipementService}/{@code ReclamationService} were added as constructor dependencies
+ * alongside {@code getAllByEquipementId}/{@code getAllByReclamationId}, which resolve the parent
+ * entity through those services before delegating to the repository.
  */
 @ExtendWith(MockitoExtension.class)
 class EquipementReclamationServiceTest {
+
+  @Mock private EquipementService equipementService;
+
+  @Mock private ReclamationService reclamationService;
 
   @Mock private EquipementReclamationRepository equipementReclamationRepository;
 
@@ -60,13 +74,56 @@ class EquipementReclamationServiceTest {
   void setUp() {
     equipementReclamationService =
         new EquipementReclamationServiceImpl(
-            equipementReclamationRepository, equipementReclamationMapper);
+            equipementService,
+            reclamationService,
+            equipementReclamationRepository,
+            equipementReclamationMapper);
 
     equipementId = 1L;
     reclamationId = UUID.randomUUID();
     id = new EquipementReclamationId(equipementId, reclamationId);
     entity = EquipementReclamation.builder().id(id).quantite(5L).build();
     dto = new EquipementReclamationDto(id, 5L, equipementId, reclamationId);
+  }
+
+  // ---------- getAllByEquipementId ----------
+
+  @Test
+  void getAllByEquipementId_shouldResolveEquipementThenFilterAndMapResults() {
+    Equipement equipement = Equipement.builder().id(equipementId).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(equipementService.getEntityById(equipementId)).thenReturn(equipement);
+    when(equipementReclamationRepository.findAllByEquipement(equipement, pageable))
+        .thenReturn(page);
+    when(equipementReclamationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = equipementReclamationService.getAllByEquipementId(equipementId, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(equipementService).getEntityById(equipementId);
+    verify(equipementReclamationRepository).findAllByEquipement(equipement, pageable);
+    verify(equipementReclamationMapper).toDto(entity);
+  }
+
+  // ---------- getAllByReclamationId ----------
+
+  @Test
+  void getAllByReclamationId_shouldResolveReclamationThenMapResults() {
+    Reclamation reclamation = Reclamation.builder().id(reclamationId).build();
+
+    when(reclamationService.getEntityById(reclamationId)).thenReturn(reclamation);
+    when(equipementReclamationRepository.findAllByReclamation(reclamation))
+        .thenReturn(List.of(entity));
+    when(equipementReclamationMapper.toDto(entity)).thenReturn(dto);
+
+    var result = equipementReclamationService.getAllByReclamationId(reclamationId);
+
+    assertThat(result).containsExactly(dto);
+    verify(reclamationService).getEntityById(reclamationId);
+    verify(equipementReclamationRepository).findAllByReclamation(reclamation);
+    verify(equipementReclamationMapper).toDto(entity);
   }
 
   // ---------- save ----------

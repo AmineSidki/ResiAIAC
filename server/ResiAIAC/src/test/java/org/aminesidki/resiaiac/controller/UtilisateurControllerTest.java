@@ -69,6 +69,7 @@ class UtilisateurControllerTest {
     dto =
         new UtilisateurDto(
             id,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine",
             "AB123456",
@@ -106,6 +107,7 @@ class UtilisateurControllerTest {
     UtilisateurDto inputDto =
         new UtilisateurDto(
             null,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine",
             "AB123456",
@@ -120,6 +122,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine",
             "AB123456",
@@ -155,6 +158,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine - renamed",
             "AB123456",
@@ -196,7 +200,7 @@ class UtilisateurControllerTest {
 
   @Test
   void getMe_shouldReturnCallersDto() throws Exception {
-    when(utilisateurService.getMyDto(any())).thenReturn(dto);
+    when(utilisateurService.getMyDtoByJwt(any())).thenReturn(dto);
 
     mockMvc
         .perform(get(BASE_PATH + "/me").with(jwt()))
@@ -204,7 +208,7 @@ class UtilisateurControllerTest {
         .andExpect(jsonPath("$.id").value(id.toString()))
         .andExpect(jsonPath("$.nom").value("Sidki"));
 
-    verify(utilisateurService).getMyDto(any());
+    verify(utilisateurService).getMyDtoByJwt(any());
     verifyNoMoreInteractions(utilisateurService);
   }
 
@@ -216,6 +220,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            "amine.sidki@example.com",
             "Sidki",
             "Amine",
             "AB123456",

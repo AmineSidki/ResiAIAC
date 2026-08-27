@@ -1,8 +1,17 @@
 package org.aminesidki.resiaiac.repository;
 
+import java.util.List;
+import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementReclamation;
+import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.id.EquipementReclamationId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EquipementReclamationRepository
-    extends JpaRepository<EquipementReclamation, EquipementReclamationId> {}
+    extends JpaRepository<EquipementReclamation, EquipementReclamationId> {
+  List<EquipementReclamation> findAllByReclamation(Reclamation reclamation);
+
+  Page<EquipementReclamation> findAllByEquipement(Equipement equipement, Pageable pageable);
+}

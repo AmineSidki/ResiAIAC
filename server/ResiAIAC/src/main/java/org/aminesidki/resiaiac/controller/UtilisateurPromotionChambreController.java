@@ -19,6 +19,18 @@ public class UtilisateurPromotionChambreController {
   private final UtilisateurPromotionChambreService utilisateurPromotionChambreService;
 
   @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/by-utilisateur/{id}")
+  public ResponseEntity<?> getAllByUserId(@PathVariable UUID id) {
+    return ResponseEntity.ok(utilisateurPromotionChambreService.getAllByUserId(id));
+  }
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/by-chambre/{id}")
+  public ResponseEntity<?> getAllByChambreId(@PathVariable UUID id) {
+    return ResponseEntity.ok(utilisateurPromotionChambreService.getAllByChambreId(id));
+  }
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/")
   public ResponseEntity<?> getById(
       @RequestParam UUID utilisateurId,

@@ -39,7 +39,7 @@ public class ReservationServiceImpl implements ReservationService {
   @Transactional(readOnly = true)
   @Override
   public Page<ReservationDto> getAllMy(Jwt jwt, Pageable pageable) {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     return reservationRepository.findAllByUtilisateur(id, pageable).map(reservationMapper::toDto);
   }
 
@@ -47,7 +47,7 @@ public class ReservationServiceImpl implements ReservationService {
   @Override
   public ReservationDto getMyById(Jwt jwt, UUID id) {
     Reservation entity = ResourceFetcher.fetchResource(id, reservationRepository, "Reservation");
-    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    Utilisateur utilisateur = utilisateurService.getMyEntityByJwt(jwt);
     if (entity.getUtilisateur().getId().equals(utilisateur.getId())) {
       return reservationMapper.toDto(entity);
     }
@@ -61,7 +61,7 @@ public class ReservationServiceImpl implements ReservationService {
     // Check if room is available (chambre.reservations.size())
     // Add reservation and change room status to AVAILABLE -> PARTIALLY_AVAILABLE ;
     // PARTIALLY_AVAILABLE -> OCCUPIED
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     Chambre chambre = chambreService.getEntityById(request.chambre());
 
     if (chambre.getEtat().equals(EtatChambre.OCCUPEE)) {
@@ -83,6 +83,12 @@ public class ReservationServiceImpl implements ReservationService {
       reservationMapper.updateEntityFromDto(dto, entity);
       entity = reservationRepository.save(entity);
 
+      emailService.envoyerEmail(
+          new EmailResponse(
+              id.getEmail(),
+              "Confirmation de Réservation",
+              "Votre réservation a été créée avec succès !"));
+
       return reservationMapper.toDto(entity);
     }
   }
@@ -96,11 +102,12 @@ public class ReservationServiceImpl implements ReservationService {
   @Override
   public ReservationDto save(ReservationDto dto) {
     Reservation entity = reservationMapper.toEntity(dto);
+    Utilisateur id = utilisateurService.getMyEntityById(dto.utilisateur());
     entity.setEtat(EtatReservation.ACTIVE);
     entity = reservationRepository.save(entity);
     emailService.envoyerEmail(
         new EmailResponse(
-            "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
+            id.getEmail(),
             "Confirmation de Réservation",
             "Votre réservation a été créée avec succès !"));
     return reservationMapper.toDto(entity);

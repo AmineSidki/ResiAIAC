@@ -37,7 +37,13 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Override
   @Transactional(readOnly = true)
-  public Utilisateur getMyEntity(Jwt jwt) {
+  public Utilisateur getMyEntityById(UUID id) {
+    return ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Utilisateur getMyEntityByJwt(Jwt jwt) {
     UUID keycloakId = extractIdFromJwt(jwt);
     return utilisateurRepository
         .findByKeycloakUser(keycloakId)
@@ -49,14 +55,14 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Override
   @Transactional(readOnly = true)
-  public UtilisateurDto getMyDto(Jwt jwt) {
-    return utilisateurMapper.toDto(getMyEntity(jwt));
+  public UtilisateurDto getMyDtoByJwt(Jwt jwt) {
+    return utilisateurMapper.toDto(getMyEntityByJwt(jwt));
   }
 
   @Override
   public UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request) {
     UtilisateurDto filteredDto = utilisateurMapper.updateMeRequestToDto(request);
-    Utilisateur entity = getMyEntity(jwt);
+    Utilisateur entity = getMyEntityByJwt(jwt);
     utilisateurMapper.updateEntityFromDto(filteredDto, entity);
     entity = utilisateurRepository.save(entity);
     return utilisateurMapper.toDto(entity);

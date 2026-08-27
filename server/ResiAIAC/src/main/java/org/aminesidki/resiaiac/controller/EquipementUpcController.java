@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementUpcDto;
 import org.aminesidki.resiaiac.dto.request.EquipementUpcUpdateRequest;
 import org.aminesidki.resiaiac.service.EquipementUpcService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +20,22 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/equipement-upc")
 public class EquipementUpcController {
   private final EquipementUpcService equipementUpcService;
+
+  @GetMapping("/by-upc/")
+  public ResponseEntity<?> getAllByUpc(
+      @RequestParam UUID utilisateurId,
+      @RequestParam UUID promotionId,
+      @RequestParam UUID chambreId) {
+    return ResponseEntity.ok(
+        equipementUpcService.getAllByUpc(utilisateurId, promotionId, chambreId));
+  }
+
+  @GetMapping("/by-equipement/")
+  public ResponseEntity<?> getAllByUpc(
+      @RequestParam Long equipementId,
+      @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    return ResponseEntity.ok(equipementUpcService.getAllByEquipement(equipementId, pageable));
+  }
 
   @GetMapping("/")
   public ResponseEntity<?> getById(

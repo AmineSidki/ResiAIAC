@@ -44,7 +44,7 @@ public class DocumentServiceImpl implements DocumentService {
   @Transactional(readOnly = true)
   @Override
   public String getMyFileUrlById(Jwt jwt, UUID id) {
-    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    Utilisateur utilisateur = utilisateurService.getMyEntityByJwt(jwt);
     Document entity = ResourceFetcher.fetchResource(id, documentRepository, "Document");
     if (entity.getProprietaire().equals(utilisateur))
       return seaweedFsService.getFileUrl(
@@ -56,7 +56,7 @@ public class DocumentServiceImpl implements DocumentService {
   @Transactional(readOnly = true)
   @Override
   public DocumentDto getMyById(Jwt jwt, UUID id) {
-    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    Utilisateur utilisateur = utilisateurService.getMyEntityByJwt(jwt);
     Document entity = ResourceFetcher.fetchResource(id, documentRepository, "Document");
     if (entity.getProprietaire().equals(utilisateur)) return documentMapper.toDto(entity);
     throw new ResourceOwnershipMismatchException(
@@ -65,7 +65,7 @@ public class DocumentServiceImpl implements DocumentService {
 
   @Override
   public Page<DocumentDto> getAllMyByStatus(Jwt jwt, EtatDocument etat, Pageable pageable) {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     return documentRepository
         .getAllByProprietaireAndEtat(id, etat, pageable)
         .map(documentMapper::toDto);
@@ -74,14 +74,14 @@ public class DocumentServiceImpl implements DocumentService {
   @Transactional(readOnly = true)
   @Override
   public Page<DocumentDto> getAllMy(Jwt jwt, Pageable pageable) {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     return documentRepository.findAllByProprietaire(id, pageable).map(documentMapper::toDto);
   }
 
   @Transactional(rollbackFor = IOException.class)
   public DocumentDto uploadMyDocument(Jwt jwt, FileType fileType, MultipartFile file)
       throws IOException {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     Document sameTypeUploadedDocument = userHasSameTypeDocumentUploaded(id, fileType);
     String randomizedName = UUID.randomUUID().toString();
     Document entity =

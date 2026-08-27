@@ -19,18 +19,18 @@ public class EmailServiceImpl implements EmailService {
 
   @Override
   @Async("emailExecutor")
-  public void envoyerEmail(EmailResponse request) {
+  public void envoyerEmail(EmailResponse response) {
     try {
       SimpleMailMessage email = new SimpleMailMessage();
-      email.setTo(request.destinataire());
-      email.setSubject(request.sujet());
-      email.setText(request.corps());
+      email.setTo(response.destinataire());
+      email.setSubject(response.sujet());
+      email.setText(response.corps());
 
       javaMailSender.send(email);
-      log.info("Email envoyé à {} avec succès", request.destinataire());
+      log.info("Email envoyé à {} avec succès", response.destinataire());
 
     } catch (MailException e) {
-      log.error("Echec de l'envoi de l'email à {} :{}", request.destinataire(), e.getMessage());
+      log.error("Echec de l'envoi de l'email à {} :{}", response.destinataire(), e.getMessage());
     }
   }
 }
