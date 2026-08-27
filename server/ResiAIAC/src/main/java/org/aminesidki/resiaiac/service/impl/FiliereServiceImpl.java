@@ -35,9 +35,7 @@ public class FiliereServiceImpl implements FiliereService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "'all'")})
   public FiliereDto save(FiliereDto dto) {
     Filiere entity = filiereMapper.toEntity(dto);
     entity = filiereRepository.save(entity);
@@ -53,10 +51,7 @@ public class FiliereServiceImpl implements FiliereService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public FiliereDto update(Long id, FiliereDto dto) {
     Filiere entity = ResourceFetcher.fetchResource(id, filiereRepository, "Filiere");
     filiereMapper.updateEntityFromDto(dto, entity);
@@ -65,10 +60,7 @@ public class FiliereServiceImpl implements FiliereService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public void delete(Long id) {
     filiereRepository.delete(ResourceFetcher.fetchResource(id, filiereRepository, "Filiere"));
   }

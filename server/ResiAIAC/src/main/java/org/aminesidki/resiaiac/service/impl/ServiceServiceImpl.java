@@ -30,9 +30,7 @@ public class ServiceServiceImpl implements ServiceService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "'all'")})
   public ServiceDto save(ServiceDto dto) {
     Service entity = serviceMapper.toEntity(dto);
     entity = serviceRepository.save(entity);
@@ -48,10 +46,7 @@ public class ServiceServiceImpl implements ServiceService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public ServiceDto update(Long id, ServiceDto dto) {
     Service entity = ResourceFetcher.fetchResource(id, serviceRepository, "Service");
     serviceMapper.updateEntityFromDto(dto, entity);
@@ -60,10 +55,7 @@ public class ServiceServiceImpl implements ServiceService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public void delete(Long id) {
     serviceRepository.delete(ResourceFetcher.fetchResource(id, serviceRepository, "Service"));
   }

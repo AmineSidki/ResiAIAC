@@ -31,9 +31,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "'all'")})
   public EquipementDto save(EquipementDto dto) {
     Equipement entity = equipementMapper.toEntity(dto);
     entity = equipementRepository.save(entity);
@@ -49,10 +47,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public EquipementDto update(Long id, EquipementDto dto) {
     Equipement entity = ResourceFetcher.fetchResource(id, equipementRepository, "Equipement");
     equipementMapper.updateEntityFromDto(dto, entity);
@@ -61,10 +56,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public void delete(Long id) {
     equipementRepository.delete(
         ResourceFetcher.fetchResource(id, equipementRepository, "Equipement"));

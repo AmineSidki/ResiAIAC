@@ -30,101 +30,103 @@ import org.springframework.transaction.annotation.Transactional;
 @CacheConfig(cacheNames = "utilisateurs")
 public class UtilisateurServiceImpl implements UtilisateurService {
 
-    private final KeycloakService keycloakService;
-    private final UtilisateurRepository utilisateurRepository;
-    private final UtilisateurMapper utilisateurMapper;
+  private final KeycloakService keycloakService;
+  private final UtilisateurRepository utilisateurRepository;
+  private final UtilisateurMapper utilisateurMapper;
 
-    private UUID extractIdFromJwt(Jwt jwt) {
-        String idString = jwt.getClaimAsString("sub");
-        if (idString == null) throw new ResourceNotFoundException("Keycloak id for user is null !");
-        return UUID.fromString(idString);
-    }
+  private UUID extractIdFromJwt(Jwt jwt) {
+    String idString = jwt.getClaimAsString("sub");
+    if (idString == null) throw new ResourceNotFoundException("Keycloak id for user is null !");
+    return UUID.fromString(idString);
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(key = "'entity-' + #jwt.subject")
-    public Utilisateur getMyEntity(Jwt jwt) {
-        UUID keycloakId = extractIdFromJwt(jwt);
-        return utilisateurRepository
-                .findByKeycloakUser(keycloakId)
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-                                        "Resource not found: Utilisateur with keycloak id " + keycloakId));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  @Cacheable(key = "'entity-' + #jwt.subject")
+  public Utilisateur getMyEntity(Jwt jwt) {
+    UUID keycloakId = extractIdFromJwt(jwt);
+    return utilisateurRepository
+        .findByKeycloakUser(keycloakId)
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundException(
+                    "Resource not found: Utilisateur with keycloak id " + keycloakId));
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(key = "'dto-' + #jwt.subject")
-    public UtilisateurDto getMyDto(Jwt jwt) {
-        return utilisateurMapper.toDto(getMyEntity(jwt));
-    }
+  @Override
+  @Transactional(readOnly = true)
+  @Cacheable(key = "'dto-' + #jwt.subject")
+  public UtilisateurDto getMyDto(Jwt jwt) {
+    return utilisateurMapper.toDto(getMyEntity(jwt));
+  }
 
-    @Override
-    @Caching(evict = {
-            @CacheEvict(key = "'dto-' + #jwt.subject"),
-            @CacheEvict(key = "'entity-' + #jwt.subject")
-    })    public UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request) {
-        UtilisateurDto filteredDto = utilisateurMapper.updateMeRequestToDto(request);
-        Utilisateur entity = getMyEntity(jwt);
-        utilisateurMapper.updateEntityFromDto(filteredDto, entity);
-        entity = utilisateurRepository.save(entity);
-        return utilisateurMapper.toDto(entity);
-    }
+  @Override
+  @Caching(
+      evict = {
+        @CacheEvict(key = "'dto-' + #jwt.subject"),
+        @CacheEvict(key = "'entity-' + #jwt.subject")
+      })
+  public UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request) {
+    UtilisateurDto filteredDto = utilisateurMapper.updateMeRequestToDto(request);
+    Utilisateur entity = getMyEntity(jwt);
+    utilisateurMapper.updateEntityFromDto(filteredDto, entity);
+    entity = utilisateurRepository.save(entity);
+    return utilisateurMapper.toDto(entity);
+  }
 
-    @Override
-    public Page<UtilisateurDto> getAll(Pageable pageable) {
-        return utilisateurRepository.findAll(pageable).map(utilisateurMapper::toDto);
-    }
+  @Override
+  public Page<UtilisateurDto> getAll(Pageable pageable) {
+    return utilisateurRepository.findAll(pageable).map(utilisateurMapper::toDto);
+  }
 
-    @Override
-    public UtilisateurDto save(UtilisateurDto dto) {
-        UUID keycloakId = null;
-        try {
-            keycloakId = keycloakService.createUser(dto);
-            Utilisateur entity = utilisateurMapper.toEntity(dto);
-            entity.setKeycloakUser(keycloakId);
-            entity = utilisateurRepository.save(entity);
-            return utilisateurMapper.toDto(entity);
-        } catch (Exception e) {
-            log.error(
-                    "An error occurred whilst saving user with username {} !",
-                    StringUtil.nameToUsername(dto.nom(), dto.prenom()));
-            if (keycloakId != null) {
-                keycloakService.deleteUser(keycloakId);
-            }
-            throw e;
-        }
+  @Override
+  public UtilisateurDto save(UtilisateurDto dto) {
+    UUID keycloakId = null;
+    try {
+      keycloakId = keycloakService.createUser(dto);
+      Utilisateur entity = utilisateurMapper.toEntity(dto);
+      entity.setKeycloakUser(keycloakId);
+      entity = utilisateurRepository.save(entity);
+      return utilisateurMapper.toDto(entity);
+    } catch (Exception e) {
+      log.error(
+          "An error occurred whilst saving user with username {} !",
+          StringUtil.nameToUsername(dto.nom(), dto.prenom()));
+      if (keycloakId != null) {
+        keycloakService.deleteUser(keycloakId);
+      }
+      throw e;
     }
+  }
 
-    @Transactional(readOnly = true)
-    @Override
-    @Cacheable(key = "#id")
-    public UtilisateurDto getById(UUID id) {
-        Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
-        return utilisateurMapper.toDto(entity);
-    }
+  @Transactional(readOnly = true)
+  @Override
+  @Cacheable(key = "#id")
+  public UtilisateurDto getById(UUID id) {
+    Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
+    return utilisateurMapper.toDto(entity);
+  }
 
-    @Override
-    @CacheEvict(key = "#id")
-    public UtilisateurDto update(UUID id, UtilisateurDto dto) {
-        Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
-        utilisateurMapper.updateEntityFromDto(dto, entity);
-        entity = utilisateurRepository.save(entity);
-        return utilisateurMapper.toDto(entity);
-    }
+  @Override
+  @CacheEvict(key = "#id")
+  public UtilisateurDto update(UUID id, UtilisateurDto dto) {
+    Utilisateur entity = ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
+    utilisateurMapper.updateEntityFromDto(dto, entity);
+    entity = utilisateurRepository.save(entity);
+    return utilisateurMapper.toDto(entity);
+  }
 
-    @Override
-    @CacheEvict(key = "#id")
-    public void delete(UUID id) {
-        Utilisateur utilisateur =
-                ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
-        try {
-            utilisateurRepository.delete(utilisateur);
-            keycloakService.deleteUser(utilisateur.getKeycloakUser());
-        } catch (Exception e) {
-            log.error("An error occurred whilst deleting user with id {} !", id);
-            throw e;
-        }
+  @Override
+  @CacheEvict(key = "#id")
+  public void delete(UUID id) {
+    Utilisateur utilisateur =
+        ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
+    try {
+      utilisateurRepository.delete(utilisateur);
+      keycloakService.deleteUser(utilisateur.getKeycloakUser());
+    } catch (Exception e) {
+      log.error("An error occurred whilst deleting user with id {} !", id);
+      throw e;
     }
+  }
 }

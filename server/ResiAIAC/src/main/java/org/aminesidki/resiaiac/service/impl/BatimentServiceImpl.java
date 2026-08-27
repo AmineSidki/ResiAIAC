@@ -32,9 +32,7 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "'all'")})
   public BatimentDto save(BatimentDto dto) {
     Batiment entity = batimentMapper.toEntity(dto);
     entity = batimentRepository.save(entity);
@@ -50,10 +48,7 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @Caching(evict = {
-             @CacheEvict(key = "#id"),
-             @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public BatimentDto update(UUID id, BatimentDto dto) {
     Batiment entity = ResourceFetcher.fetchResource(id, batimentRepository, "Batiment");
     batimentMapper.updateEntityFromDto(dto, entity);
@@ -62,10 +57,7 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @Caching(evict = {
-          @CacheEvict(key = "#id"),
-          @CacheEvict(key = "'all'")
-  })
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public void delete(UUID id) {
     batimentRepository.delete(ResourceFetcher.fetchResource(id, batimentRepository, "Batiment"));
   }
