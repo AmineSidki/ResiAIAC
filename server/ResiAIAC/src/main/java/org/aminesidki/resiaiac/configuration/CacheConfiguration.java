@@ -17,7 +17,7 @@ public class CacheConfiguration {
   public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
     RedisCacheConfiguration config =
         RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(Duration.ofHours(6))
+            .entryTtl(Duration.ofMinutes(3))
             .disableCachingNullValues()
             .serializeValuesWith(
                 RedisSerializationContext.SerializationPair.fromSerializer(

@@ -12,6 +12,7 @@ import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +32,9 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @Caching(evict = {
+          @CacheEvict(key = "'all'")
+  })
   public BatimentDto save(BatimentDto dto) {
     Batiment entity = batimentMapper.toEntity(dto);
     entity = batimentRepository.save(entity);
@@ -47,12 +50,10 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
-  /* OR --- @Caching(evict = {
+  @Caching(evict = {
              @CacheEvict(key = "#id"),
              @CacheEvict(key = "'all'")
   })
-  */
   public BatimentDto update(UUID id, BatimentDto dto) {
     Batiment entity = ResourceFetcher.fetchResource(id, batimentRepository, "Batiment");
     batimentMapper.updateEntityFromDto(dto, entity);
@@ -61,7 +62,10 @@ public class BatimentServiceImpl implements BatimentService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @Caching(evict = {
+          @CacheEvict(key = "#id"),
+          @CacheEvict(key = "'all'")
+  })
   public void delete(UUID id) {
     batimentRepository.delete(ResourceFetcher.fetchResource(id, batimentRepository, "Batiment"));
   }

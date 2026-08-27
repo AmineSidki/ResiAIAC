@@ -100,7 +100,7 @@ public class ReservationServiceImpl implements ReservationService {
     entity = reservationRepository.save(entity);
     emailService.envoyerEmail(
         new EmailResponse(
-            "yassine.daher4@.com", // Plus tard on récupérera l'email de l'étudiant
+            "yassine.daher4@gmail.com", // Plus tard on récupérera l'email de l'étudiant
             "Confirmation de Réservation",
             "Votre réservation a été créée avec succès !"));
     return reservationMapper.toDto(entity);
