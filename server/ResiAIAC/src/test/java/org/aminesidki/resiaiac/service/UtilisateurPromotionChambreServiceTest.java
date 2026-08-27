@@ -11,10 +11,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
+import org.aminesidki.resiaiac.entity.Chambre;
+import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurPromotionChambreMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurPromotionChambreRepository;
 import org.aminesidki.resiaiac.service.impl.UtilisateurPromotionChambreServiceImpl;
@@ -38,9 +42,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
  *
  * <p>getById/delete take the 3 raw UUIDs and build the composite id internally; update still takes
  * the composite id directly (matches the current implementation).
+ *
+ * <p>{@code UtilisateurService}/{@code ChambreService} were added as constructor dependencies
+ * alongside {@code getAllByUserId}/{@code getAllByChambreId}, which resolve the parent entity
+ * through those services before delegating to the repository.
  */
 @ExtendWith(MockitoExtension.class)
 class UtilisateurPromotionChambreServiceTest {
+
+  @Mock private UtilisateurService utilisateurService;
+
+  @Mock private ChambreService chambreService;
 
   @Mock private UtilisateurPromotionChambreRepository repository;
 
@@ -57,7 +69,9 @@ class UtilisateurPromotionChambreServiceTest {
 
   @BeforeEach
   void setUp() {
-    service = new UtilisateurPromotionChambreServiceImpl(repository, mapper);
+    service =
+        new UtilisateurPromotionChambreServiceImpl(
+            utilisateurService, chambreService, repository, mapper);
 
     utilisateurId = UUID.randomUUID();
     promotionId = UUID.randomUUID();
@@ -68,6 +82,88 @@ class UtilisateurPromotionChambreServiceTest {
     dto =
         new UtilisateurPromotionChambreDto(
             id, false, "RAS", utilisateurId, promotionId, chambreId, List.of());
+  }
+
+  // ---------- getAllByChambreId ----------
+
+  @Test
+  void getAllByChambreId_shouldResolveChambreThenMapResults() {
+    Chambre chambre = Chambre.builder().id(chambreId).build();
+
+    when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
+    when(repository.findAllByChambre(chambre)).thenReturn(List.of(entity));
+    when(mapper.toDto(entity)).thenReturn(dto);
+
+    var result = service.getAllByChambreId(chambreId);
+
+    assertThat(result).containsExactly(dto);
+    verify(chambreService).getEntityById(chambreId);
+    verify(repository).findAllByChambre(chambre);
+    verify(mapper).toDto(entity);
+  }
+
+  // ---------- getAllByUserId ----------
+
+  @Test
+  void getAllByUserId_shouldResolveUserThenMapResults() {
+    Utilisateur utilisateur = Utilisateur.builder().id(utilisateurId).build();
+
+    when(utilisateurService.getMyEntityById(utilisateurId)).thenReturn(utilisateur);
+    when(repository.findAllByUtilisateur(utilisateur)).thenReturn(List.of(entity));
+    when(mapper.toDto(entity)).thenReturn(dto);
+
+    var result = service.getAllByUserId(utilisateurId);
+
+    assertThat(result).containsExactly(dto);
+    verify(utilisateurService).getMyEntityById(utilisateurId);
+    verify(repository).findAllByUtilisateur(utilisateur);
+    verify(mapper).toDto(entity);
+  }
+
+  // ---------- getEntityById ----------
+
+  @Test
+  void getEntityById_shouldFetchEntity() {
+    try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
+      fetcher
+          .when(() -> ResourceFetcher.fetchResource(id, repository, "UtilisateurPromotionChambre"))
+          .thenReturn(entity);
+
+      UtilisateurPromotionChambre result = service.getEntityById(id);
+
+      assertThat(result).isEqualTo(entity);
+      fetcher.verify(
+          () -> ResourceFetcher.fetchResource(id, repository, "UtilisateurPromotionChambre"));
+    }
+  }
+
+  // ---------- getCurrentRoomByUser ----------
+
+  @Test
+  void getCurrentRoomByUser_shouldReturnChambreOfMostRecentUpc() {
+    Utilisateur utilisateur = Utilisateur.builder().id(utilisateurId).build();
+    Chambre chambre = Chambre.builder().id(chambreId).build();
+    UtilisateurPromotionChambre mostRecent =
+        UtilisateurPromotionChambre.builder().id(id).chambre(chambre).build();
+
+    when(repository.findTopByUtilisateurOrderByPromotion_AnneeDeFinDesc(utilisateur))
+        .thenReturn(Optional.of(mostRecent));
+
+    Chambre result = service.getCurrentRoomByUser(utilisateur);
+
+    assertThat(result).isEqualTo(chambre);
+    verify(repository).findTopByUtilisateurOrderByPromotion_AnneeDeFinDesc(utilisateur);
+  }
+
+  @Test
+  void getCurrentRoomByUser_shouldThrowResourceNotFoundWhenUserHasNoUpc() {
+    Utilisateur utilisateur = Utilisateur.builder().id(utilisateurId).build();
+
+    when(repository.findTopByUtilisateurOrderByPromotion_AnneeDeFinDesc(utilisateur))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.getCurrentRoomByUser(utilisateur))
+        .isInstanceOf(ResourceNotFoundException.class);
   }
 
   // ---------- save ----------

@@ -40,6 +40,12 @@ public class EquipementServiceImpl implements EquipementService {
 
   @Transactional(readOnly = true)
   @Override
+  public Equipement getEntityById(Long id) {
+    return ResourceFetcher.fetchResource(id, equipementRepository, "Equipement");
+  }
+
+  @Transactional(readOnly = true)
+  @Override
   @Cacheable(key = "#id")
   public EquipementDto getById(Long id) {
     Equipement entity = ResourceFetcher.fetchResource(id, equipementRepository, "Equipement");

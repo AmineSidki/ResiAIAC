@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -28,13 +29,14 @@ public class ReclamationServiceImpl implements ReclamationService {
   private final UtilisateurService utilisateurService;
   private final UtilisateurPromotionChambreService utilisateurPromotionChambreService;
   private final EquipementReclamationService equipementReclamationService;
+  private final EmailService emailService;
   private final ReclamationRepository reclamationRepository;
   private final ReclamationMapper reclamationMapper;
 
   @Transactional(readOnly = true)
   @Override
   public Page<ReclamationDto> getAllMyByStatus(Jwt jwt, EtatReclamation etat, Pageable pageable) {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     return reclamationRepository
         .findAllByUtilisateurAndEtat(id, etat, pageable)
         .map(reclamationMapper::toDto);
@@ -43,7 +45,7 @@ public class ReclamationServiceImpl implements ReclamationService {
   @Transactional(readOnly = true)
   @Override
   public Page<ReclamationDto> getAllMy(Jwt jwt, Pageable pageable) {
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     return reclamationRepository.findAllByUtilisateur(id, pageable).map(reclamationMapper::toDto);
   }
 
@@ -51,7 +53,7 @@ public class ReclamationServiceImpl implements ReclamationService {
   public ReclamationDto saveMy(Jwt jwt, MyReclamationRequest request) {
     // fetch user // fetch room = fetch UPC with highest endYear // fetch the equipements
     // create dto // map dto -> entity // persist // create composite // persist composite
-    Utilisateur id = utilisateurService.getMyEntity(jwt);
+    Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
     Chambre chambre = utilisateurPromotionChambreService.getCurrentRoomByUser(id);
 
     ReclamationDto dto = reclamationMapper.myReclamationToDto(request);
@@ -69,6 +71,12 @@ public class ReclamationServiceImpl implements ReclamationService {
             e ->
                 equipementReclamationService.save(
                     new EquipementReclamationDto(null, e.quantite(), e.id(), entityId)));
+
+    emailService.envoyerEmail(
+        new EmailResponse(
+            id.getEmail(),
+            "Confirmation de Réservation",
+            "Votre réclamation a été créée avec succès !"));
     return reclamationMapper.toDto(entity);
   }
 
@@ -76,7 +84,7 @@ public class ReclamationServiceImpl implements ReclamationService {
   @Override
   public ReclamationDto getMyById(Jwt jwt, UUID id) {
     Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
-    Utilisateur utilisateur = utilisateurService.getMyEntity(jwt);
+    Utilisateur utilisateur = utilisateurService.getMyEntityByJwt(jwt);
     if (entity.getUtilisateur().getId().equals(utilisateur.getId())) {
       return reclamationMapper.toDto(entity);
     }
@@ -84,14 +92,22 @@ public class ReclamationServiceImpl implements ReclamationService {
         "Queried resource does not belong to querying user !");
   }
 
+  @Transactional(readOnly = true)
   @Override
   public Page<ReclamationDto> getAllByStatus(EtatReclamation etat, Pageable pageable) {
     return reclamationRepository.findAllByEtat(etat, pageable).map(reclamationMapper::toDto);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public Page<ReclamationDto> getAll(Pageable pageable) {
     return reclamationRepository.findAll(pageable).map(reclamationMapper::toDto);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public Reclamation getEntityById(UUID id) {
+    return ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
   }
 
   @Override
@@ -113,6 +129,12 @@ public class ReclamationServiceImpl implements ReclamationService {
     Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
     reclamationMapper.updateEntityFromDto(dto, entity);
     entity = reclamationRepository.save(entity);
+    Utilisateur utilisateur = utilisateurService.getMyEntityById(dto.utilisateur());
+    emailService.envoyerEmail(
+        new EmailResponse(
+            utilisateur.getEmail(),
+            "Au sujet de votre réclamation",
+            "Votre réclamation a été prise en compte, vous pouvez verifier son état immédiat !"));
     return reclamationMapper.toDto(entity);
   }
 

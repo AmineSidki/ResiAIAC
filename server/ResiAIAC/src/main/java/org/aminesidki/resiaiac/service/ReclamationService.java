@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.service;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
+import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.enumeration.EtatReclamation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,8 @@ public interface ReclamationService {
   Page<ReclamationDto> getAllByStatus(EtatReclamation etat, Pageable pageable);
 
   Page<ReclamationDto> getAll(Pageable pageable);
+
+  Reclamation getEntityById(UUID id);
 
   ReclamationDto save(ReclamationDto dto);
 
