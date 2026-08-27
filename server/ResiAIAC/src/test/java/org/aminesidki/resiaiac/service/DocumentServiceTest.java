@@ -88,7 +88,7 @@ class DocumentServiceTest {
     String url = "https://seaweed.local/cin/cin.pdf?signed=1";
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(owner);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(owner);
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
           .thenReturn(owned);
@@ -110,7 +110,7 @@ class DocumentServiceTest {
         Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").proprietaire(owner).build();
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(requester);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(requester);
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
           .thenReturn(owned);
@@ -132,7 +132,7 @@ class DocumentServiceTest {
         Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").proprietaire(owner).build();
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(owner);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(owner);
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
           .thenReturn(owned);
@@ -154,7 +154,7 @@ class DocumentServiceTest {
         Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").proprietaire(owner).build();
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(requester);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(requester);
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, documentRepository, "Document"))
           .thenReturn(owned);
@@ -183,7 +183,7 @@ class DocumentServiceTest {
             .proprietaire(me)
             .build();
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(documentRepository.findFirstByNomSceauAndProprietaire(FileType.CIN.getBucketName(), me))
         .thenReturn(null);
     when(documentRepository.save(any(Document.class))).thenReturn(savedEntity);
@@ -224,7 +224,7 @@ class DocumentServiceTest {
     Document savedEntity =
         Document.builder().id(id).nomFichier("new-name").nomSceau("cin").proprietaire(me).build();
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(documentRepository.findFirstByNomSceauAndProprietaire(FileType.CIN.getBucketName(), me))
         .thenReturn(oldDocument);
     when(documentRepository.save(any(Document.class))).thenReturn(savedEntity);
@@ -256,7 +256,7 @@ class DocumentServiceTest {
             .proprietaire(me)
             .build();
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(documentRepository.findFirstByNomSceauAndProprietaire(FileType.CIN.getBucketName(), me))
         .thenReturn(oldDocument);
     when(documentRepository.save(any(Document.class)))
@@ -441,14 +441,14 @@ class DocumentServiceTest {
     Pageable pageable = PageRequest.of(0, 20);
     var page = new PageImpl<>(List.of(entity));
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(documentRepository.findAllByProprietaire(me, pageable)).thenReturn(page);
     when(documentMapper.toDto(entity)).thenReturn(dto);
 
     var result = documentService.getAllMy(jwt, pageable);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(documentRepository).findAllByProprietaire(me, pageable);
     verify(documentMapper).toDto(entity);
   }
@@ -462,7 +462,7 @@ class DocumentServiceTest {
     Pageable pageable = PageRequest.of(0, 20);
     var page = new PageImpl<>(List.of(entity));
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(documentRepository.getAllByProprietaireAndEtat(me, EtatDocument.EN_ATTENTE, pageable))
         .thenReturn(page);
     when(documentMapper.toDto(entity)).thenReturn(dto);
@@ -470,7 +470,7 @@ class DocumentServiceTest {
     var result = documentService.getAllMyByStatus(jwt, EtatDocument.EN_ATTENTE, pageable);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(documentRepository).getAllByProprietaireAndEtat(me, EtatDocument.EN_ATTENTE, pageable);
     verify(documentMapper).toDto(entity);
   }

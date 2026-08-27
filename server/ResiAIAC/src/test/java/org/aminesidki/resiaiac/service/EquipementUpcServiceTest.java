@@ -10,9 +10,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.EquipementUpcDto;
+import org.aminesidki.resiaiac.entity.Equipement;
 import org.aminesidki.resiaiac.entity.EquipementUpc;
+import org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre;
 import org.aminesidki.resiaiac.entity.id.EquipementUpcId;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 import org.aminesidki.resiaiac.mapper.EquipementUpcMapper;
@@ -25,6 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Unit tests for {@link EquipementUpcService}, exercised through its {@link
@@ -39,9 +45,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <p>getById/delete take the 4 raw values (equipementId + 3 UUIDs) and build the two-level
  * composite id internally; update still takes the composite id directly (matches the current
  * implementation).
+ *
+ * <p>{@code UtilisateurPromotionChambreService}/{@code EquipementService} were added as constructor
+ * dependencies alongside {@code getAllByEquipement}/{@code getAllByUpc}, which resolve the parent
+ * entity through those services before delegating to the repository.
  */
 @ExtendWith(MockitoExtension.class)
 class EquipementUpcServiceTest {
+
+  @Mock private UtilisateurPromotionChambreService utilisateurPromotionChambreService;
+
+  @Mock private EquipementService equipementService;
 
   @Mock private EquipementUpcRepository repository;
 
@@ -59,7 +73,9 @@ class EquipementUpcServiceTest {
 
   @BeforeEach
   void setUp() {
-    service = new EquipementUpcServiceImpl(repository, mapper);
+    service =
+        new EquipementUpcServiceImpl(
+            utilisateurPromotionChambreService, equipementService, repository, mapper);
 
     equipementId = 1L;
     utilisateurId = UUID.randomUUID();
@@ -72,6 +88,46 @@ class EquipementUpcServiceTest {
 
     entity = EquipementUpc.builder().id(id).quantite(2L).build();
     dto = new EquipementUpcDto(id, 2L, equipementId, upcId);
+  }
+
+  // ---------- getAllByEquipement ----------
+
+  @Test
+  void getAllByEquipement_shouldResolveEquipementThenFilterAndMapResults() {
+    Equipement equipement = Equipement.builder().id(equipementId).build();
+    Pageable pageable = PageRequest.of(0, 20);
+    var page = new PageImpl<>(List.of(entity));
+
+    when(equipementService.getEntityById(equipementId)).thenReturn(equipement);
+    when(repository.findAllByEquipement(equipement, pageable)).thenReturn(page);
+    when(mapper.toDto(entity)).thenReturn(dto);
+
+    var result = service.getAllByEquipement(equipementId, pageable);
+
+    assertThat(result.getContent()).containsExactly(dto);
+    verify(equipementService).getEntityById(equipementId);
+    verify(repository).findAllByEquipement(equipement, pageable);
+    verify(mapper).toDto(entity);
+  }
+
+  // ---------- getAllByUpc ----------
+
+  @Test
+  void getAllByUpc_shouldResolveUpcThenMapResults() {
+    UtilisateurPromotionChambreId upcId =
+        new UtilisateurPromotionChambreId(utilisateurId, promotionId, chambreId);
+    UtilisateurPromotionChambre upc = UtilisateurPromotionChambre.builder().id(upcId).build();
+
+    when(utilisateurPromotionChambreService.getEntityById(upcId)).thenReturn(upc);
+    when(repository.findAllByUpc(upc)).thenReturn(List.of(entity));
+    when(mapper.toDto(entity)).thenReturn(dto);
+
+    var result = service.getAllByUpc(utilisateurId, promotionId, chambreId);
+
+    assertThat(result).containsExactly(dto);
+    verify(utilisateurPromotionChambreService).getEntityById(upcId);
+    verify(repository).findAllByUpc(upc);
+    verify(mapper).toDto(entity);
   }
 
   // ---------- save ----------

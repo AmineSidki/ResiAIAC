@@ -21,6 +21,7 @@ public class Utilisateur {
   private UUID id;
 
   private UUID keycloakUser;
+  private String email;
   private String nom;
   private String prenom;
   private String cin;

@@ -18,6 +18,7 @@ import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.entry.EquipementEntry;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
+import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -48,6 +49,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
  *
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
+ *
+ * <p>{@code EmailService} was added as a constructor dependency alongside notification emails fired
+ * from {@code saveMy} and {@code update}.
  */
 @ExtendWith(MockitoExtension.class)
 class ReclamationServiceTest {
@@ -62,6 +66,8 @@ class ReclamationServiceTest {
 
   @Mock private EquipementReclamationService equipementReclamationService;
 
+  @Mock private EmailService emailService;
+
   private ReclamationService reclamationService;
 
   private UUID id;
@@ -75,6 +81,7 @@ class ReclamationServiceTest {
             utilisateurService,
             utilisateurPromotionChambreService,
             equipementReclamationService,
+            emailService,
             reclamationRepository,
             reclamationMapper);
 
@@ -153,14 +160,14 @@ class ReclamationServiceTest {
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
           .thenReturn(owned);
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
       when(reclamationMapper.toDto(owned)).thenReturn(dto);
 
       ReclamationDto result = reclamationService.getMyById(jwt, id);
 
       assertThat(result).isEqualTo(dto);
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"));
-      verify(utilisateurService).getMyEntity(jwt);
+      verify(utilisateurService).getMyEntityByJwt(jwt);
       verify(reclamationMapper).toDto(owned);
     }
   }
@@ -177,7 +184,7 @@ class ReclamationServiceTest {
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"))
           .thenReturn(notOwned);
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
 
       assertThatThrownBy(() -> reclamationService.getMyById(jwt, id))
           .isInstanceOf(ResourceOwnershipMismatchException.class);
@@ -246,7 +253,7 @@ class ReclamationServiceTest {
     Pageable pageable = PageRequest.of(0, 20);
     var page = new PageImpl<>(List.of(entity));
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(reclamationRepository.findAllByUtilisateurAndEtat(
             me, EtatReclamation.EN_ATTENTE, pageable))
         .thenReturn(page);
@@ -255,7 +262,7 @@ class ReclamationServiceTest {
     var result = reclamationService.getAllMyByStatus(jwt, EtatReclamation.EN_ATTENTE, pageable);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(reclamationRepository)
         .findAllByUtilisateurAndEtat(me, EtatReclamation.EN_ATTENTE, pageable);
     verify(reclamationMapper).toDto(entity);
@@ -265,6 +272,11 @@ class ReclamationServiceTest {
 
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
+    ReclamationDto inputDto =
+        new ReclamationDto(
+            id, "Fuite d'eau", null, UUID.randomUUID(), null, null, List.of(), null, null);
+    Utilisateur owner =
+        Utilisateur.builder().id(inputDto.utilisateur()).email("etudiant@example.com").build();
     Reclamation savedEntity =
         Reclamation.builder().id(id).message("Fuite d'eau - resolue").etat(null).build();
     ReclamationDto resultDto =
@@ -277,15 +289,23 @@ class ReclamationServiceTest {
           .thenReturn(entity);
       when(reclamationRepository.save(entity)).thenReturn(savedEntity);
       when(reclamationMapper.toDto(savedEntity)).thenReturn(resultDto);
+      when(utilisateurService.getMyEntityById(inputDto.utilisateur())).thenReturn(owner);
 
-      ReclamationDto result = reclamationService.update(id, dto);
+      ReclamationDto result = reclamationService.update(id, inputDto);
 
       assertThat(result).isEqualTo(resultDto);
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation"));
-      verify(reclamationMapper).updateEntityFromDto(dto, entity);
+      verify(reclamationMapper).updateEntityFromDto(inputDto, entity);
       verify(reclamationRepository).save(entity);
       verify(reclamationMapper).toDto(savedEntity);
-      verifyNoMoreInteractions(reclamationRepository, reclamationMapper);
+      verify(utilisateurService).getMyEntityById(inputDto.utilisateur());
+      verify(emailService)
+          .envoyerEmail(
+              new EmailResponse(
+                  owner.getEmail(),
+                  "Au sujet de votre réclamation",
+                  "Votre réclamation a été prise en compte, vous pouvez verifier son état immédiat !"));
+      verifyNoMoreInteractions(reclamationRepository, reclamationMapper, utilisateurService);
     }
   }
 
@@ -300,7 +320,7 @@ class ReclamationServiceTest {
       assertThatThrownBy(() -> reclamationService.update(id, dto)).isSameAs(notFound);
 
       verify(reclamationRepository, never()).save(any());
-      verifyNoMoreInteractions(reclamationMapper);
+      verifyNoMoreInteractions(reclamationMapper, utilisateurService, emailService);
     }
   }
 
@@ -344,14 +364,14 @@ class ReclamationServiceTest {
     Pageable pageable = PageRequest.of(0, 20);
     var page = new PageImpl<>(List.of(entity));
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(reclamationRepository.findAllByUtilisateur(me, pageable)).thenReturn(page);
     when(reclamationMapper.toDto(entity)).thenReturn(dto);
 
     var result = reclamationService.getAllMy(jwt, pageable);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(reclamationRepository).findAllByUtilisateur(me, pageable);
     verifyNoMoreInteractions(reclamationRepository, utilisateurService);
   }
@@ -361,7 +381,8 @@ class ReclamationServiceTest {
   @Test
   void saveMy_shouldResolveUserAndCurrentRoomThenPersistAndForwardEquipements() {
     Jwt jwt = mock(Jwt.class);
-    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Utilisateur me =
+        Utilisateur.builder().id(UUID.randomUUID()).email("etudiant@example.com").build();
     Chambre currentRoom = Chambre.builder().id(UUID.randomUUID()).build();
     List<EquipementEntry> equipements =
         List.of(new EquipementEntry(1L, 2L), new EquipementEntry(2L, 1L));
@@ -371,7 +392,7 @@ class ReclamationServiceTest {
     Reclamation mappedEntity = Reclamation.builder().message("Fuite d'eau").build();
     Reclamation savedEntity = Reclamation.builder().id(id).message("Fuite d'eau").build();
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(utilisateurPromotionChambreService.getCurrentRoomByUser(me)).thenReturn(currentRoom);
     when(reclamationMapper.myReclamationToDto(request)).thenReturn(mappedDto);
     when(reclamationMapper.toEntity(mappedDto)).thenReturn(mappedEntity);
@@ -387,7 +408,7 @@ class ReclamationServiceTest {
     assertThat(mappedEntity.getUtilisateur()).isEqualTo(me);
     assertThat(mappedEntity.getChambre()).isEqualTo(currentRoom);
 
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(utilisateurPromotionChambreService).getCurrentRoomByUser(me);
 
     ArgumentCaptor<EquipementReclamationDto> captor =
@@ -397,6 +418,13 @@ class ReclamationServiceTest {
         .extracting(EquipementReclamationDto::equipement, EquipementReclamationDto::quantite)
         .containsExactly(tuple(1L, 2L), tuple(2L, 1L));
     assertThat(captor.getAllValues()).allSatisfy(e -> assertThat(e.reclamation()).isEqualTo(id));
+
+    verify(emailService)
+        .envoyerEmail(
+            new EmailResponse(
+                me.getEmail(),
+                "Confirmation de Réservation",
+                "Votre réclamation a été créée avec succès !"));
   }
 
   @Test
@@ -406,12 +434,12 @@ class ReclamationServiceTest {
     MyReclamationRequest request = new MyReclamationRequest("Fuite d'eau", 1L, List.of());
     RuntimeException notFound = new RuntimeException("No current room for user");
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(utilisateurPromotionChambreService.getCurrentRoomByUser(me)).thenThrow(notFound);
 
     assertThatThrownBy(() -> reclamationService.saveMy(jwt, request)).isSameAs(notFound);
 
     verify(reclamationRepository, never()).save(any());
-    verifyNoMoreInteractions(reclamationMapper, equipementReclamationService);
+    verifyNoMoreInteractions(reclamationMapper, equipementReclamationService, emailService);
   }
 }

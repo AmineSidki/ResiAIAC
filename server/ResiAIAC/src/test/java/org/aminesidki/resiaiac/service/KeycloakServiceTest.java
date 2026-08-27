@@ -59,8 +59,19 @@ class KeycloakServiceTest {
 
     dto =
         new UtilisateurDto(
-            null, "Sidki", "Amine", null, null, null, List.of(), List.of(), List.of(), List.of(),
-            null, null);
+            null,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
 
     when(keycloak.realm(REALM)).thenReturn(realmResource);
     when(realmResource.users()).thenReturn(usersResource);

@@ -49,12 +49,10 @@ public class KeycloakServiceImpl implements KeycloakService {
     userRepresentation.setLastName(dto.nom());
     userRepresentation.setEnabled(true);
     userRepresentation.setUsername(username);
-    userRepresentation.setEmail(
-        "example@email.com"); // FIXME: Once emails are in place, add them in here.
+    userRepresentation.setEmail(dto.email());
     userRepresentation.setEmailVerified(true);
 
     CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-    credentialRepresentation.setTemporary(true);
     credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
     credentialRepresentation.setValue(username.toLowerCase());
 

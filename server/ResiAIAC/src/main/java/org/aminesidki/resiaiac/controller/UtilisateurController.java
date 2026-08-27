@@ -25,7 +25,7 @@ public class UtilisateurController {
 
   @GetMapping("/me")
   public ResponseEntity<?> getMe(@AuthenticationPrincipal Jwt jwt) {
-    return ResponseEntity.ok(utilisateurService.getMyDto(jwt));
+    return ResponseEntity.ok(utilisateurService.getMyDtoByJwt(jwt));
   }
 
   @PutMapping("/me")

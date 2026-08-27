@@ -95,12 +95,15 @@ class ReservationServiceTest {
   void save_shouldMapPersistAndReturnDto() {
     ReservationDto inputDto =
         new ReservationDto(null, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
+    Utilisateur owner =
+        Utilisateur.builder().id(inputDto.utilisateur()).email("etudiant@example.com").build();
     Reservation mappedEntity = Reservation.builder().build();
     Reservation savedEntity = Reservation.builder().id(id).build();
     ReservationDto resultDto =
         new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(utilisateurService.getMyEntityById(inputDto.utilisateur())).thenReturn(owner);
     when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
     when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -108,10 +111,17 @@ class ReservationServiceTest {
 
     assertThat(result).isEqualTo(resultDto);
     verify(reservationMapper).toEntity(inputDto);
+    verify(utilisateurService).getMyEntityById(inputDto.utilisateur());
     verify(reservationRepository).save(mappedEntity);
     verify(reservationMapper).toDto(savedEntity);
-    verify(emailService).envoyerEmail(any(EmailResponse.class));
-    verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
+    verify(emailService)
+        .envoyerEmail(
+            new EmailResponse(
+                owner.getEmail(),
+                "Confirmation de Réservation",
+                "Votre réservation a été créée avec succès !"));
+    verifyNoMoreInteractions(
+        reservationRepository, reservationMapper, utilisateurService, emailService);
   }
 
   // ---------- getById ----------
@@ -159,14 +169,14 @@ class ReservationServiceTest {
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
           .thenReturn(owned);
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
       when(reservationMapper.toDto(owned)).thenReturn(dto);
 
       ReservationDto result = reservationService.getMyById(jwt, id);
 
       assertThat(result).isEqualTo(dto);
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
-      verify(utilisateurService).getMyEntity(jwt);
+      verify(utilisateurService).getMyEntityByJwt(jwt);
       verify(reservationMapper).toDto(owned);
     }
   }
@@ -182,7 +192,7 @@ class ReservationServiceTest {
       fetcher
           .when(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"))
           .thenReturn(notOwned);
-      when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+      when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
 
       assertThatThrownBy(() -> reservationService.getMyById(jwt, id))
           .isInstanceOf(ResourceOwnershipMismatchException.class);
@@ -289,14 +299,14 @@ class ReservationServiceTest {
     Pageable pageable = PageRequest.of(0, 20);
     var page = new PageImpl<>(List.of(entity));
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(reservationRepository.findAllByUtilisateur(me, pageable)).thenReturn(page);
     when(reservationMapper.toDto(entity)).thenReturn(dto);
 
     var result = reservationService.getAllMy(jwt, pageable);
 
     assertThat(result.getContent()).containsExactly(dto);
-    verify(utilisateurService).getMyEntity(jwt);
+    verify(utilisateurService).getMyEntityByJwt(jwt);
     verify(reservationRepository).findAllByUtilisateur(me, pageable);
   }
 
@@ -311,7 +321,7 @@ class ReservationServiceTest {
         Chambre.builder().id(chambreId).matricule("B1-101").etat(EtatChambre.OCCUPEE).build();
     MyReservationRequest request = new MyReservationRequest(chambreId);
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(chambreService.getEntityById(chambreId)).thenReturn(fullRoom);
 
     assertThatThrownBy(() -> reservationService.saveMy(jwt, request))
@@ -344,7 +354,7 @@ class ReservationServiceTest {
     MyReservationRequest request = new MyReservationRequest(chambreId);
     ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
     when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
     when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -372,7 +382,7 @@ class ReservationServiceTest {
     MyReservationRequest request = new MyReservationRequest(chambreId);
     ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
     when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
     when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -386,7 +396,8 @@ class ReservationServiceTest {
   @Test
   void saveMy_shouldPersistWithActiveEtatOwnerAndRoomFromJwt() {
     Jwt jwt = mock(Jwt.class);
-    Utilisateur me = Utilisateur.builder().id(UUID.randomUUID()).build();
+    Utilisateur me =
+        Utilisateur.builder().id(UUID.randomUUID()).email("etudiant@example.com").build();
     UUID chambreId = UUID.randomUUID();
     Chambre chambre =
         Chambre.builder()
@@ -399,7 +410,7 @@ class ReservationServiceTest {
     MyReservationRequest request = new MyReservationRequest(chambreId);
     ReservationDto mappedDto = new ReservationDto(null, null, null, null, null, null);
 
-    when(utilisateurService.getMyEntity(jwt)).thenReturn(me);
+    when(utilisateurService.getMyEntityByJwt(jwt)).thenReturn(me);
     when(chambreService.getEntityById(chambreId)).thenReturn(chambre);
     when(reservationMapper.myReservationToDto(request)).thenReturn(mappedDto);
     when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -415,6 +426,11 @@ class ReservationServiceTest {
                     r.getEtat() == EtatReservation.ACTIVE
                         && r.getUtilisateur() == me
                         && r.getChambre() == chambre));
-    verifyNoMoreInteractions(emailService);
+    verify(emailService)
+        .envoyerEmail(
+            new EmailResponse(
+                me.getEmail(),
+                "Confirmation de Réservation",
+                "Votre réservation a été créée avec succès !"));
   }
 }
