@@ -55,7 +55,7 @@ public class PromotionServiceImpl implements PromotionService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @CacheEvict(key = "#id")
   public PromotionDto update(UUID id, PromotionDto dto) {
     Promotion entity = ResourceFetcher.fetchResource(id, promotionRepository, "Promotion");
     promotionMapper.updateEntityFromDto(dto, entity);
@@ -64,7 +64,7 @@ public class PromotionServiceImpl implements PromotionService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @CacheEvict(key = "#id")
   public void delete(UUID id) {
     promotionRepository.delete(ResourceFetcher.fetchResource(id, promotionRepository, "Promotion"));
   }

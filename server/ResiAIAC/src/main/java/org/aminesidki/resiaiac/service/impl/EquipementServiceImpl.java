@@ -11,6 +11,7 @@ import org.aminesidki.resiaiac.util.ResourceFetcher;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +31,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @Caching(evict = {@CacheEvict(key = "'all'")})
   public EquipementDto save(EquipementDto dto) {
     Equipement entity = equipementMapper.toEntity(dto);
     entity = equipementRepository.save(entity);
@@ -52,7 +53,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public EquipementDto update(Long id, EquipementDto dto) {
     Equipement entity = ResourceFetcher.fetchResource(id, equipementRepository, "Equipement");
     equipementMapper.updateEntityFromDto(dto, entity);
@@ -61,7 +62,7 @@ public class EquipementServiceImpl implements EquipementService {
   }
 
   @Override
-  @CacheEvict(allEntries = true)
+  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
   public void delete(Long id) {
     equipementRepository.delete(
         ResourceFetcher.fetchResource(id, equipementRepository, "Equipement"));

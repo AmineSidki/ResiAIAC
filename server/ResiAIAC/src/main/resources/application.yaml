@@ -1,6 +1,13 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: ResiAIAC
+
+  docker:
+    compose:
+      enabled: false
 
   data:
     web:
