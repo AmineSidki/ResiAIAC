@@ -56,8 +56,6 @@ class EquipementReclamationServiceTest {
 
   @Mock private EquipementService equipementService;
 
-  @Mock private ReclamationService reclamationService;
-
   @Mock private EquipementReclamationRepository equipementReclamationRepository;
 
   @Mock private EquipementReclamationMapper equipementReclamationMapper;
@@ -75,7 +73,6 @@ class EquipementReclamationServiceTest {
     equipementReclamationService =
         new EquipementReclamationServiceImpl(
             equipementService,
-            reclamationService,
             equipementReclamationRepository,
             equipementReclamationMapper);
 
@@ -111,18 +108,14 @@ class EquipementReclamationServiceTest {
 
   @Test
   void getAllByReclamationId_shouldResolveReclamationThenMapResults() {
-    Reclamation reclamation = Reclamation.builder().id(reclamationId).build();
-
-    when(reclamationService.getEntityById(reclamationId)).thenReturn(reclamation);
-    when(equipementReclamationRepository.findAllByReclamation(reclamation))
+    when(equipementReclamationRepository.findAllByReclamation_Id(reclamationId))
         .thenReturn(List.of(entity));
     when(equipementReclamationMapper.toDto(entity)).thenReturn(dto);
 
     var result = equipementReclamationService.getAllByReclamationId(reclamationId);
 
     assertThat(result).containsExactly(dto);
-    verify(reclamationService).getEntityById(reclamationId);
-    verify(equipementReclamationRepository).findAllByReclamation(reclamation);
+    verify(equipementReclamationRepository).findAllByReclamation_Id(reclamationId);
     verify(equipementReclamationMapper).toDto(entity);
   }
 

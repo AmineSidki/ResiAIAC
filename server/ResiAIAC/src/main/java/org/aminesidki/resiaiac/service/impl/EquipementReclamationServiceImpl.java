@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class EquipementReclamationServiceImpl implements EquipementReclamationService {
 
   private final EquipementService equipementService;
-  private final ReclamationService reclamationService;
   private final EquipementReclamationRepository equipementReclamationRepository;
   private final EquipementReclamationMapper equipementReclamationMapper;
 
@@ -41,8 +40,10 @@ public class EquipementReclamationServiceImpl implements EquipementReclamationSe
   @Transactional(readOnly = true)
   @Override
   public List<EquipementReclamationDto> getAllByReclamationId(UUID id) {
-    Reclamation reclamation = reclamationService.getEntityById(id);
-    return equipementReclamationRepository.findAllByReclamation(reclamation).stream()
+    // This is different from the rest of the getBy_ methods for the sole reason that having ReclamationService
+    // imported created a cyclical dependency, to break that, I opted for having this service fetch following
+    // the id alone
+    return equipementReclamationRepository.findAllByReclamation_Id(id).stream()
         .map(equipementReclamationMapper::toDto)
         .toList();
   }
