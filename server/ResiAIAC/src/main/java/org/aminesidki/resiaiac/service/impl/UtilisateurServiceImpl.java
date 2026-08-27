@@ -46,7 +46,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     return ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
   }
 
-  @Transactional(readOnly = true) 
+  @Transactional(readOnly = true)
   @Override
   @Cacheable(key = "'entity-' + #jwt.subject")
   public Utilisateur getMyEntityByJwt(Jwt jwt) {

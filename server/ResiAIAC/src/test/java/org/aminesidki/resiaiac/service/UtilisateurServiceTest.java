@@ -3,19 +3,15 @@ package org.aminesidki.resiaiac.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
 import org.aminesidki.resiaiac.service.impl.UtilisateurServiceImpl;
@@ -27,6 +23,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
  * Unit tests for {@link UtilisateurService}, exercised through its {@link UtilisateurServiceImpl}
