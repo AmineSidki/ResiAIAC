@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Mise à jour de votre document</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background-color:#f2f3f5;">
+    <tr>
+        <td align="center" style="padding:32px 16px;">
+
+            <!-- Card -->
+            <table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0"
+                   style="width:100%;max-width:520px;background-color:#ffffff;
+                          border:1px solid #e0e0e0;border-radius:8px;
+                          font-family:'Google Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">
+
+                <!-- Header -->
+                <tr>
+                    <td style="padding:24px 32px 20px 32px;" th:insert="~{email/fragments/common :: header}"></td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                    <td style="padding:0 32px;">
+                        <span style="font-size:20px;font-weight:400;color:#202124;">État de votre document mis à jour</span>
+                    </td>
+                </tr>
+
+                <!-- Intro -->
+                <tr>
+                    <td style="padding:12px 32px 0 32px;font-size:14px;line-height:20px;color:#5f6368;">
+                        Bonjour <span th:text="${prenom}">Étudiant</span>, votre document a été examiné.
+                    </td>
+                </tr>
+
+                <!-- Details -->
+                <tr>
+                    <td style="padding:20px 32px 0 32px;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="border-top:1px solid #e8eaed;border-bottom:1px solid #e8eaed;">
+                            <tr>
+                                <td style="padding:12px 0;font-size:13px;color:#5f6368;">État</td>
+                                <td style="padding:12px 0;text-align:right;"
+                                    th:insert="~{email/fragments/common :: badge(${statutLibelle}, ${statutCouleur})}"></td>
+                            </tr>
+                            <tr th:if="${note != null and not #strings.isEmpty(note)}">
+                                <td style="padding:12px 0;font-size:13px;color:#5f6368;vertical-align:top;">Motif</td>
+                                <td style="padding:12px 0;font-size:13px;color:#202124;text-align:right;"
+                                    th:text="${note}">Raison du refus.</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Message -->
+                <tr>
+                    <td style="padding:16px 32px 0 32px;font-size:14px;line-height:20px;color:#5f6368;">
+                        <span th:text="${message}">Votre document a été mis à jour.</span>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:24px 32px 24px 32px;" th:insert="~{email/fragments/common :: footer}"></td>
+                </tr>
+
+            </table>
+            <!-- /Card -->
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

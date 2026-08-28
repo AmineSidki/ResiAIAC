@@ -18,7 +18,6 @@ import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.entry.EquipementEntry;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
-import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -50,8 +49,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
  *
- * <p>{@code EmailService} was added as a constructor dependency alongside notification emails fired
- * from {@code saveMy} and {@code update}.
+ * <p>{@code EmailTemplateService} was added as a constructor dependency alongside notification
+ * emails fired from {@code saveMy} and {@code update}.
  */
 @ExtendWith(MockitoExtension.class)
 class ReclamationServiceTest {
@@ -66,7 +65,7 @@ class ReclamationServiceTest {
 
   @Mock private EquipementReclamationService equipementReclamationService;
 
-  @Mock private EmailService emailService;
+  @Mock private EmailTemplateService emailTemplateService;
 
   private ReclamationService reclamationService;
 
@@ -81,7 +80,7 @@ class ReclamationServiceTest {
             utilisateurService,
             utilisateurPromotionChambreService,
             equipementReclamationService,
-            emailService,
+            emailTemplateService,
             reclamationRepository,
             reclamationMapper);
 
@@ -278,7 +277,12 @@ class ReclamationServiceTest {
     Utilisateur owner =
         Utilisateur.builder().id(inputDto.utilisateur()).email("etudiant@example.com").build();
     Reclamation savedEntity =
-        Reclamation.builder().id(id).message("Fuite d'eau - resolue").etat(null).build();
+        Reclamation.builder()
+            .id(id)
+            .message("Fuite d'eau - resolue")
+            .etat(EtatReclamation.EN_TRAITEMENT)
+            .utilisateur(owner)
+            .build();
     ReclamationDto resultDto =
         new ReclamationDto(
             id, "Fuite d'eau - resolue", null, null, null, null, List.of(), null, null);
@@ -289,7 +293,6 @@ class ReclamationServiceTest {
           .thenReturn(entity);
       when(reclamationRepository.save(entity)).thenReturn(savedEntity);
       when(reclamationMapper.toDto(savedEntity)).thenReturn(resultDto);
-      when(utilisateurService.getMyEntityById(inputDto.utilisateur())).thenReturn(owner);
 
       ReclamationDto result = reclamationService.update(id, inputDto);
 
@@ -298,14 +301,8 @@ class ReclamationServiceTest {
       verify(reclamationMapper).updateEntityFromDto(inputDto, entity);
       verify(reclamationRepository).save(entity);
       verify(reclamationMapper).toDto(savedEntity);
-      verify(utilisateurService).getMyEntityById(inputDto.utilisateur());
-      verify(emailService)
-          .envoyerEmail(
-              new EmailResponse(
-                  owner.getEmail(),
-                  "Au sujet de votre réclamation",
-                  "Votre réclamation a été prise en compte, vous pouvez verifier son état immédiat !"));
-      verifyNoMoreInteractions(reclamationRepository, reclamationMapper, utilisateurService);
+      verify(emailTemplateService).envoyerReclamationStatut(owner, savedEntity);
+      verifyNoMoreInteractions(reclamationRepository, reclamationMapper, emailTemplateService);
     }
   }
 
@@ -320,7 +317,7 @@ class ReclamationServiceTest {
       assertThatThrownBy(() -> reclamationService.update(id, dto)).isSameAs(notFound);
 
       verify(reclamationRepository, never()).save(any());
-      verifyNoMoreInteractions(reclamationMapper, utilisateurService, emailService);
+      verifyNoMoreInteractions(reclamationMapper, utilisateurService, emailTemplateService);
     }
   }
 
@@ -419,12 +416,7 @@ class ReclamationServiceTest {
         .containsExactly(tuple(1L, 2L), tuple(2L, 1L));
     assertThat(captor.getAllValues()).allSatisfy(e -> assertThat(e.reclamation()).isEqualTo(id));
 
-    verify(emailService)
-        .envoyerEmail(
-            new EmailResponse(
-                me.getEmail(),
-                "Confirmation de Réservation",
-                "Votre réclamation a été créée avec succès !"));
+    verify(emailTemplateService).envoyerReclamationCreee(me);
   }
 
   @Test
@@ -440,6 +432,6 @@ class ReclamationServiceTest {
     assertThatThrownBy(() -> reclamationService.saveMy(jwt, request)).isSameAs(notFound);
 
     verify(reclamationRepository, never()).save(any());
-    verifyNoMoreInteractions(reclamationMapper, equipementReclamationService, emailService);
+    verifyNoMoreInteractions(reclamationMapper, equipementReclamationService, emailTemplateService);
   }
 }

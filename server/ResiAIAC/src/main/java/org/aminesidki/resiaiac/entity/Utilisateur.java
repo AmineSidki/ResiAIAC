@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.List;
@@ -28,15 +29,19 @@ public class Utilisateur {
   private String adresse;
   private String telephone;
 
+  @JsonIgnore
   @OneToMany(mappedBy = "utilisateur")
   private List<Reservation> reservations;
 
+  @JsonIgnore
   @OneToMany(mappedBy = "utilisateur")
   private List<Reclamation> reclamations;
 
+  @JsonIgnore
   @OneToMany(mappedBy = "proprietaire")
   private List<Document> documents;
 
+  @JsonIgnore
   @OneToMany(mappedBy = "utilisateur")
   private List<UtilisateurPromotionChambre> combinaisonsUpc;
 

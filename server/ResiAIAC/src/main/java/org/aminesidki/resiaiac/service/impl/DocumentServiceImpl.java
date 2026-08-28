@@ -12,6 +12,7 @@ import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.mapper.DocumentMapper;
 import org.aminesidki.resiaiac.repository.DocumentRepository;
 import org.aminesidki.resiaiac.service.DocumentService;
+import org.aminesidki.resiaiac.service.EmailTemplateService;
 import org.aminesidki.resiaiac.service.SeaweedFsService;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
@@ -31,6 +32,7 @@ public class DocumentServiceImpl implements DocumentService {
   private final UtilisateurService utilisateurService;
   private final DocumentRepository documentRepository;
   private final DocumentMapper documentMapper;
+  private final EmailTemplateService emailTemplateService;
 
   private Document userHasSameTypeDocumentUploaded(Utilisateur user, FileType fileType) {
     return documentRepository.findFirstByNomSceauAndProprietaire(fileType.getBucketName(), user);
@@ -127,6 +129,9 @@ public class DocumentServiceImpl implements DocumentService {
     Document entity = ResourceFetcher.fetchResource(id, documentRepository, "Document");
     documentMapper.updateEntityFromDto(dto, entity);
     entity = documentRepository.save(entity);
+    // entity.getEtat() / entity.getNoteSurValidite() reflètent ce qui vient d'être persisté,
+    // donc l'e-mail montre toujours le vrai statut du document.
+    emailTemplateService.envoyerDocumentStatut(entity.getProprietaire(), entity);
     return documentMapper.toDto(entity);
   }
 

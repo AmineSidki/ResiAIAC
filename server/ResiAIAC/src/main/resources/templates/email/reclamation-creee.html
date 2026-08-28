@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Réclamation reçue</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background-color:#f2f3f5;">
+    <tr>
+        <td align="center" style="padding:32px 16px;">
+
+            <!-- Card -->
+            <table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0"
+                   style="width:100%;max-width:520px;background-color:#ffffff;
+                          border:1px solid #e0e0e0;border-radius:8px;
+                          font-family:'Google Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">
+
+                <!-- Header -->
+                <tr>
+                    <td style="padding:24px 32px 20px 32px;" th:insert="~{email/fragments/common :: header}"></td>
+                </tr>
+
+                <!-- Title -->
+                <tr>
+                    <td style="padding:0 32px;">
+                        <span style="font-size:20px;font-weight:400;color:#202124;">Votre réclamation a été reçue</span>
+                    </td>
+                </tr>
+
+                <!-- Intro -->
+                <tr>
+                    <td style="padding:12px 32px 0 32px;font-size:14px;line-height:20px;color:#5f6368;">
+                        Bonjour <span th:text="${prenom}">Étudiant</span>, nous avons bien reçu votre réclamation.
+                        Elle sera prise en charge par notre équipe dans les plus brefs délais.
+                    </td>
+                </tr>
+
+                <!-- Pointer to personal space -->
+                <tr>
+                    <td style="padding:16px 32px 0 32px;font-size:13px;line-height:19px;color:#5f6368;">
+                        Vous pouvez suivre son traitement depuis votre espace personnel ResiAIAC.
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="padding:24px 32px 24px 32px;" th:insert="~{email/fragments/common :: footer}"></td>
+                </tr>
+
+            </table>
+            <!-- /Card -->
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

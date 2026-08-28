@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.EquipementReclamationDto;
 import org.aminesidki.resiaiac.dto.ReclamationDto;
 import org.aminesidki.resiaiac.dto.request.MyReclamationRequest;
-import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reclamation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -29,7 +28,7 @@ public class ReclamationServiceImpl implements ReclamationService {
   private final UtilisateurService utilisateurService;
   private final UtilisateurPromotionChambreService utilisateurPromotionChambreService;
   private final EquipementReclamationService equipementReclamationService;
-  private final EmailService emailService;
+  private final EmailTemplateService emailTemplateService;
   private final ReclamationRepository reclamationRepository;
   private final ReclamationMapper reclamationMapper;
 
@@ -72,11 +71,7 @@ public class ReclamationServiceImpl implements ReclamationService {
                 equipementReclamationService.save(
                     new EquipementReclamationDto(null, e.quantite(), e.id(), entityId)));
 
-    emailService.envoyerEmail(
-        new EmailResponse(
-            id.getEmail(),
-            "Confirmation de Réservation",
-            "Votre réclamation a été créée avec succès !"));
+    emailTemplateService.envoyerReclamationCreee(id);
     return reclamationMapper.toDto(entity);
   }
 
@@ -129,12 +124,10 @@ public class ReclamationServiceImpl implements ReclamationService {
     Reclamation entity = ResourceFetcher.fetchResource(id, reclamationRepository, "Reclamation");
     reclamationMapper.updateEntityFromDto(dto, entity);
     entity = reclamationRepository.save(entity);
-    Utilisateur utilisateur = utilisateurService.getMyEntityById(dto.utilisateur());
-    emailService.envoyerEmail(
-        new EmailResponse(
-            utilisateur.getEmail(),
-            "Au sujet de votre réclamation",
-            "Votre réclamation a été prise en compte, vous pouvez verifier son état immédiat !"));
+    // entity.getEtat() est l'état réellement persisté ci-dessus (celui envoyé par le manager
+    // dans le PATCH/PUT), donc l'e-mail reflète toujours le vrai statut — jamais un message
+    // générique codé en dur.
+    emailTemplateService.envoyerReclamationStatut(entity.getUtilisateur(), entity);
     return reclamationMapper.toDto(entity);
   }
 

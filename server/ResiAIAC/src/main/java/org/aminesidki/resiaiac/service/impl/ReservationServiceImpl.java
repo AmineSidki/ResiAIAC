@@ -4,7 +4,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
-import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -15,7 +14,7 @@ import org.aminesidki.resiaiac.exception.RoomFullException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
-import org.aminesidki.resiaiac.service.EmailService;
+import org.aminesidki.resiaiac.service.EmailTemplateService;
 import org.aminesidki.resiaiac.service.ReservationService;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
@@ -34,7 +33,7 @@ public class ReservationServiceImpl implements ReservationService {
   private final ChambreService chambreService;
   private final ReservationRepository reservationRepository;
   private final ReservationMapper reservationMapper;
-  private final EmailService emailService;
+  private final EmailTemplateService emailTemplateService;
 
   @Transactional(readOnly = true)
   @Override
@@ -83,11 +82,7 @@ public class ReservationServiceImpl implements ReservationService {
       reservationMapper.updateEntityFromDto(dto, entity);
       entity = reservationRepository.save(entity);
 
-      emailService.envoyerEmail(
-          new EmailResponse(
-              id.getEmail(),
-              "Confirmation de Réservation",
-              "Votre réservation a été créée avec succès !"));
+      emailTemplateService.envoyerReservationCreee(id, chambre);
 
       return reservationMapper.toDto(entity);
     }
@@ -105,11 +100,7 @@ public class ReservationServiceImpl implements ReservationService {
     Utilisateur id = utilisateurService.getMyEntityById(dto.utilisateur());
     entity.setEtat(EtatReservation.ACTIVE);
     entity = reservationRepository.save(entity);
-    emailService.envoyerEmail(
-        new EmailResponse(
-            id.getEmail(),
-            "Confirmation de Réservation",
-            "Votre réservation a été créée avec succès !"));
+    emailTemplateService.envoyerReservationCreee(id, entity.getChambre());
     return reservationMapper.toDto(entity);
   }
 

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
-import org.aminesidki.resiaiac.dto.response.EmailResponse;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Reservation;
 import org.aminesidki.resiaiac.entity.Utilisateur;
@@ -52,8 +51,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
  *
- * <p>{@link EmailService} is mocked; {@code save()} triggers a confirmation email as a side-effect,
- * verified separately from the persistence flow.
+ * <p>{@link EmailTemplateService} is mocked; {@code save()}/{@code saveMy()} trigger a confirmation
+ * email as a side-effect, verified separately from the persistence flow.
  */
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
@@ -66,7 +65,7 @@ class ReservationServiceTest {
 
   @Mock private ChambreService chambreService;
 
-  @Mock private EmailService emailService;
+  @Mock private EmailTemplateService emailTemplateService;
 
   private ReservationService reservationService;
 
@@ -82,7 +81,7 @@ class ReservationServiceTest {
             chambreService,
             reservationRepository,
             reservationMapper,
-            emailService);
+            emailTemplateService);
 
     id = UUID.randomUUID();
     entity = Reservation.builder().id(id).build();
@@ -114,14 +113,9 @@ class ReservationServiceTest {
     verify(utilisateurService).getMyEntityById(inputDto.utilisateur());
     verify(reservationRepository).save(mappedEntity);
     verify(reservationMapper).toDto(savedEntity);
-    verify(emailService)
-        .envoyerEmail(
-            new EmailResponse(
-                owner.getEmail(),
-                "Confirmation de Réservation",
-                "Votre réservation a été créée avec succès !"));
+    verify(emailTemplateService).envoyerReservationCreee(owner, savedEntity.getChambre());
     verifyNoMoreInteractions(
-        reservationRepository, reservationMapper, utilisateurService, emailService);
+        reservationRepository, reservationMapper, utilisateurService, emailTemplateService);
   }
 
   // ---------- getById ----------
@@ -139,7 +133,7 @@ class ReservationServiceTest {
       assertThat(result).isEqualTo(dto);
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
       verify(reservationMapper).toDto(entity);
-      verifyNoMoreInteractions(reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationMapper, emailTemplateService);
     }
   }
 
@@ -153,7 +147,7 @@ class ReservationServiceTest {
 
       assertThatThrownBy(() -> reservationService.getById(id)).isSameAs(notFound);
 
-      verifyNoMoreInteractions(reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationMapper, emailTemplateService);
     }
   }
 
@@ -197,7 +191,7 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.getMyById(jwt, id))
           .isInstanceOf(ResourceOwnershipMismatchException.class);
 
-      verifyNoMoreInteractions(reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationMapper, emailTemplateService);
     }
   }
 
@@ -213,7 +207,7 @@ class ReservationServiceTest {
 
       assertThatThrownBy(() -> reservationService.getMyById(jwt, id)).isSameAs(notFound);
 
-      verifyNoMoreInteractions(reservationMapper, utilisateurService, emailService);
+      verifyNoMoreInteractions(reservationMapper, utilisateurService, emailTemplateService);
     }
   }
 
@@ -239,7 +233,7 @@ class ReservationServiceTest {
       verify(reservationMapper).updateEntityFromDto(dto, entity);
       verify(reservationRepository).save(entity);
       verify(reservationMapper).toDto(savedEntity);
-      verifyNoMoreInteractions(reservationRepository, reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationRepository, reservationMapper, emailTemplateService);
     }
   }
 
@@ -254,7 +248,7 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.update(id, dto)).isSameAs(notFound);
 
       verify(reservationRepository, never()).save(any());
-      verifyNoMoreInteractions(reservationMapper, emailService);
+      verifyNoMoreInteractions(reservationMapper, emailTemplateService);
     }
   }
 
@@ -271,7 +265,7 @@ class ReservationServiceTest {
 
       fetcher.verify(() -> ResourceFetcher.fetchResource(id, reservationRepository, "Reservation"));
       verify(reservationRepository, times(1)).delete(entity);
-      verifyNoMoreInteractions(reservationRepository, emailService);
+      verifyNoMoreInteractions(reservationRepository, emailTemplateService);
     }
   }
 
@@ -286,7 +280,7 @@ class ReservationServiceTest {
       assertThatThrownBy(() -> reservationService.delete(id)).isSameAs(notFound);
 
       verify(reservationRepository, never()).delete(any());
-      verifyNoMoreInteractions(emailService);
+      verifyNoMoreInteractions(emailTemplateService);
     }
   }
 
@@ -426,11 +420,6 @@ class ReservationServiceTest {
                     r.getEtat() == EtatReservation.ACTIVE
                         && r.getUtilisateur() == me
                         && r.getChambre() == chambre));
-    verify(emailService)
-        .envoyerEmail(
-            new EmailResponse(
-                me.getEmail(),
-                "Confirmation de Réservation",
-                "Votre réservation a été créée avec succès !"));
+    verify(emailTemplateService).envoyerReservationCreee(me, chambre);
   }
 }
