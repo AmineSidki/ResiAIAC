@@ -9,7 +9,6 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
 
 @Configuration
 @RequiredArgsConstructor
@@ -30,7 +29,6 @@ public class AmazonS3ClientConfiguration {
         .region(Region.of(region))
         .credentialsProvider(awsCredentialsProvider)
         .serviceConfiguration(s3Configuration)
-        .httpClientBuilder(ApacheHttpClient.builder().expectContinueEnabled(false))
         .build();
   }
 }
