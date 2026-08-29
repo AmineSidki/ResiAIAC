@@ -19,6 +19,7 @@ spec:
           image: chrislusf/seaweedfs:latest
           args:
             - "server"
+            - "-ip=seaweedfs-0.seaweedfs.resiaiac.svc.cluster.local"
             - "-s3"
             - "-s3.config=/etc/seaweedfs/s3.config"
             - "-dir=/data"
@@ -26,6 +27,7 @@ spec:
             - "-filer.port=8888"
             - "-master.port=9333"
             - "-volume.port=8080"
+            - "-master.volumeSizeLimitMB=256"
           ports:
             - containerPort: 8080
               name: volume

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:26.0
+          image: quay.io/keycloak/keycloak:26.7.0
           args: ["start-dev", "--import-realm"]
           ports:
             - containerPort: 8080
@@ -39,3 +39,11 @@ spec:
                   key:  POSTGRES_PASSWORD
             - name: KC_HOSTNAME_STRICT
               value: "false"
+          volumeMounts:
+            - name: realm-volume
+              mountPath: /opt/keycloak/data/import/ResiAIAC-realm.json
+              subPath: realm.json
+      volumes:
+        - name: realm-volume
+          configMap:
+            name: keycloak-realm-import

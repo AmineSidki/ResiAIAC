@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application
+  namespace: resiaiac
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: application
+  template:
+    metadata:
+      labels:
+        app: application
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: application
+          image: ghcr.io/aminesidki/resiaiac-application:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: application-env
+          env:
+            - name: DB_USR
+              valueFrom:
+                secretKeyRef:
+                  name: application-postgres-credentials
+                  key: POSTGRES_USER
+            - name: DB_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: application-postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: REDIS_PASSWORD
+            - name: SPRING_KC_ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: application-keycloak-admin-credentials
+                  key: SPRING_KC_ADMIN_SECRET
+
