@@ -24,8 +24,6 @@ public class AmazonS3Configuration {
 
   @Bean
   public S3Configuration s3Configuration() {
-    return S3Configuration.builder()
-        .pathStyleAccessEnabled(true)
-        .build();
+    return S3Configuration.builder().pathStyleAccessEnabled(true).build();
   }
 }
