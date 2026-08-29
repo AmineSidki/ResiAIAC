@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum FileType {
   IMAGE("images"),
-  CIN("CINs"),
+  CIN("cins"),
   DIPLOMA("diplomes");
 
   private final String bucketName;
