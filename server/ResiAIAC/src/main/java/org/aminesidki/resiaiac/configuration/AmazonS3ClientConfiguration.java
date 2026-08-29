@@ -30,7 +30,6 @@ public class AmazonS3ClientConfiguration {
         .region(Region.of(region))
         .credentialsProvider(awsCredentialsProvider)
         .serviceConfiguration(s3Configuration)
-        .httpClientBuilder(ApacheHttpClient.builder().expectContinueEnabled(false))
         .build();
   }
 }
