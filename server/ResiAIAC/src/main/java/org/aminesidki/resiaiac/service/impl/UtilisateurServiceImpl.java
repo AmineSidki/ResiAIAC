@@ -16,7 +16,6 @@ import org.aminesidki.resiaiac.util.StringUtil;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -48,7 +47,6 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Transactional(readOnly = true)
   @Override
-  @Cacheable(key = "'entity-' + #jwt.subject")
   public Utilisateur getMyEntityByJwt(Jwt jwt) {
     UUID keycloakId = extractIdFromJwt(jwt);
     return utilisateurRepository
@@ -61,17 +59,11 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Transactional(readOnly = true)
   @Override
-  @Cacheable(key = "'dto-' + #jwt.subject")
   public UtilisateurDto getMyDtoByJwt(Jwt jwt) {
     return utilisateurMapper.toDto(getMyEntityByJwt(jwt));
   }
 
   @Override
-  @Caching(
-      evict = {
-        @CacheEvict(key = "'dto-' + #jwt.subject"),
-        @CacheEvict(key = "'entity-' + #jwt.subject")
-      })
   public UtilisateurDto updateMe(Jwt jwt, UpdateMeRequest request) {
     UtilisateurDto filteredDto = utilisateurMapper.updateMeRequestToDto(request);
     Utilisateur entity = getMyEntityByJwt(jwt);

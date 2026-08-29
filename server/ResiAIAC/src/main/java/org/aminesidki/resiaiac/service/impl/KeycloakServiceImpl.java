@@ -46,7 +46,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     UserRepresentation userRepresentation = new UserRepresentation();
     userRepresentation.setLastName(dto.prenom());
-    userRepresentation.setLastName(dto.nom());
+    userRepresentation.setFirstName(dto.nom());
     userRepresentation.setEnabled(true);
     userRepresentation.setUsername(username);
     userRepresentation.setEmail(dto.email());
