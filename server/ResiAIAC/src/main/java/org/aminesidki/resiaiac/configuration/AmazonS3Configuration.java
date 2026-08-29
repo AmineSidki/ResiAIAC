@@ -26,7 +26,6 @@ public class AmazonS3Configuration {
   public S3Configuration s3Configuration() {
     return S3Configuration.builder()
         .pathStyleAccessEnabled(true)
-        .chunkedEncodingEnabled(false)
         .build();
   }
 }
