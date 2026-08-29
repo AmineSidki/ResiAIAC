@@ -60,6 +60,8 @@ class DocumentServiceTest {
 
   @Mock private DocumentMapper documentMapper;
 
+  @Mock private EmailTemplateService emailTemplateService;
+
   private DocumentService documentService;
 
   private UUID id;
@@ -70,7 +72,11 @@ class DocumentServiceTest {
   void setUp() {
     documentService =
         new DocumentServiceImpl(
-            seaweedFsService, utilisateurService, documentRepository, documentMapper);
+            seaweedFsService,
+            utilisateurService,
+            documentRepository,
+            documentMapper,
+            emailTemplateService);
 
     id = UUID.randomUUID();
     entity = Document.builder().id(id).nomFichier("cin.pdf").nomSceau("cin").build();
@@ -363,7 +369,15 @@ class DocumentServiceTest {
 
   @Test
   void update_shouldFetchMutateSaveAndReturnDto() {
-    Document savedEntity = Document.builder().id(id).nomFichier("cin-renamed.pdf").build();
+    Utilisateur owner =
+        Utilisateur.builder().id(UUID.randomUUID()).email("etudiant@example.com").build();
+    Document savedEntity =
+        Document.builder()
+            .id(id)
+            .nomFichier("cin-renamed.pdf")
+            .etat(EtatDocument.VALIDE)
+            .proprietaire(owner)
+            .build();
     DocumentDto resultDto = new DocumentDto(id, "cin-renamed.pdf", null, null, null, null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
@@ -380,7 +394,8 @@ class DocumentServiceTest {
       verify(documentMapper).updateEntityFromDto(dto, entity);
       verify(documentRepository).save(entity);
       verify(documentMapper).toDto(savedEntity);
-      verifyNoMoreInteractions(documentRepository, documentMapper);
+      verify(emailTemplateService).envoyerDocumentStatut(owner, savedEntity);
+      verifyNoMoreInteractions(documentRepository, documentMapper, emailTemplateService);
     }
   }
 

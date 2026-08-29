@@ -55,6 +55,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
     credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
     credentialRepresentation.setValue(username.toLowerCase());
+    credentialRepresentation.setTemporary(false);
 
     userRepresentation.setCredentials(Collections.singletonList(credentialRepresentation));
 

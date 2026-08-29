@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Fragments communs - Emails ResiAIAC</title>
+</head>
+<body>
+
+<!--
+    Fragment: header
+    Plain text wordmark, Gmail/Workspace-style: small, medium-weight, no banner.
+    Root is a <table> so it nests validly when pulled in via th:insert into a <td>.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       th:fragment="header">
+    <tr>
+        <td style="font-family:'Google Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+                    font-size:16px;
+                    font-weight:500;
+                    color:#202124;">
+            Resi<span style="color:#1a73e8;">AIAC</span>
+        </td>
+    </tr>
+</table>
+
+<!--
+    Fragment: footer
+    Small muted disclaimer, Gmail footer grey.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       th:fragment="footer">
+    <tr>
+        <td style="font-family:'Google Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+                    font-size:12px;
+                    line-height:18px;
+                    color:#9aa0a6;">
+            ResiAIAC · notification automatique, merci de ne pas répondre à cet e-mail.<br/>
+            Pour toute question, connectez-vous à votre espace personnel ResiAIAC.
+        </td>
+    </tr>
+</table>
+
+<!--
+    Fragment: badge(libelle, couleur)
+    Plain bold colored text (no chip/background) — matches Gmail's own inline
+    status-label look and avoids any reliance on alpha-hex backgrounds, which
+    Outlook doesn't render reliably. "couleur" is a hex string supplied by the
+    calling Java code based on the relevant enum value.
+    Root is a <span> so it drops cleanly into a label/value table cell.
+-->
+<span th:fragment="badge(libelle, couleur)"
+      th:text="${libelle}"
+      th:style="'font-family:\'Google Sans\',-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif;font-size:13px;font-weight:600;color:' + ${couleur} + ';'"
+      style="font-family:'Google Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:13px;font-weight:600;color:#5f6368;">Statut</span>
+
+</body>
+</html>
