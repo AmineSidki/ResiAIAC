@@ -3,11 +3,13 @@ package org.aminesidki.resiaiac.controller.test;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.service.SeaweedFsService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Profile("test")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/seaweed-fs-test")
