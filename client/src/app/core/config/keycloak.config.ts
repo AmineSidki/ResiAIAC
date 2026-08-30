@@ -35,6 +35,12 @@ export function provideAppKeycloak(): EnvironmentProviders {
       onLoad: 'check-sso',
       silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
       pkceMethod: 'S256',
+      // Disables keycloak-js's background 3rd-party-cookie iframe check.
+      // That check hangs/times out across our proxy chain (and increasingly
+      // in browsers that block 3rd-party cookies/frames by default) —
+      // it only gates periodic session-status polling, not login itself,
+      // and withAutoRefreshToken already covers token refresh on its own.
+      checkLoginIframe: false,
     },
     features: [withAutoRefreshToken({ onInactivityTimeout: 'logout', sessionTimeout: 300000 })],
     providers: [
