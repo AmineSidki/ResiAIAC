@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/resiaiac-client/browser",
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": "https://resi-aiac-vmware-virtual-platform.kudu-scylla.ts.net/api/v1/:path*" },
+    { "source": "/realms/:path*", "destination": "https://resi-aiac-vmware-virtual-platform.kudu-scylla.ts.net/realms/:path*" },
+    { "source": "/resources/:path*", "destination": "https://resi-aiac-vmware-virtual-platform.kudu-scylla.ts.net/resources/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
