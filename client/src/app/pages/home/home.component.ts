@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { CurrentUserService } from '../../core/auth/current-user.service';
 
 /**
@@ -9,11 +10,18 @@ import { CurrentUserService } from '../../core/auth/current-user.service';
 @Component({
   selector: 'app-home',
   standalone: true,
+  imports: [RouterLink],
   template: `
     <div class="flex min-h-screen flex-col items-center justify-center gap-3 bg-surface dark:bg-surface-dark">
       @if (currentUser.authenticated()) {
         <p class="text-lg font-medium text-neutral-900">Welcome, {{ currentUser.fullName() ?? 'there' }}</p>
         <p class="text-sm text-neutral-500">Role: {{ currentUser.highestRole() ?? 'none assigned' }}</p>
+        <a
+          routerLink="/student"
+          class="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          Espace étudiant
+        </a>
         <button
           type="button"
           (click)="currentUser.logout()"
