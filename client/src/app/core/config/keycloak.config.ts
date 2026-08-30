@@ -1,4 +1,10 @@
-import { provideKeycloak, withAutoRefreshToken, INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG } from 'keycloak-angular';
+import {
+  provideKeycloak,
+  withAutoRefreshToken,
+  INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
+  AutoRefreshTokenService,
+  UserActivityService,
+} from 'keycloak-angular';
 import { EnvironmentProviders } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
@@ -32,6 +38,11 @@ export function provideAppKeycloak(): EnvironmentProviders {
     },
     features: [withAutoRefreshToken({ onInactivityTimeout: 'logout', sessionTimeout: 300000 })],
     providers: [
+      // withAutoRefreshToken's configure() step injects these directly; they
+      // aren't providedIn: 'root' in keycloak-angular, so they must be listed
+      // here explicitly or bootstrap throws NullInjectorError.
+      AutoRefreshTokenService,
+      UserActivityService,
       {
         provide: INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
         useValue: [
