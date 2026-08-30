@@ -2,11 +2,12 @@ import { Routes } from '@angular/router';
 import { requireEtudiant, requireManager } from './core/auth/role.guard';
 
 /**
- * Scaffold-level routes only. The `student` and `admin` route groups are
- * placeholders for the two shells to be built independently on top of this
- * scaffold — each guarded at its natural role floor (any authenticated user
- * for the student shell, MANAGER-and-above for the admin shell), lazy-loaded
- * so neither shell pulls in the other's bundle.
+ * Top-level routes. `student` and `admin` are the two independent shells,
+ * each guarded at its natural role floor (any authenticated user for the
+ * student shell, MANAGER-and-above for the admin shell), lazy-loaded so
+ * neither shell pulls in the other's bundle. `student` now points at the
+ * real Track A shell (see ./student/student.routes.ts); `admin` is still
+ * the Track B placeholder.
  */
 export const routes: Routes = [
   {
@@ -26,8 +27,7 @@ export const routes: Routes = [
   {
     path: 'student',
     canActivate: [requireEtudiant],
-    // TODO(student-shell): loadChildren pointing at the student shell's own routes file.
-    children: [],
+    loadChildren: () => import('./student/student.routes').then((m) => m.studentRoutes),
   },
   {
     path: 'admin',
