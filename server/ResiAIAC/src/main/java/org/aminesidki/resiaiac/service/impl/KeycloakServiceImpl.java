@@ -79,12 +79,19 @@ public class KeycloakServiceImpl implements KeycloakService {
             "Failed to extract id for created user with username " + username);
       }
 
-      keycloak.realm(realm).users().get(keycloakId.toString()).roles().realmLevel().add(List.of(role));
+      keycloak
+          .realm(realm)
+          .users()
+          .get(keycloakId.toString())
+          .roles()
+          .realmLevel()
+          .add(List.of(role));
 
       log.info(
           "Created user with username {} successfully ! Assigned keycloak ID : {}, Assigned keycloak role : {}",
           username,
-          keycloakId, role.getName());
+          keycloakId,
+          role.getName());
       return keycloakId;
     }
   }

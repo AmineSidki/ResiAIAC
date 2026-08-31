@@ -83,7 +83,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
   public UtilisateurDto save(UtilisateurDto dto) {
     UUID keycloakId = null;
     try {
-      if(dto.role().equals(Role.RESPONSABLE) || dto.role().equals(Role.ADMINISTRATEUR))
+      if (dto.role().equals(Role.RESPONSABLE) || dto.role().equals(Role.ADMINISTRATEUR))
         throw new BadRouteException("This route isn't adapted for creating Administrator !");
       keycloakId = keycloakService.createUser(dto);
       Utilisateur entity = utilisateurMapper.toEntity(dto);
@@ -112,8 +112,8 @@ public class UtilisateurServiceImpl implements UtilisateurService {
       return utilisateurMapper.toDto(entity);
     } catch (Exception e) {
       log.error(
-              "An error occurred whilst saving user with username {} !",
-              StringUtil.nameToUsername(dto.nom(), dto.prenom()));
+          "An error occurred whilst saving user with username {} !",
+          StringUtil.nameToUsername(dto.nom(), dto.prenom()));
       if (keycloakId != null) {
         keycloakService.deleteUser(keycloakId);
       }
