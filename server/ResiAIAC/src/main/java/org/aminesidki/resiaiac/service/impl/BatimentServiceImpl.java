@@ -26,7 +26,7 @@ public class BatimentServiceImpl implements BatimentService {
   private final BatimentMapper batimentMapper;
 
   @Override
-  @Cacheable(key = "'all'")
+//  @Cacheable(key = "'all'")
   public List<BatimentDto> getAll() {
     return batimentRepository.findAll().stream().map(batimentMapper::toDto).toList();
   }
