@@ -8,8 +8,33 @@ import { ErrorResponse } from '../models/dtos';
  * just trade a spurious error for a spurious empty list/object. This keeps
  * the last successful GET body per URL so a 304 can be resolved with the
  * data it's actually confirming is still valid, instead of nothing.
+ *
+ * sessionStorage, not a plain in-memory Map: the browser's HTTP cache (the
+ * thing that causes the 304 in the first place) survives a page reload, so
+ * our cache of bodies has to survive the reload too, or every reload after
+ * the first would revalidate to a 304 with no in-memory body to fall back
+ * on. sessionStorage is cleared when the tab closes, same rough lifetime as
+ * the browser's revalidation cache for a session-scoped SPA like this one.
  */
-const lastGetBodyByUrl = new Map<string, unknown>();
+const CACHE_PREFIX = 'resiaiac.lastGetBody:';
+
+function readCachedBody(url: string): unknown {
+  try {
+    const raw = sessionStorage.getItem(CACHE_PREFIX + url);
+    return raw === null ? undefined : JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCachedBody(url: string, body: unknown): void {
+  try {
+    sessionStorage.setItem(CACHE_PREFIX + url, JSON.stringify(body));
+  } catch {
+    // Storage full or unavailable (private browsing) — worst case a future
+    // 304 for this URL falls back to an empty body, same as before this cache existed.
+  }
+}
 
 /**
  * Unwraps the backend's ErrorResponse{status, message, timestamp} body into a
@@ -29,14 +54,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
   next(req).pipe(
     tap((event) => {
       if (req.method === 'GET' && event instanceof HttpResponse && event.status === 200) {
-        lastGetBodyByUrl.set(req.urlWithParams, event.body);
+        writeCachedBody(req.urlWithParams, event.body);
       }
     }),
     catchError((err: unknown) => {
       if (err instanceof HttpErrorResponse) {
         if (err.status !== 0 && err.status < 400) {
-          const body =
-            err.status === 304 ? (lastGetBodyByUrl.get(req.urlWithParams) ?? err.error) : err.error;
+          const body = err.status === 304 ? (readCachedBody(req.urlWithParams) ?? err.error) : err.error;
 
           return of(
             new HttpResponse({
