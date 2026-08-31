@@ -1,7 +1,15 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
-import { catchError, of, throwError } from 'rxjs';
+import { catchError, of, tap, throwError } from 'rxjs';
 import { toAppError } from '../api/app-error';
 import { ErrorResponse } from '../models/dtos';
+
+/**
+ * A 304 never carries a body, so passing it through with an empty body would
+ * just trade a spurious error for a spurious empty list/object. This keeps
+ * the last successful GET body per URL so a 304 can be resolved with the
+ * data it's actually confirming is still valid, instead of nothing.
+ */
+const lastGetBodyByUrl = new Map<string, unknown>();
 
 /**
  * Unwraps the backend's ErrorResponse{status, message, timestamp} body into a
@@ -19,12 +27,20 @@ import { ErrorResponse } from '../models/dtos';
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) =>
   next(req).pipe(
+    tap((event) => {
+      if (req.method === 'GET' && event instanceof HttpResponse && event.status === 200) {
+        lastGetBodyByUrl.set(req.urlWithParams, event.body);
+      }
+    }),
     catchError((err: unknown) => {
       if (err instanceof HttpErrorResponse) {
         if (err.status !== 0 && err.status < 400) {
+          const body =
+            err.status === 304 ? (lastGetBodyByUrl.get(req.urlWithParams) ?? err.error) : err.error;
+
           return of(
             new HttpResponse({
-              body: err.error,
+              body,
               headers: err.headers,
               status: err.status,
               statusText: err.statusText,
