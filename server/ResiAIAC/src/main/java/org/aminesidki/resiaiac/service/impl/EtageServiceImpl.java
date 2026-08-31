@@ -25,7 +25,7 @@ public class EtageServiceImpl implements EtageService {
   private final EtageMapper etageMapper;
 
   @Override
-  @Cacheable(key = "'all'")
+//  @Cacheable(key = "'all'")
   public List<EtageDto> getAll() {
     return etageRepository.findAll().stream().map(etageMapper::toDto).toList();
   }
