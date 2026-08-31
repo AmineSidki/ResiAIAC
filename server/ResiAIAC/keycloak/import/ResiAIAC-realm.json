@@ -502,7 +502,7 @@
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-resiaiac" ],
     "clientRoles" : {
-      "realm-management" : [ "manage-users" ]
+      "realm-management" : [ "manage-users", "view-realm" ]
     },
     "notBefore" : 0,
     "groups" : [ ]

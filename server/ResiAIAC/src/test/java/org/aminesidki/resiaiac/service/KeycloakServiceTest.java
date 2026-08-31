@@ -11,6 +11,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
+import org.aminesidki.resiaiac.enumeration.Role;
 import org.aminesidki.resiaiac.exception.CreatedKeycloakUserIdExtractionFail;
 import org.aminesidki.resiaiac.exception.KeycloakUserCreationException;
 import org.aminesidki.resiaiac.exception.KeycloakUserDeletionException;
@@ -58,20 +59,21 @@ class KeycloakServiceTest {
     keycloakService = impl;
 
     dto =
-        new UtilisateurDto(
-            null,
-            "amine.sidki@example.com",
-            "Sidki",
-            "Amine",
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null);
+            new UtilisateurDto(
+                    null,
+                    Role.ETUDIANT,
+                    "amine.sidki@example.com",
+                    "Sidki",
+                    "Amine",
+                    null,
+                    null,
+                    null,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    null,
+                    null);
 
     when(keycloak.realm(REALM)).thenReturn(realmResource);
     when(realmResource.users()).thenReturn(usersResource);
@@ -85,7 +87,7 @@ class KeycloakServiceTest {
     when(usersResource.create(any())).thenReturn(response);
     when(response.getStatus()).thenReturn(201);
     when(response.getLocation())
-        .thenReturn(URI.create("http://localhost:8080/admin/realms/resiaiac/users/" + expectedId));
+            .thenReturn(URI.create("http://localhost:8080/admin/realms/resiaiac/users/" + expectedId));
 
     UUID result = keycloakService.createUser(dto);
 
@@ -99,7 +101,7 @@ class KeycloakServiceTest {
     when(response.getStatus()).thenReturn(409); // e.g. username already taken
 
     assertThatThrownBy(() -> keycloakService.createUser(dto))
-        .isInstanceOf(KeycloakUserCreationException.class);
+            .isInstanceOf(KeycloakUserCreationException.class);
   }
 
   @Test
@@ -107,10 +109,10 @@ class KeycloakServiceTest {
     when(usersResource.create(any())).thenReturn(response);
     when(response.getStatus()).thenReturn(201);
     when(response.getLocation())
-        .thenReturn(URI.create("http://localhost:8080/admin/realms/resiaiac/users/not-a-uuid"));
+            .thenReturn(URI.create("http://localhost:8080/admin/realms/resiaiac/users/not-a-uuid"));
 
     assertThatThrownBy(() -> keycloakService.createUser(dto))
-        .isInstanceOf(CreatedKeycloakUserIdExtractionFail.class);
+            .isInstanceOf(CreatedKeycloakUserIdExtractionFail.class);
   }
 
   @Test
@@ -120,7 +122,7 @@ class KeycloakServiceTest {
     when(response.getLocation()).thenReturn(null);
 
     assertThatThrownBy(() -> keycloakService.createUser(dto))
-        .isInstanceOf(CreatedKeycloakUserIdExtractionFail.class);
+            .isInstanceOf(CreatedKeycloakUserIdExtractionFail.class);
   }
 
   // ---------- deleteUser ----------
@@ -143,6 +145,6 @@ class KeycloakServiceTest {
     when(response.getStatus()).thenReturn(404);
 
     assertThatThrownBy(() -> keycloakService.deleteUser(id))
-        .isInstanceOf(KeycloakUserDeletionException.class);
+            .isInstanceOf(KeycloakUserDeletionException.class);
   }
 }

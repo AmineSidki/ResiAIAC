@@ -57,6 +57,7 @@ public class CompositeIdPersistenceTestController {
         utilisateurService.save(
             new UtilisateurDto(
                 null,
+                body.utilisateurDto().role(),
                 body.utilisateurDto().email(),
                 body.utilisateurDto().nom(),
                 body.utilisateurDto().prenom(),
