@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api',
+  apiBaseUrl: '/api/v1',
   keycloak: {
     url: '/',
     realm: 'ResiAIAC',
