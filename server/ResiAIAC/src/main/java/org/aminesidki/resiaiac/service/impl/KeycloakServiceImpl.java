@@ -3,6 +3,7 @@ package org.aminesidki.resiaiac.service.impl;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.aminesidki.resiaiac.util.StringUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -43,14 +45,17 @@ public class KeycloakServiceImpl implements KeycloakService {
   @Override
   public UUID createUser(UtilisateurDto dto) {
     String username = StringUtil.nameToUsername(dto.nom(), dto.prenom());
+    String roleName = dto.role() == null ? "ETUDIANT" : dto.role().name();
 
     UserRepresentation userRepresentation = new UserRepresentation();
-    userRepresentation.setLastName(dto.prenom());
-    userRepresentation.setFirstName(dto.nom());
+    userRepresentation.setLastName(dto.nom());
+    userRepresentation.setFirstName(dto.prenom());
     userRepresentation.setEnabled(true);
     userRepresentation.setUsername(username);
     userRepresentation.setEmail(dto.email());
     userRepresentation.setEmailVerified(true);
+
+    log.warn(roleName);
 
     CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
     credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
@@ -61,21 +66,32 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     UsersResource usersResource = keycloak.realm(realm).users();
     try (Response response = usersResource.create(userRepresentation)) {
+      log.warn("Status {} ", response.getStatus());
       if (response.getStatus() != HttpStatus.CREATED.value()) {
         throw new KeycloakUserCreationException(
             "Failed to create keycloak user with username " + username);
       }
 
+      RoleRepresentation role = keycloak.realm(realm).roles().get(roleName).toRepresentation();
       UUID keycloakId = extractUserIdFromUri(response.getLocation());
       if (keycloakId == null) {
         throw new CreatedKeycloakUserIdExtractionFail(
             "Failed to extract id for created user with username " + username);
       }
 
+      keycloak
+          .realm(realm)
+          .users()
+          .get(keycloakId.toString())
+          .roles()
+          .realmLevel()
+          .add(List.of(role));
+
       log.info(
-          "Created user with username {} successfully ! Assigned keycloak ID : {}",
+          "Created user with username {} successfully ! Assigned keycloak ID : {}, Assigned keycloak role : {}",
           username,
-          keycloakId);
+          keycloakId,
+          role.getName());
       return keycloakId;
     }
   }

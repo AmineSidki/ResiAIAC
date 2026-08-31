@@ -53,6 +53,12 @@ public class UtilisateurController {
     return ResponseEntity.ok(utilisateurService.save(dto));
   }
 
+  @PreAuthorize("hasAnyRole('ADMINISTRATEUR')")
+  @PostMapping("/admin/")
+  public ResponseEntity<?> saveAdmin(@RequestBody @Valid UtilisateurDto dto) {
+    return ResponseEntity.ok(utilisateurService.saveAdmin(dto));
+  }
+
   @PreAuthorize("hasAnyRole('RESPONSABLE')")
   @PutMapping("/")
   public ResponseEntity<?> update(@RequestBody @Valid UtilisateurUpdateRequest request) {

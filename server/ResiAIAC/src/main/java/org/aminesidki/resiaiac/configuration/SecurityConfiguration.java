@@ -24,6 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfiguration {
   @Value("${hostname.value}")
   private String hostname;
+
   private final JwtAuthenticationConverter jwtAuthenticationConverter;
 
   @Bean
@@ -52,11 +53,7 @@ public class SecurityConfiguration {
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(
                     jwtConfigurer ->
                         jwtConfigurer.jwtAuthenticationConverter(jwtAuthenticationConverter)))
-        .authorizeHttpRequests(
-            customizer ->
-                customizer
-                    .anyRequest()
-                    .authenticated())
+        .authorizeHttpRequests(customizer -> customizer.anyRequest().authenticated())
         .build();
   }
 

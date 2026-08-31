@@ -9,11 +9,13 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
+import org.aminesidki.resiaiac.enumeration.Role;
 import org.aminesidki.resiaiac.validator.OptionalNotBlank;
 
 /** Dto for {@link org.aminesidki.resiaiac.entity.Utilisateur } */
 public record UtilisateurDto(
     UUID id,
+    Role role,
     @NotBlank(message = "Email ne peut pas etre vide !") @Email(message = "Email invalide !")
         String email,
     @NotBlank(message = "Nom ne peut pas etre vide !") String nom,

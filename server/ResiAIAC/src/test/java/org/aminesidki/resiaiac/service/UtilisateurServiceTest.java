@@ -11,6 +11,8 @@ import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.enumeration.Role;
+import org.aminesidki.resiaiac.exception.BadRouteException;
 import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
@@ -33,6 +35,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
  * Keycloak user before persisting, and roll it back if the DB write fails; {@code delete} must
  * delete the DB row *before* the Keycloak user, so a failed Keycloak delete leaves the transaction
  * rollback restoring full consistency rather than an orphaned DB row.
+ *
+ * <p>{@code save} additionally rejects {@code RESPONSABLE}/{@code ADMINISTRATEUR} roles up front
+ * with a {@link BadRouteException}, before any Keycloak or DB interaction — those roles must go
+ * through {@code saveAdmin} instead, which shares the same create-then-persist-with-rollback flow
+ * but without the role restriction.
  *
  * <p>ResourceFetcher.fetchResource is a static method, mocked per-test with Mockito's mockStatic
  * (requires Mockito 5+ / mockito-inline).
@@ -65,6 +72,7 @@ class UtilisateurServiceTest {
     dto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine",
@@ -79,43 +87,51 @@ class UtilisateurServiceTest {
             null);
   }
 
+  private UtilisateurDto dtoWithRole(Role role) {
+    return new UtilisateurDto(
+        null,
+        role,
+        "amine.sidki@example.com",
+        "Sidki",
+        "Amine",
+        null,
+        null,
+        null,
+        List.of(),
+        List.of(),
+        List.of(),
+        List.of(),
+        null,
+        null);
+  }
+
+  private UtilisateurDto dtoWithRoleAndId(Role role, UUID id) {
+    return new UtilisateurDto(
+        id,
+        role,
+        "amine.sidki@example.com",
+        "Sidki",
+        "Amine",
+        null,
+        null,
+        null,
+        List.of(),
+        List.of(),
+        List.of(),
+        List.of(),
+        null,
+        null);
+  }
+
   // ---------- save ----------
 
   @Test
   void save_shouldCreateKeycloakUserThenPersistAndReturnDto() {
-    UtilisateurDto inputDto =
-        new UtilisateurDto(
-            null,
-            "amine.sidki@example.com",
-            "Sidki",
-            "Amine",
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null);
+    UtilisateurDto inputDto = dtoWithRole(Role.ETUDIANT);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     Utilisateur savedEntity =
         Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
-    UtilisateurDto resultDto =
-        new UtilisateurDto(
-            id,
-            "amine.sidki@example.com",
-            "Sidki",
-            "Amine",
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null);
+    UtilisateurDto resultDto = dtoWithRoleAndId(Role.ETUDIANT, id);
 
     when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
     when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
@@ -135,21 +151,7 @@ class UtilisateurServiceTest {
 
   @Test
   void save_shouldNotTouchDbOrRollbackWhenKeycloakCreationFails() {
-    UtilisateurDto inputDto =
-        new UtilisateurDto(
-            null,
-            "amine.sidki@example.com",
-            "Sidki",
-            "Amine",
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null);
+    UtilisateurDto inputDto = dtoWithRole(Role.ETUDIANT);
     RuntimeException keycloakFailure = new RuntimeException("Keycloak unavailable");
 
     when(keycloakService.createUser(inputDto)).thenThrow(keycloakFailure);
@@ -164,21 +166,7 @@ class UtilisateurServiceTest {
 
   @Test
   void save_shouldRollbackKeycloakUserWhenDbSaveFails() {
-    UtilisateurDto inputDto =
-        new UtilisateurDto(
-            null,
-            "amine.sidki@example.com",
-            "Sidki",
-            "Amine",
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null);
+    UtilisateurDto inputDto = dtoWithRole(Role.ETUDIANT);
     Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
     RuntimeException dbFailure = new RuntimeException("DB unavailable");
 
@@ -187,6 +175,103 @@ class UtilisateurServiceTest {
     when(utilisateurRepository.save(mappedEntity)).thenThrow(dbFailure);
 
     assertThatThrownBy(() -> utilisateurService.save(inputDto)).isSameAs(dbFailure);
+
+    verify(keycloakService).createUser(inputDto);
+    verify(keycloakService).deleteUser(keycloakId);
+    verifyNoMoreInteractions(keycloakService);
+  }
+
+  @Test
+  void save_shouldThrowBadRouteExceptionWhenRoleIsResponsable() {
+    UtilisateurDto inputDto = dtoWithRole(Role.RESPONSABLE);
+
+    assertThatThrownBy(() -> utilisateurService.save(inputDto))
+        .isInstanceOf(BadRouteException.class);
+
+    verifyNoInteractions(keycloakService, utilisateurRepository, utilisateurMapper);
+  }
+
+  @Test
+  void save_shouldThrowBadRouteExceptionWhenRoleIsAdministrateur() {
+    UtilisateurDto inputDto = dtoWithRole(Role.ADMINISTRATEUR);
+
+    assertThatThrownBy(() -> utilisateurService.save(inputDto))
+        .isInstanceOf(BadRouteException.class);
+
+    verifyNoInteractions(keycloakService, utilisateurRepository, utilisateurMapper);
+  }
+
+  // ---------- saveAdmin ----------
+
+  @Test
+  void saveAdmin_shouldCreateKeycloakUserThenPersistAndReturnDtoForAdministrateurRole() {
+    UtilisateurDto inputDto = dtoWithRole(Role.ADMINISTRATEUR);
+    Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
+    Utilisateur savedEntity =
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
+    UtilisateurDto resultDto = dtoWithRoleAndId(Role.ADMINISTRATEUR, id);
+
+    when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
+    when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(utilisateurRepository.save(mappedEntity)).thenReturn(savedEntity);
+    when(utilisateurMapper.toDto(savedEntity)).thenReturn(resultDto);
+
+    UtilisateurDto result = utilisateurService.saveAdmin(inputDto);
+
+    assertThat(result).isEqualTo(resultDto);
+    assertThat(mappedEntity.getKeycloakUser()).isEqualTo(keycloakId);
+    verify(keycloakService).createUser(inputDto);
+    verify(utilisateurMapper).toEntity(inputDto);
+    verify(utilisateurRepository).save(mappedEntity);
+    verify(utilisateurMapper).toDto(savedEntity);
+    verifyNoMoreInteractions(keycloakService, utilisateurRepository, utilisateurMapper);
+  }
+
+  @Test
+  void saveAdmin_shouldAllowResponsableRoleUnlikeSave() {
+    UtilisateurDto inputDto = dtoWithRole(Role.RESPONSABLE);
+    Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
+    Utilisateur savedEntity =
+        Utilisateur.builder().id(id).keycloakUser(keycloakId).nom("Sidki").prenom("Amine").build();
+    UtilisateurDto resultDto = dtoWithRoleAndId(Role.RESPONSABLE, id);
+
+    when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
+    when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(utilisateurRepository.save(mappedEntity)).thenReturn(savedEntity);
+    when(utilisateurMapper.toDto(savedEntity)).thenReturn(resultDto);
+
+    UtilisateurDto result = utilisateurService.saveAdmin(inputDto);
+
+    assertThat(result).isEqualTo(resultDto);
+    verify(keycloakService).createUser(inputDto);
+  }
+
+  @Test
+  void saveAdmin_shouldNotTouchDbOrRollbackWhenKeycloakCreationFails() {
+    UtilisateurDto inputDto = dtoWithRole(Role.ADMINISTRATEUR);
+    RuntimeException keycloakFailure = new RuntimeException("Keycloak unavailable");
+
+    when(keycloakService.createUser(inputDto)).thenThrow(keycloakFailure);
+
+    assertThatThrownBy(() -> utilisateurService.saveAdmin(inputDto)).isSameAs(keycloakFailure);
+
+    verify(keycloakService).createUser(inputDto);
+    verify(keycloakService, never()).deleteUser(any());
+    verifyNoMoreInteractions(keycloakService);
+    verifyNoInteractions(utilisateurRepository, utilisateurMapper);
+  }
+
+  @Test
+  void saveAdmin_shouldRollbackKeycloakUserWhenDbSaveFails() {
+    UtilisateurDto inputDto = dtoWithRole(Role.ADMINISTRATEUR);
+    Utilisateur mappedEntity = Utilisateur.builder().nom("Sidki").prenom("Amine").build();
+    RuntimeException dbFailure = new RuntimeException("DB unavailable");
+
+    when(keycloakService.createUser(inputDto)).thenReturn(keycloakId);
+    when(utilisateurMapper.toEntity(inputDto)).thenReturn(mappedEntity);
+    when(utilisateurRepository.save(mappedEntity)).thenThrow(dbFailure);
+
+    assertThatThrownBy(() -> utilisateurService.saveAdmin(inputDto)).isSameAs(dbFailure);
 
     verify(keycloakService).createUser(inputDto);
     verify(keycloakService).deleteUser(keycloakId);
@@ -242,6 +327,7 @@ class UtilisateurServiceTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine-renamed",
@@ -395,6 +481,7 @@ class UtilisateurServiceTest {
     UpdateMeRequest request = new UpdateMeRequest("12 Rue des Fleurs", "+212600000000");
     UtilisateurDto filteredDto =
         new UtilisateurDto(
+            null,
             null,
             null,
             null,

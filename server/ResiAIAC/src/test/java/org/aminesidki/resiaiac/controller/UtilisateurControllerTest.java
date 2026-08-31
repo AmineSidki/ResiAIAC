@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.dto.request.UtilisateurUpdateRequest;
+import org.aminesidki.resiaiac.enumeration.Role;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,9 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>{@link UtilisateurService} is mocked; only request routing, (de)serialization, and status
  * codes are under test here — business logic is covered separately by {@code
- * UtilisateurServiceTest}.
+ * UtilisateurServiceTest}. That includes the {@code save} vs {@code saveAdmin} role split ({@code
+ * BadRouteException} for privileged roles on {@code save}) — the controller test below only checks
+ * that {@code POST /admin/} routes to {@code saveAdmin}.
  *
  * <p>Security filters are disabled ({@code addFilters = false}) since Keycloak-backed
  * authentication is out of scope for these tests; adjust if endpoint-level authorization rules need
@@ -69,6 +72,7 @@ class UtilisateurControllerTest {
     dto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine",
@@ -107,6 +111,7 @@ class UtilisateurControllerTest {
     UtilisateurDto inputDto =
         new UtilisateurDto(
             null,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine",
@@ -122,6 +127,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine",
@@ -150,6 +156,58 @@ class UtilisateurControllerTest {
     verifyNoMoreInteractions(utilisateurService);
   }
 
+  // ---------- saveAdmin ----------
+
+  @Test
+  void saveAdmin_shouldPersistAndReturnDto() throws Exception {
+    UtilisateurDto inputDto =
+        new UtilisateurDto(
+            null,
+            Role.ADMINISTRATEUR,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
+    UtilisateurDto resultDto =
+        new UtilisateurDto(
+            id,
+            Role.ADMINISTRATEUR,
+            "amine.sidki@example.com",
+            "Sidki",
+            "Amine",
+            "AB123456",
+            "Casablanca",
+            "0600000000",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null);
+
+    when(utilisateurService.saveAdmin(inputDto)).thenReturn(resultDto);
+
+    mockMvc
+        .perform(
+            post(BASE_PATH + "/admin/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(inputDto)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id.toString()))
+        .andExpect(jsonPath("$.nom").value("Sidki"));
+
+    verify(utilisateurService).saveAdmin(inputDto);
+    verifyNoMoreInteractions(utilisateurService);
+  }
+
   // ---------- update ----------
 
   @Test
@@ -158,6 +216,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine - renamed",
@@ -220,6 +279,7 @@ class UtilisateurControllerTest {
     UtilisateurDto resultDto =
         new UtilisateurDto(
             id,
+            Role.ETUDIANT,
             "amine.sidki@example.com",
             "Sidki",
             "Amine",

@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.Utilisateur;
+import org.aminesidki.resiaiac.enumeration.Role;
+import org.aminesidki.resiaiac.exception.BadRouteException;
 import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurRepository;
@@ -79,6 +81,28 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Override
   public UtilisateurDto save(UtilisateurDto dto) {
+    UUID keycloakId = null;
+    try {
+      if (dto.role().equals(Role.RESPONSABLE) || dto.role().equals(Role.ADMINISTRATEUR))
+        throw new BadRouteException("This route isn't adapted for creating Administrator !");
+      keycloakId = keycloakService.createUser(dto);
+      Utilisateur entity = utilisateurMapper.toEntity(dto);
+      entity.setKeycloakUser(keycloakId);
+      entity = utilisateurRepository.save(entity);
+      return utilisateurMapper.toDto(entity);
+    } catch (Exception e) {
+      log.error(
+          "An error occurred whilst saving user with username {} !",
+          StringUtil.nameToUsername(dto.nom(), dto.prenom()));
+      if (keycloakId != null) {
+        keycloakService.deleteUser(keycloakId);
+      }
+      throw e;
+    }
+  }
+
+  @Override
+  public UtilisateurDto saveAdmin(UtilisateurDto dto) {
     UUID keycloakId = null;
     try {
       keycloakId = keycloakService.createUser(dto);
