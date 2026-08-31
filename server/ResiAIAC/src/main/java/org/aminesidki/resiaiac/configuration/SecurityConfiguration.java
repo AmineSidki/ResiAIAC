@@ -2,6 +2,7 @@ package org.aminesidki.resiaiac.configuration;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -21,12 +22,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
+  @Value("${hostname.value}")
+  private String hostname;
   private final JwtAuthenticationConverter jwtAuthenticationConverter;
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
-    corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
+    corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200", "https://" + hostname));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
     corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -52,9 +55,6 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             customizer ->
                 customizer
-                    .requestMatchers(
-                        "/api/v1/auth-test/public", "/api/v1/keycloak-service-test/public")
-                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .build();
