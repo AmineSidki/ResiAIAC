@@ -9,7 +9,14 @@ import { AppRole, ROLE_HIERARCHY } from '../models/enums';
  * this checks "does the user hold a role at least as senior as `minimum`",
  * never an exact match against a single role name.
  */
-function hasRoleAtLeast(realmRoles: string[], minimum: AppRole): boolean {
+/**
+ * Exported for UI-level gating (nav items, action buttons) that needs the
+ * same "holds a role at least this senior" check the route guards use, but
+ * isn't itself a route guard — e.g. hiding "Utilisateurs" from a pure
+ * MANAGER in the admin sidebar. Guards below remain the actual access
+ * control; this is for display/UX only.
+ */
+export function hasRoleAtLeast(realmRoles: string[], minimum: AppRole): boolean {
   const minimumRank = ROLE_HIERARCHY.indexOf(minimum);
   return realmRoles.some((role) => {
     const rank = ROLE_HIERARCHY.indexOf(role as AppRole);
