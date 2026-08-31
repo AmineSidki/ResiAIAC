@@ -32,8 +32,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [requireManager],
-    // TODO(admin-shell): loadChildren pointing at the admin shell's own routes file.
-    children: [],
+    loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },
   { path: '**', redirectTo: '' },
 ];
