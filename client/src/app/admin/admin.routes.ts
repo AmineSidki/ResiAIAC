@@ -99,6 +99,26 @@ export const ADMIN_ROUTES: Routes = [
         path: 'reference/equipements',
         loadComponent: () => import('./pages/reference-data/equipement.page').then((m) => m.EquipementPageComponent),
       },
+
+      // TEMPORARY diagnostic routes — bypass BaseCrudService and
+      // EntityCrudTableComponent entirely to isolate which layer is
+      // responsible for the etage/chambre/batiment bug. Remove these three
+      // once the theory has been tested.
+      {
+        path: 'diagnostic/etage',
+        loadComponent: () =>
+          import('./pages/reference-data/etage-manual.page').then((m) => m.EtageManualPageComponent),
+      },
+      {
+        path: 'diagnostic/chambre',
+        loadComponent: () =>
+          import('./pages/reference-data/chambre-manual.page').then((m) => m.ChambreManualPageComponent),
+      },
+      {
+        path: 'diagnostic/batiment',
+        loadComponent: () =>
+          import('./pages/reference-data/batiment-manual.page').then((m) => m.BatimentManualPageComponent),
+      },
     ],
   },
 ];
