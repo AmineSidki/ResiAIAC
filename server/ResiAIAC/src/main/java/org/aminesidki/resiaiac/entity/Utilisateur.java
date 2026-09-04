@@ -29,6 +29,10 @@ public class Utilisateur {
   private String adresse;
   private String telephone;
 
+  @ManyToOne
+  @JoinColumn(name = "filiere_id")
+  private Filiere filiere;
+
   @JsonIgnore
   @OneToMany(mappedBy = "utilisateur")
   private List<Reservation> reservations;

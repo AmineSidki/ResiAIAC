@@ -29,14 +29,26 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
   ],
   template: `
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-neutral-900">Réclamations</h1>
-      <div class="w-56">
-        <app-select
-          placeholder="Tous les états"
-          [options]="etatOptions"
-          [ngModel]="etatFilter()"
-          (ngModelChange)="onFilterChange($event)"
-        ></app-select>
+      <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réclamations</h1>
+      <div class="flex items-end gap-2">
+        <div class="w-56">
+          <app-select
+            placeholder="Tous les états"
+            [clearable]="true"
+            [options]="etatOptions"
+            [ngModel]="etatFilter()"
+            (ngModelChange)="onFilterChange($event)"
+          ></app-select>
+        </div>
+        @if (etatFilter()) {
+          <button
+            type="button"
+            (click)="clearFilter()"
+            class="h-[38px] rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 dark:border-white/10 dark:text-neutral-300 dark:hover:bg-white/5"
+          >
+            Réinitialiser
+          </button>
+        }
       </div>
     </div>
 
@@ -95,6 +107,11 @@ export class ReclamationListPageComponent implements OnInit {
     this.etatFilter.set(value || null);
     this.page.set(0);
     this.load();
+  }
+
+  /** Filter Clearing fix: the select's placeholder used to be permanently disabled, so once a filter was set there was no way back to "all" without this. */
+  protected clearFilter(): void {
+    this.onFilterChange('');
   }
 
   protected goToPage(page: number): void {

@@ -3,15 +3,19 @@ package org.aminesidki.resiaiac.service.impl;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
+import org.aminesidki.resiaiac.dto.request.RoomAssignationRequest;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.entity.Utilisateur;
 import org.aminesidki.resiaiac.entity.UtilisateurPromotionChambre;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
+import org.aminesidki.resiaiac.enumeration.EtatReservation;
 import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.UtilisateurPromotionChambreMapper;
 import org.aminesidki.resiaiac.repository.UtilisateurPromotionChambreRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
+import org.aminesidki.resiaiac.service.ReservationService;
 import org.aminesidki.resiaiac.service.UtilisateurPromotionChambreService;
 import org.aminesidki.resiaiac.service.UtilisateurService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
@@ -24,9 +28,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class UtilisateurPromotionChambreServiceImpl implements UtilisateurPromotionChambreService {
 
   private final UtilisateurService utilisateurService;
+  private final ReservationService reservationService;
   private final ChambreService chambreService;
   private final UtilisateurPromotionChambreRepository utilisateurPromotionChambreRepository;
   private final UtilisateurPromotionChambreMapper utilisateurPromotionChambreMapper;
+
+  @Override
+  public UtilisateurPromotionChambreDto assignRoom(RoomAssignationRequest request) {
+    UUID reservationId = null;
+    if (request.reservationId() == null) {
+      Chambre randomOpenChambre = chambreService.getRandom();
+      reservationId =
+          reservationService
+              .save(
+                  new ReservationDto(
+                      null, null, request.utilisateurId(), randomOpenChambre.getId(), null, null))
+              .id();
+    } else {
+      reservationId = request.reservationId();
+    }
+    reservationService.update(
+        reservationId, new ReservationDto(null, EtatReservation.TERMINEE, null, null, null, null));
+    return save(
+        new UtilisateurPromotionChambreDto(
+            null,
+            null,
+            null,
+            request.utilisateurId(),
+            request.promotionId(),
+            reservationService.getById(reservationId).chambre(),
+            null));
+  }
 
   @Transactional(readOnly = true)
   @Override

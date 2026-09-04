@@ -14,7 +14,7 @@ import {
   EquipementUpcId,
   UtilisateurPromotionChambreId,
 } from './ids';
-import { EtatChambre, EtatDocument, EtatReclamation, EtatReservation } from './enums';
+import { AppRole, EtatChambre, EtatDocument, EtatReclamation, EtatReservation } from './enums';
 
 export interface BatimentDto {
   id: string | null; // UUID
@@ -116,6 +116,7 @@ export interface ServiceDto {
 
 export interface UtilisateurDto {
   id: string | null; // UUID
+  role: AppRole;
   email: string;
   nom: string;
   prenom: string;

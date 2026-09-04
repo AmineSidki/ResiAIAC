@@ -10,6 +10,7 @@ import org.aminesidki.resiaiac.mapper.ChambreMapper;
 import org.aminesidki.resiaiac.repository.ChambreRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
 import org.aminesidki.resiaiac.util.ResourceFetcher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,7 @@ public class ChambreServiceImpl implements ChambreService {
 
   @Override
   public void updateEtatChambre(UUID id, EtatChambre etatChambre) {
-    ChambreDto dto = new ChambreDto(null, null, null, etatChambre, null, null, null, null);
+    ChambreDto dto = new ChambreDto(null, null, null, etatChambre, null);
     update(id, dto);
   }
 
@@ -64,5 +65,10 @@ public class ChambreServiceImpl implements ChambreService {
   @Override
   public void delete(UUID id) {
     chambreRepository.delete(ResourceFetcher.fetchResource(id, chambreRepository, "Chambre"));
+  }
+
+  @Override
+  public Chambre getRandom() {
+    return chambreRepository.getRandomChambre(PageRequest.of(0, 1));
   }
 }

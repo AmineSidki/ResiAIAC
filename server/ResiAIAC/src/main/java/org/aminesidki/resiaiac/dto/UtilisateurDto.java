@@ -6,9 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.UUID;
-import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
 import org.aminesidki.resiaiac.enumeration.Role;
 import org.aminesidki.resiaiac.validator.OptionalNotBlank;
 
@@ -24,10 +22,7 @@ public record UtilisateurDto(
     @OptionalNotBlank String adresse,
     @NotBlank @Pattern(regexp = "^\\+?[0-9]{8,15}$", message = "Numero de telephone invalide !")
         String telephone,
-    List<UUID> reservations,
-    List<UUID> reclamations,
-    List<UUID> documents,
-    List<UtilisateurPromotionChambreId> combinaisonsUpc,
+    Long filiere,
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) Timestamp createdAt,
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) Timestamp updatedAt)
     implements Serializable {}

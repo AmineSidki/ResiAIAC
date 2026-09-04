@@ -35,14 +35,26 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
   ],
   template: `
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-neutral-900">Réservations</h1>
-      <div class="w-56">
-        <app-select
-          placeholder="Tous les états"
-          [options]="etatOptions"
-          [ngModel]="etatFilter()"
-          (ngModelChange)="etatFilter.set($event || null)"
-        ></app-select>
+      <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réservations</h1>
+      <div class="flex items-end gap-2">
+        <div class="w-56">
+          <app-select
+            placeholder="Tous les états"
+            [clearable]="true"
+            [options]="etatOptions"
+            [ngModel]="etatFilter()"
+            (ngModelChange)="etatFilter.set($event || null)"
+          ></app-select>
+        </div>
+        @if (etatFilter()) {
+          <button
+            type="button"
+            (click)="etatFilter.set(null)"
+            class="h-[38px] rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 dark:border-white/10 dark:text-neutral-300 dark:hover:bg-white/5"
+          >
+            Réinitialiser
+          </button>
+        }
       </div>
     </div>
 

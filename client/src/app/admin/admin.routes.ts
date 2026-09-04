@@ -91,6 +91,13 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./pages/reference-data/filiere.page').then((m) => m.FilierePageComponent),
       },
       {
+        // Promotion GET is MANAGER-gated, POST/PUT/DELETE RESPONSABLE-gated
+        // (confirmed against PromotionController.java) — same floor/write-split
+        // as the rest of this section; write-gating happens in-page via canWrite().
+        path: 'reference/promotions',
+        loadComponent: () => import('./pages/reference-data/promotion.page').then((m) => m.PromotionPageComponent),
+      },
+      {
         path: 'reference/services',
         loadComponent: () =>
           import('./pages/reference-data/service-entity.page').then((m) => m.ServiceEntityPageComponent),

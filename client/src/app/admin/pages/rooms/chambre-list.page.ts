@@ -5,6 +5,7 @@ import { DataTableColumn } from '../../../shared/components/data-table/data-tabl
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ChambreService } from '../../../core/services/chambre.service';
 import { EtageService } from '../../../core/services/etage.service';
+import { BatimentService } from '../../../core/services/batiment.service';
 import { ChambreDto, ChambreUpdateRequest } from '../../../core/models/dtos';
 import { ETAT_CHAMBRE_VALUES } from '../../../core/models/enums';
 import { CurrentUserService } from '../../../core/auth/current-user.service';
@@ -41,19 +42,27 @@ import { hasRoleAtLeast } from '../../../core/auth/role.guard';
 export class ChambreListPageComponent {
   protected readonly service = inject(ChambreService);
   private readonly etageService = inject(EtageService);
+  private readonly batimentService = inject(BatimentService);
   private readonly currentUser = inject(CurrentUserService);
 
   protected readonly canWrite = computed(() => hasRoleAtLeast(this.currentUser.realmRoles(), 'RESPONSABLE'));
 
+  /**
+   * Etage's own display name ("Étage 2") — used for the edit-form select,
+   * where "Bâtiment A - Étage 2" would be redundant noise once you're
+   * already picking from a dropdown.
+   */
   private readonly etageNameById = signal<Map<string, string>>(new Map());
+  /** "Bâtiment A - Étage 2" per etage id — used in the list column so the building is visible without opening the row. */
+  private readonly etageDisplayById = signal<Map<string, string>>(new Map());
   private readonly etatTpl = viewChild<TemplateRef<{ $implicit: ChambreDto }>>('etatTpl');
   private readonly matriculeTpl = viewChild<TemplateRef<{ $implicit: ChambreDto }>>('matriculeTpl');
 
   protected readonly columns = computed<DataTableColumn<ChambreDto>[]>(() => {
-    const names = this.etageNameById();
+    const displayNames = this.etageDisplayById();
     const cols: DataTableColumn<ChambreDto>[] = [
       { key: 'matricule', header: 'Matricule', cellTemplate: this.matriculeTpl(), accessor: (r) => r.matricule },
-      { key: 'etage', header: 'Étage', accessor: (r) => names.get(r.etage) ?? r.etage },
+      { key: 'etage', header: 'Bâtiment - Étage', accessor: (r) => displayNames.get(r.etage) ?? r.etage },
       { key: 'capacite', header: 'Capacité', accessor: (r) => String(r.capacite) },
       { key: 'etat', header: 'État', cellTemplate: this.etatTpl() },
     ];
@@ -95,6 +104,22 @@ export class ChambreListPageComponent {
   constructor() {
     this.etageService.getAll().subscribe((etages) => {
       this.etageNameById.set(new Map(etages.map((e) => [e.id as string, `Étage ${e.numero}`])));
+
+      // Chambre Display fix: join etage -> batiment so the list can show
+      // "Bâtiment A - Étage 2" instead of just the etage number, which used
+      // to leave which building a room is in completely invisible from the
+      // list/table view.
+      this.batimentService.getAll().subscribe((batiments) => {
+        const batimentNameById = new Map(batiments.map((b) => [b.id as string, b.nom]));
+        this.etageDisplayById.set(
+          new Map(
+            etages.map((e) => [
+              e.id as string,
+              `${batimentNameById.get(e.batiment) ?? 'Bâtiment ?'} - Étage ${e.numero}`,
+            ]),
+          ),
+        );
+      });
     });
   }
 }

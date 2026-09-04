@@ -49,9 +49,9 @@ export interface EntityFieldConfig<T> {
   template: `
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-semibold text-neutral-900">{{ title() }}</h1>
+        <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">{{ title() }}</h1>
         @if (subtitle()) {
-          <p class="text-sm text-neutral-500">{{ subtitle() }}</p>
+          <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ subtitle() }}</p>
         }
       </div>
       @if (canWrite()) {
@@ -111,7 +111,7 @@ export interface EntityFieldConfig<T> {
     </app-dialog>
 
     <app-dialog [open]="deleteTarget() !== null" title="Confirmer la suppression" (close)="deleteTarget.set(null)">
-      <p class="text-sm text-neutral-600">
+      <p class="text-sm text-neutral-600 dark:text-neutral-300">
         Supprimer définitivement cet élément&nbsp;? Cette action est irréversible.
       </p>
       <div footer class="flex gap-2">

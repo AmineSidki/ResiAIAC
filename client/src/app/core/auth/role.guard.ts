@@ -24,13 +24,22 @@ export function hasRoleAtLeast(realmRoles: string[], minimum: AppRole): boolean 
   });
 }
 
+/**
+ * Anonymous visitors get sent to /unauthorized with the URL they were
+ * actually headed for tucked into `?redirect=`. /unauthorized (and
+ * CurrentUserService.login) thread that value through to keycloak.login's
+ * redirectUri, so a successful login lands the user on the page they
+ * originally wanted instead of stranding them back on /unauthorized — this
+ * is the fix for the "hit 401 before logging in, stuck there forever after
+ * logging in" loop.
+ */
 function buildRoleGuard(minimum: AppRole): CanActivateFn {
   return createAuthGuard<CanActivateFn>(async (route, state, authData: AuthGuardData) => {
     const router = inject(Router);
     const { authenticated, grantedRoles } = authData;
 
     if (!authenticated) {
-      return router.parseUrl('/unauthorized');
+      return router.createUrlTree(['/unauthorized'], { queryParams: { redirect: state.url } });
     }
 
     if (hasRoleAtLeast(grantedRoles.realmRoles, minimum)) {
@@ -52,3 +61,24 @@ export const requireResponsable: CanActivateFn = buildRoleGuard('RESPONSABLE');
 
 /** Route requires ADMINISTRATEUR exactly (top of the hierarchy). */
 export const requireAdministrateur: CanActivateFn = buildRoleGuard('ADMINISTRATEUR');
+
+/**
+ * The student self-service shell is for ETUDIANT-and-up in the raw role
+ * hierarchy sense (requireEtudiant admits everyone), but ADMINISTRATEUR
+ * specifically shouldn't land there — they have their own dashboard.
+ * Composed alongside requireEtudiant on the /student route rather than
+ * replacing it, so the ETUDIANT floor + unauthenticated handling stay
+ * exactly as before for every other role.
+ */
+export const blockAdministrateur: CanActivateFn = createAuthGuard<CanActivateFn>(
+  async (route, state, authData: AuthGuardData) => {
+    const router = inject(Router);
+    const { authenticated, grantedRoles } = authData;
+
+    if (!authenticated) return true; // let requireEtudiant handle the unauthenticated case
+    if (grantedRoles.realmRoles.includes('ADMINISTRATEUR')) {
+      return router.parseUrl('/admin');
+    }
+    return true;
+  },
+);

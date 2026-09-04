@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service.impl;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ReservationDto;
@@ -11,6 +12,7 @@ import org.aminesidki.resiaiac.enumeration.EtatChambre;
 import org.aminesidki.resiaiac.enumeration.EtatReservation;
 import org.aminesidki.resiaiac.exception.ResourceOwnershipMismatchException;
 import org.aminesidki.resiaiac.exception.RoomFullException;
+import org.aminesidki.resiaiac.exception.UserHasReservationException;
 import org.aminesidki.resiaiac.mapper.ReservationMapper;
 import org.aminesidki.resiaiac.repository.ReservationRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
@@ -57,10 +59,20 @@ public class ReservationServiceImpl implements ReservationService {
   @Override
   public ReservationDto saveMy(Jwt jwt, MyReservationRequest request) {
     // Fetch user info
+    // Check if user made any reservations prior
     // Check if room is available (chambre.reservations.size())
     // Add reservation and change room status to AVAILABLE -> PARTIALLY_AVAILABLE ;
     // PARTIALLY_AVAILABLE -> OCCUPIED
     Utilisateur id = utilisateurService.getMyEntityByJwt(jwt);
+    List<Reservation> userOpenReservations =
+        reservationRepository.findAllByUtilisateurAndEtat(id, EtatReservation.ACTIVE);
+    if (!userOpenReservations.isEmpty())
+      throw new UserHasReservationException(
+          "L'utilisateur "
+              + id.getNom()
+              + " "
+              + id.getPrenom()
+              + " possède dejà une reservation toujours ouverte !");
     Chambre chambre = chambreService.getEntityById(request.chambre());
 
     if (chambre.getEtat().equals(EtatChambre.OCCUPEE)) {

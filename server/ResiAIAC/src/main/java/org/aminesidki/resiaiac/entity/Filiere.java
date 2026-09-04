@@ -20,5 +20,8 @@ public class Filiere {
   private Integer niveauMaximal;
 
   @OneToMany(mappedBy = "filiere")
+  private List<Utilisateur> utilisateurs;
+
+  @OneToMany(mappedBy = "filiere")
   private List<Promotion> promotions;
 }

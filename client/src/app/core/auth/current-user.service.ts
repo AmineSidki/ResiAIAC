@@ -41,8 +41,15 @@ export class CurrentUserService {
     return [parsed.given_name, parsed.family_name].filter(Boolean).join(' ');
   });
 
-  login(): void {
-    this.keycloak.login();
+  /**
+   * `redirectUri` lets callers send the user back to wherever they were
+   * trying to go before Keycloak intercepted them — without it, keycloak-js
+   * defaults to the current location, which is how a user who hits
+   * /unauthorized before logging in gets stranded back on /unauthorized
+   * after a successful login (see pages/unauthorized/unauthorized.component.ts).
+   */
+  login(redirectUri?: string): void {
+    this.keycloak.login(redirectUri ? { redirectUri } : undefined);
   }
 
   logout(): void {

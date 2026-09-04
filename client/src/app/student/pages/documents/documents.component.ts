@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DocumentService } from '../../../core/services/document.service';
 import { DocumentDto } from '../../../core/models/dtos';
 import { AppError } from '../../../core/api/app-error';
@@ -7,7 +8,7 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 
-type SlotKey = 'pfp' | 'cin' | 'dip';
+type SlotKey = 'cin' | 'dip';
 
 interface Slot {
   key: SlotKey;
@@ -15,7 +16,7 @@ interface Slot {
   hint: string;
   /**
    * DocumentDto.nomSceau on the wire is literally FileType.bucketName
-   * ("images"/"cins"/"diplomes") — see DocumentServiceImpl.uploadMyDocument,
+   * ("cins"/"diplomes") — see DocumentServiceImpl.uploadMyDocument,
    * which sets nomSceau = fileType.getBucketName(). This is the only signal
    * the response gives for which fixed slot a DocumentDto belongs to.
    * Flagged gap: core/models/enums.ts's FileType comment claims
@@ -30,8 +31,9 @@ interface Slot {
   uploading: boolean;
 }
 
+// Profile picture ('pfp'/'images') moved to the Profile page — Task A5.
+// This screen now only handles the validation-queue documents (CIN, diplôme).
 const INITIAL_SLOTS: Slot[] = [
-  { key: 'pfp', label: 'Photo de profil', hint: 'JPG ou PNG', bucketName: 'images', doc: null, uploading: false },
   { key: 'cin', label: 'CIN', hint: 'Recto, lisible', bucketName: 'cins', doc: null, uploading: false },
   { key: 'dip', label: 'Diplôme', hint: 'Dernier diplôme obtenu', bucketName: 'diplomes', doc: null, uploading: false },
 ];
@@ -39,27 +41,28 @@ const INITIAL_SLOTS: Slot[] = [
 @Component({
   selector: 'app-student-documents',
   standalone: true,
-  imports: [ButtonComponent, StatusBadgeComponent, SkeletonComponent],
+  imports: [RouterLink, ButtonComponent, StatusBadgeComponent, SkeletonComponent],
   template: `
     <div class="flex flex-col gap-4">
-      <h1 class="text-lg font-semibold text-neutral-900">Mes documents</h1>
-      <p class="text-sm text-neutral-500">
-        Chaque envoi remplace le document précédent du même type — il n'y a pas d'historique.
+      <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Mes documents</h1>
+      <p class="text-sm text-neutral-500 dark:text-neutral-400">
+        Chaque envoi remplace le document précédent du même type — il n'y a pas d'historique. Votre photo de
+        profil se gère depuis votre <a routerLink="/student/profile" class="text-primary-600 hover:underline dark:text-primary-400">profil</a>.
       </p>
 
       @if (loading()) {
         <div class="flex flex-col gap-3">
-          @for (i of [0, 1, 2]; track i) {
+          @for (i of [0, 1]; track i) {
             <app-skeleton variant="block" height="5rem" />
           }
         </div>
       } @else {
         <div class="flex flex-col gap-3">
           @for (slot of slots(); track slot.key) {
-            <div class="flex items-center justify-between gap-3 rounded-lg border border-neutral-100 bg-surface p-4 shadow-sm">
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-neutral-100 bg-surface p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
               <div class="min-w-0">
-                <p class="text-sm font-medium text-neutral-900">{{ slot.label }}</p>
-                <p class="text-xs text-neutral-500">{{ slot.hint }}</p>
+                <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ slot.label }}</p>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ slot.hint }}</p>
                 <div class="mt-1.5">
                   @if (slot.doc) {
                     <app-status-badge kind="document" [value]="slot.doc.etat ?? 'AUCUN'" />
@@ -73,7 +76,7 @@ const INITIAL_SLOTS: Slot[] = [
                   <button
                     type="button"
                     (click)="previewSlot(slot)"
-                    class="text-xs font-medium text-primary-600 hover:underline"
+                    class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-400"
                   >
                     Voir
                   </button>
@@ -156,8 +159,6 @@ export class DocumentsComponent implements OnInit {
 
   private uploadFor(key: SlotKey, file: File) {
     switch (key) {
-      case 'pfp':
-        return this.documentService.uploadProfileImage(file);
       case 'cin':
         return this.documentService.uploadCin(file);
       case 'dip':
