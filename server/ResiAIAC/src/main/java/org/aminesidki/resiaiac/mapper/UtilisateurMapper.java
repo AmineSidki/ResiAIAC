@@ -6,10 +6,7 @@ import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
 import org.aminesidki.resiaiac.entity.*;
 import org.aminesidki.resiaiac.entity.id.UtilisateurPromotionChambreId;
-import org.aminesidki.resiaiac.repository.DocumentRepository;
-import org.aminesidki.resiaiac.repository.ReclamationRepository;
-import org.aminesidki.resiaiac.repository.ReservationRepository;
-import org.aminesidki.resiaiac.repository.UtilisateurPromotionChambreRepository;
+import org.aminesidki.resiaiac.repository.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -21,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
     componentModel = "spring")
 public abstract class UtilisateurMapper {
 
+  @Autowired private FiliereRepository filiereRepo;
   @Autowired private UtilisateurPromotionChambreRepository utilisateurPromotionChambreRepo;
   @Autowired private ReservationRepository reservationRepo;
   @Autowired private ReclamationRepository reclamationRepo;
@@ -45,54 +43,17 @@ public abstract class UtilisateurMapper {
     return reservationRepo.findAllById(ids);
   }
 
-  protected List<UUID> mapReservationsToIds(List<Reservation> entities) {
-    if (entities == null) {
+  protected Filiere mapIdToFiliere(Long id) {
+    if (id == null) {
       return null;
     }
-    return entities.stream().map(e -> e.getId()).toList();
+    return filiereRepo.findById(id).orElse(null);
   }
 
-  protected List<Reclamation> mapIdToReclamations(List<UUID> ids) {
-    if (ids == null) {
+  protected Long mapFiliereToId(Filiere entity) {
+    if (entity == null) {
       return null;
     }
-    return reclamationRepo.findAllById(ids);
-  }
-
-  protected List<UUID> mapReclamationsToIds(List<Reclamation> entities) {
-    if (entities == null) {
-      return null;
-    }
-    return entities.stream().map(e -> e.getId()).toList();
-  }
-
-  protected List<Document> mapIdToDocuments(List<UUID> ids) {
-    if (ids == null) {
-      return null;
-    }
-    return documentRepo.findAllById(ids);
-  }
-
-  protected List<UUID> mapDocumentsToIds(List<Document> entities) {
-    if (entities == null) {
-      return null;
-    }
-    return entities.stream().map(e -> e.getId()).toList();
-  }
-
-  protected List<UtilisateurPromotionChambre> mapIdToUtilisateurPromotionChambres(
-      List<UtilisateurPromotionChambreId> ids) {
-    if (ids == null) {
-      return null;
-    }
-    return utilisateurPromotionChambreRepo.findAllById(ids);
-  }
-
-  protected List<UtilisateurPromotionChambreId> mapUtilisateurPromotionChambresToIds(
-      List<UtilisateurPromotionChambre> entities) {
-    if (entities == null) {
-      return null;
-    }
-    return entities.stream().map(e -> e.getId()).toList();
+    return entity.getId();
   }
 }

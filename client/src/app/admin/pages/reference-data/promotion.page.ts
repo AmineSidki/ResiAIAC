@@ -269,7 +269,6 @@ export class PromotionPageComponent implements OnInit {
       anneeDeDepart: Number(value.anneeDeDepart),
       anneeDeFin: Number(value.anneeDeFin),
       niveau: Number(value.niveau),
-      combinaisonsUpc: editing?.combinaisonsUpc ?? [],
     };
 
     this.saving.set(true);

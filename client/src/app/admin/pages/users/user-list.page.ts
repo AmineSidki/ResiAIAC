@@ -1,7 +1,10 @@
 import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UtilisateurService } from '../../../core/services/utilisateur.service';
+import { FiliereService } from '../../../core/services/filiere.service';
+import { PromotionService } from '../../../core/services/promotion.service';
+import { UtilisateurPromotionChambreService } from '../../../core/services/utilisateur-promotion-chambre.service';
 import { UtilisateurDto } from '../../../core/models/dtos';
 import { AppRole } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -18,6 +21,7 @@ import { SkeletonRowsComponent } from '../../shared/skeleton/skeleton-rows.compo
 import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 
 const TELEPHONE_PATTERN = '^\\+?[0-9]{8,15}$';
+const NO_FILIERE = '__none__';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   ETUDIANT: 'Étudiant',
@@ -36,10 +40,7 @@ function emptyUser(): UtilisateurDto {
     cin: '',
     adresse: '',
     telephone: '',
-    reservations: [],
-    reclamations: [],
-    documents: [],
-    combinaisonsUpc: [],
+    filiere: null,
     createdAt: null,
     updatedAt: null,
   };
@@ -56,12 +57,18 @@ function emptyUser(): UtilisateurDto {
  * POST /utilisateur/admin/ (ADMINISTRATEUR-only) can hand out those two
  * roles. The role dropdown below is scoped to what the signed-in user is
  * actually allowed to grant, and `save()` picks the matching endpoint.
+ *
+ * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
+ * dev/amine): it's the only user-facing way to give a student a chambre —
+ * the server auto-picks any LIBRE room when reservationId is omitted, which
+ * is what this dialog always does (no chambre-picker needed here).
  */
 @Component({
   selector: 'app-user-list-page',
   standalone: true,
   imports: [
     RouterLink,
+    FormsModule,
     ReactiveFormsModule,
     ButtonComponent,
     InputComponent,
@@ -106,7 +113,10 @@ function emptyUser(): UtilisateurDto {
     </ng-template>
 
     <ng-template #actionsTpl let-row>
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-3">
+        @if (row.role === 'ETUDIANT') {
+          <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openAssign(row)">Assigner une promotion</button>
+        }
         <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openEdit(row)">Modifier</button>
         <button type="button" class="text-sm font-medium text-danger-500 hover:text-danger-600" (click)="deleteTarget.set(row)">Supprimer</button>
       </div>
@@ -133,6 +143,7 @@ function emptyUser(): UtilisateurDto {
         <app-input formControlName="cin" label="CIN" [errorText]="errorFor('cin')"></app-input>
         <app-input formControlName="telephone" label="Téléphone" type="tel" hint="Format: +212612345678" [errorText]="errorFor('telephone')"></app-input>
         <app-input formControlName="adresse" label="Adresse (optionnel)"></app-input>
+        <app-select formControlName="filiere" label="Filière (optionnel)" [options]="filiereOptionsWithNone()"></app-select>
       </form>
       @if (editingRow()) {
         <p class="mt-3 text-xs text-neutral-400">
@@ -143,6 +154,36 @@ function emptyUser(): UtilisateurDto {
       <div footer class="flex gap-2">
         <app-button variant="secondary" (click)="closeDialog()">Annuler</app-button>
         <app-button [loading]="saving()" [disabled]="form.invalid" (click)="save()">Enregistrer</app-button>
+      </div>
+    </app-dialog>
+
+    <app-dialog [open]="assignTarget() !== null" title="Assigner une promotion" (close)="closeAssign()">
+      @if (assignTarget(); as target) {
+        <p class="text-sm text-neutral-600 dark:text-neutral-300">
+          {{ target.prenom }} {{ target.nom }} — une chambre libre sera attribuée automatiquement.
+        </p>
+        <div class="mt-3">
+          @if (loadingPromotions()) {
+            <app-skeleton-rows [rows]="1" [columns]="1"></app-skeleton-rows>
+          } @else if (promotionOptions().length === 0) {
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              Aucune promotion disponible — créez-en une dans Référentiel → Promotions d'abord.
+            </p>
+          } @else {
+            <app-select
+              label="Promotion"
+              placeholder="Choisir une promotion"
+              [clearable]="false"
+              [options]="promotionOptions()"
+              [ngModel]="selectedPromotionId()"
+              (ngModelChange)="selectedPromotionId.set($event)"
+            ></app-select>
+          }
+        </div>
+      }
+      <div footer class="flex gap-2">
+        <app-button variant="secondary" (click)="closeAssign()">Annuler</app-button>
+        <app-button [loading]="assigning()" [disabled]="!selectedPromotionId()" (click)="confirmAssign()">Assigner</app-button>
       </div>
     </app-dialog>
 
@@ -159,6 +200,9 @@ function emptyUser(): UtilisateurDto {
 })
 export class UserListPageComponent implements OnInit {
   private readonly userService = inject(UtilisateurService);
+  private readonly filiereService = inject(FiliereService);
+  private readonly promotionService = inject(PromotionService);
+  private readonly upcService = inject(UtilisateurPromotionChambreService);
   private readonly currentUser = inject(CurrentUserService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
@@ -174,6 +218,19 @@ export class UserListPageComponent implements OnInit {
   protected readonly dialogOpen = signal(false);
   protected readonly editingRow = signal<UtilisateurDto | null>(null);
   protected readonly deleteTarget = signal<UtilisateurDto | null>(null);
+
+  protected readonly assignTarget = signal<UtilisateurDto | null>(null);
+  protected readonly assigning = signal(false);
+  protected readonly loadingPromotions = signal(false);
+  protected readonly selectedPromotionId = signal<string>('');
+  private readonly promotionOptionsSignal = signal<SelectOption[]>([]);
+  protected readonly promotionOptions = this.promotionOptionsSignal.asReadonly();
+
+  private readonly filiereOptionsSignal = signal<SelectOption[]>([]);
+  protected readonly filiereOptionsWithNone = computed<SelectOption[]>(() => [
+    { value: NO_FILIERE, label: 'Aucune' },
+    ...this.filiereOptionsSignal(),
+  ]);
 
   protected readonly rowId = (row: UtilisateurDto) => row.id;
 
@@ -199,6 +256,7 @@ export class UserListPageComponent implements OnInit {
     cin: ['', Validators.required],
     telephone: ['', [Validators.required, Validators.pattern(TELEPHONE_PATTERN)]],
     adresse: [''],
+    filiere: [NO_FILIERE],
   });
 
   private readonly nameTpl = viewChild<TemplateRef<{ $implicit: UtilisateurDto }>>('nameTpl');
@@ -224,6 +282,9 @@ export class UserListPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.filiereService.getAll().subscribe((filieres) => {
+      this.filiereOptionsSignal.set(filieres.map((f) => ({ value: String(f.id), label: f.nom })));
+    });
   }
 
   protected load(): void {
@@ -249,7 +310,7 @@ export class UserListPageComponent implements OnInit {
 
   protected openCreate(): void {
     this.editingRow.set(null);
-    this.form.reset({ role: 'ETUDIANT', prenom: '', nom: '', email: '', cin: '', telephone: '', adresse: '' });
+    this.form.reset({ role: 'ETUDIANT', prenom: '', nom: '', email: '', cin: '', telephone: '', adresse: '', filiere: NO_FILIERE });
     this.dialogOpen.set(true);
   }
 
@@ -263,6 +324,7 @@ export class UserListPageComponent implements OnInit {
       cin: row.cin,
       telephone: row.telephone,
       adresse: row.adresse ?? '',
+      filiere: row.filiere != null ? String(row.filiere) : NO_FILIERE,
     });
     this.dialogOpen.set(true);
   }
@@ -297,6 +359,7 @@ export class UserListPageComponent implements OnInit {
       cin: value.cin,
       telephone: value.telephone,
       adresse: value.adresse || null,
+      filiere: value.filiere === NO_FILIERE ? null : Number(value.filiere),
     };
 
     this.saving.set(true);
@@ -336,5 +399,54 @@ export class UserListPageComponent implements OnInit {
         this.toast.showError(err.message);
       },
     });
+  }
+
+  protected openAssign(row: UtilisateurDto): void {
+    this.assignTarget.set(row);
+    this.selectedPromotionId.set('');
+    this.loadingPromotions.set(true);
+    // First page only (max 20) — a school-scale promotion list fits in one
+    // page in practice; revisit with a search-as-you-type select if that
+    // ever stops being true.
+    this.promotionService.getAll({ size: 20 }).subscribe({
+      next: (result) => {
+        this.promotionOptionsSignal.set(
+          result.content.map((p) => ({
+            value: p.id as string,
+            label: `${p.anneeDeDepart} - ${p.anneeDeFin} · Niveau ${p.niveau}`,
+          })),
+        );
+        this.loadingPromotions.set(false);
+      },
+      error: (err: AppError) => {
+        this.loadingPromotions.set(false);
+        this.toast.showError(err.message);
+      },
+    });
+  }
+
+  protected closeAssign(): void {
+    this.assignTarget.set(null);
+  }
+
+  protected confirmAssign(): void {
+    const target = this.assignTarget();
+    const promotionId = this.selectedPromotionId();
+    if (!target?.id || !promotionId) return;
+
+    this.assigning.set(true);
+    this.upcService
+      .assignRoom({ utilisateurId: target.id, promotionId, reservationId: null })
+      .subscribe({
+        next: () => {
+          this.assigning.set(false);
+          this.toast.show('Promotion et chambre assignées.', 'success');
+          this.closeAssign();
+        },
+        error: (err: AppError) => {
+          this.assigning.set(false);
+          this.toast.showError(err.message);
+        },
+      });
   }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } f
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReclamationService } from '../../../core/services/reclamation.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { ReclamationDto } from '../../../core/models/dtos';
 import { ETAT_RECLAMATION_VALUES, EtatReclamation } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -69,6 +70,10 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
       </a>
     </ng-template>
 
+    <ng-template #ownerTpl let-row>
+      {{ ownerNames().get(row.utilisateur) ?? '…' }}
+    </ng-template>
+
     <ng-template #etatTpl let-row>
       <app-status-badge kind="reclamation" [value]="row.etat ?? 'EN_ATTENTE'"></app-status-badge>
     </ng-template>
@@ -76,9 +81,11 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
 })
 export class ReclamationListPageComponent implements OnInit {
   private readonly reclamationService = inject(ReclamationService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
 
   protected readonly rows = signal<ReclamationDto[]>([]);
+  protected readonly ownerNames = signal<Map<string, string>>(new Map());
   protected readonly loading = signal(true);
   protected readonly page = signal(0);
   protected readonly totalPages = signal(0);
@@ -90,10 +97,12 @@ export class ReclamationListPageComponent implements OnInit {
   protected readonly rowId = (row: ReclamationDto) => row.id;
 
   private readonly idTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('idTpl');
+  private readonly ownerTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('ownerTpl');
   private readonly etatTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('etatTpl');
 
   protected readonly columns = computed<DataTableColumn<ReclamationDto>[]>(() => [
     { key: 'id', header: 'ID', cellTemplate: this.idTpl() },
+    { key: 'utilisateur', header: 'Étudiant', cellTemplate: this.ownerTpl() },
     { key: 'service', header: 'Service', accessor: (r) => String(r.service) },
     { key: 'message', header: 'Message', accessor: (r) => r.message ?? '—' },
     { key: 'etat', header: 'État', cellTemplate: this.etatTpl() },
@@ -132,6 +141,7 @@ export class ReclamationListPageComponent implements OnInit {
         this.totalPages.set(result.totalPages);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        this.ownerNameService.resolveMany(result.content.map((r) => r.utilisateur)).subscribe((names) => this.ownerNames.set(names));
       },
       error: (err: AppError) => {
         this.loading.set(false);

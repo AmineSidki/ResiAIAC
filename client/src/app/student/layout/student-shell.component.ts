@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CurrentUserService } from '../../core/auth/current-user.service';
+import { MyRoomStatusService } from '../../core/services/my-room-status.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 interface StudentNavLink {
@@ -51,7 +52,7 @@ const NAV_LINKS: StudentNavLink[] = [
           </div>
         </div>
         <nav class="flex gap-1 overflow-x-auto px-2 pb-2" aria-label="Navigation étudiant">
-          @for (link of navLinks; track link.path) {
+          @for (link of visibleNavLinks(); track link.path) {
             <a
               [routerLink]="link.path"
               routerLinkActive="bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
@@ -71,5 +72,17 @@ const NAV_LINKS: StudentNavLink[] = [
 })
 export class StudentShellComponent {
   protected readonly currentUser = inject(CurrentUserService);
+  private readonly roomStatus = inject(MyRoomStatusService);
   protected readonly navLinks = NAV_LINKS;
+
+  /**
+   * Hides "Réclamations" only in the unambiguous no-reservation-history
+   * case (see MyRoomStatusService for why it isn't more aggressive than
+   * that). Deliberately does NOT hide it while status is 'loading' —
+   * showing it briefly then removing it is a smaller UX cost than the
+   * reverse (a flash where a legitimate tab is briefly missing).
+   */
+  protected readonly visibleNavLinks = computed(() =>
+    this.roomStatus.status() === 'no-history' ? NAV_LINKS.filter((l) => l.path !== 'reclamations') : NAV_LINKS,
+  );
 }

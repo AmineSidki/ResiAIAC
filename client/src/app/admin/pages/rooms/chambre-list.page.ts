@@ -93,9 +93,6 @@ export class ChambreListPageComponent {
     matricule: '',
     capacite: 1,
     etat: 'LIBRE',
-    reservations: [],
-    reclamations: [],
-    combinaisonsUpc: [],
     etage: '',
   });
 

@@ -27,9 +27,6 @@ export interface ChambreDto {
   matricule: string;
   capacite: number; // Long
   etat: EtatChambre | null;
-  reservations: string[]; // UUID[]
-  reclamations: string[]; // UUID[]
-  combinaisonsUpc: UtilisateurPromotionChambreId[];
   etage: string; // UUID
 }
 
@@ -75,7 +72,6 @@ export interface FiliereDto {
   id: number | null; // Long
   nom: string;
   niveauMaximal: number; // Integer, @Min(1)
-  promotions: string[]; // UUID[]
 }
 
 export interface PromotionDto {
@@ -84,7 +80,6 @@ export interface PromotionDto {
   anneeDeFin: number; // Long
   niveau: number; // Integer, @Min(1)
   filiere: number; // Long
-  combinaisonsUpc: UtilisateurPromotionChambreId[];
 }
 
 export interface ReclamationDto {
@@ -123,10 +118,7 @@ export interface UtilisateurDto {
   cin: string;
   adresse: string | null; // optional-not-blank
   telephone: string; // ^\+?[0-9]{8,15}$
-  reservations: string[]; // UUID[]
-  reclamations: string[]; // UUID[]
-  documents: string[]; // UUID[]
-  combinaisonsUpc: UtilisateurPromotionChambreId[];
+  filiere: number | null; // Long, nullable — no @NotNull server-side
   readonly createdAt: string | null; // read-only
   readonly updatedAt: string | null; // read-only
 }
@@ -227,6 +219,13 @@ export interface ServiceUpdateRequest {
 export interface UpdateMeRequest {
   adresse: string | null;
   telephone: string;
+}
+
+/** POST /api/v1/upc/assign body — reservationId is optional; omit it to let the server auto-pick any LIBRE chambre. */
+export interface RoomAssignationRequest {
+  utilisateurId: string; // UUID
+  promotionId: string; // UUID
+  reservationId: string | null; // UUID, optional
 }
 
 export interface UtilisateurPromotionChambreUpdateRequest {

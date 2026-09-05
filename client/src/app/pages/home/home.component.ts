@@ -2,7 +2,6 @@ import { Component, computed, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CurrentUserService } from '../../core/auth/current-user.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { RoleBadgeComponent } from '../../shared/components/role-badge/role-badge.component';
 
 const HIGHLIGHTS = [
   {
@@ -30,7 +29,7 @@ const HIGHLIGHTS = [
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, ThemeToggleComponent, RoleBadgeComponent],
+  imports: [RouterLink, ThemeToggleComponent],
   template: `
     <div class="min-h-screen bg-surface dark:bg-surface-dark">
       @if (currentUser.authenticated()) {

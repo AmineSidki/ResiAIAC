@@ -14,7 +14,11 @@ interface BadgeStyle {
  * different things across enums — never key this map by value alone.
  */
 const DOCUMENT_STYLES: Record<EtatDocument, BadgeStyle> = {
-  AUCUN: { label: 'Aucun document', classes: 'bg-neutral-100 text-neutral-700' },
+  // This badge shows the *state* of a document slot, not whether a file
+  // exists — "Aucun document" read as if the label were naming the document
+  // itself. AUCUN is one value of EtatDocument alongside EN_ATTENTE/VALIDE/
+  // INVALIDE, so it should read the same way they do: as a state.
+  AUCUN: { label: 'Aucun état', classes: 'bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-300' },
   EN_ATTENTE: { label: 'En attente', classes: 'bg-accent-500/10 text-accent-600' },
   VALIDE: { label: 'Validé', classes: 'bg-success-500/10 text-success-500' },
   INVALIDE: { label: 'Invalide', classes: 'bg-danger-500/10 text-danger-500' },
@@ -24,19 +28,19 @@ const RECLAMATION_STYLES: Record<EtatReclamation, BadgeStyle> = {
   EN_ATTENTE: { label: 'En attente', classes: 'bg-accent-500/10 text-accent-600' },
   EN_TRAITEMENT: { label: 'En traitement', classes: 'bg-primary-500/10 text-primary-600' },
   FERME_TRAITE: { label: 'Fermée (traitée)', classes: 'bg-success-500/10 text-success-500' },
-  FERME_SANS_TRAITEMENT: { label: 'Fermée (sans traitement)', classes: 'bg-neutral-100 text-neutral-700' },
+  FERME_SANS_TRAITEMENT: { label: 'Fermée (sans traitement)', classes: 'bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-300' },
 };
 
 const RESERVATION_STYLES: Record<EtatReservation, BadgeStyle> = {
   ACTIVE: { label: 'Active', classes: 'bg-success-500/10 text-success-500' },
-  TERMINEE: { label: 'Terminée', classes: 'bg-neutral-100 text-neutral-700' },
+  TERMINEE: { label: 'Terminée', classes: 'bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-300' },
   FERMEE: { label: 'Fermée', classes: 'bg-danger-500/10 text-danger-500' },
 };
 
 const CHAMBRE_STYLES: Record<EtatChambre, BadgeStyle> = {
   LIBRE: { label: 'Libre', classes: 'bg-success-500/10 text-success-500' },
   PARTIELLEMENT_LIBRE: { label: 'Partiellement libre', classes: 'bg-accent-500/10 text-accent-600' },
-  MAINTENANCE: { label: 'Maintenance', classes: 'bg-neutral-100 text-neutral-700' },
+  MAINTENANCE: { label: 'Maintenance', classes: 'bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-300' },
   OCCUPEE: { label: 'Occupée', classes: 'bg-danger-500/10 text-danger-500' },
 };
 
@@ -64,6 +68,6 @@ export class StatusBadgeComponent {
 
   protected readonly style = computed<BadgeStyle>(() => {
     const map = STYLE_MAPS[this.kind()] as Record<string, BadgeStyle>;
-    return map[this.value()] ?? { label: this.value(), classes: 'bg-neutral-100 text-neutral-700' };
+    return map[this.value()] ?? { label: this.value(), classes: 'bg-neutral-100 text-neutral-700 dark:bg-white/10 dark:text-neutral-300' };
   });
 }
