@@ -1,5 +1,6 @@
 package org.aminesidki.resiaiac.service;
 
+import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ReservationDto;
 import org.aminesidki.resiaiac.dto.request.MyReservationRequest;
@@ -8,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface ReservationService {
+  List<ReservationDto> getAllOpenByUser(UUID utilisateurId);
+
   Page<ReservationDto> getAllMy(Jwt jwt, Pageable pageable);
 
   ReservationDto getMyById(Jwt jwt, UUID id);

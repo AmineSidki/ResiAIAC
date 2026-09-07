@@ -37,7 +37,12 @@ public class ReservationServiceImpl implements ReservationService {
   private final ReservationMapper reservationMapper;
   private final EmailTemplateService emailTemplateService;
 
-  public Page<ReservationDto> getAll
+  @Transactional(readOnly = true)
+  @Override
+  public List<ReservationDto> getAllOpenByUser(UUID utilisateurId){
+    Utilisateur id = utilisateurService.getEntityById(utilisateurId);
+    return reservationRepository.findAllByUtilisateurAndEtat(id, EtatReservation.ACTIVE).stream().map(reservationMapper::toDto).toList();
+  }
 
   @Transactional(readOnly = true)
   @Override
@@ -111,7 +116,7 @@ public class ReservationServiceImpl implements ReservationService {
   @Override
   public ReservationDto save(ReservationDto dto) {
     Reservation entity = reservationMapper.toEntity(dto);
-    Utilisateur id = utilisateurService.getMyEntityById(dto.utilisateur());
+    Utilisateur id = utilisateurService.getEntityById(dto.utilisateur());
     entity.setEtat(EtatReservation.ACTIVE);
     entity = reservationRepository.save(entity);
     emailTemplateService.envoyerReservationCreee(id, entity.getChambre());

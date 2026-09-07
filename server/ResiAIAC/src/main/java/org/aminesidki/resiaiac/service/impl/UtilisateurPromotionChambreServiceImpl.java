@@ -72,7 +72,7 @@ public class UtilisateurPromotionChambreServiceImpl implements UtilisateurPromot
   @Transactional(readOnly = true)
   @Override
   public List<UtilisateurPromotionChambreDto> getAllByUserId(UUID id) {
-    Utilisateur utilisateur = utilisateurService.getMyEntityById(id);
+    Utilisateur utilisateur = utilisateurService.getEntityById(id);
     return utilisateurPromotionChambreRepository.findAllByUtilisateur(utilisateur).stream()
         .map(utilisateurPromotionChambreMapper::toDto)
         .toList();

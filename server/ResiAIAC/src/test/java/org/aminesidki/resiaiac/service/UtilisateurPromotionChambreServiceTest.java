@@ -110,14 +110,14 @@ class UtilisateurPromotionChambreServiceTest {
   void getAllByUserId_shouldResolveUserThenMapResults() {
     Utilisateur utilisateur = Utilisateur.builder().id(utilisateurId).build();
 
-    when(utilisateurService.getMyEntityById(utilisateurId)).thenReturn(utilisateur);
+    when(utilisateurService.getEntityById(utilisateurId)).thenReturn(utilisateur);
     when(repository.findAllByUtilisateur(utilisateur)).thenReturn(List.of(entity));
     when(mapper.toDto(entity)).thenReturn(dto);
 
     var result = service.getAllByUserId(utilisateurId);
 
     assertThat(result).containsExactly(dto);
-    verify(utilisateurService).getMyEntityById(utilisateurId);
+    verify(utilisateurService).getEntityById(utilisateurId);
     verify(repository).findAllByUtilisateur(utilisateur);
     verify(mapper).toDto(entity);
   }
