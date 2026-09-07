@@ -37,6 +37,8 @@ public class ReservationServiceImpl implements ReservationService {
   private final ReservationMapper reservationMapper;
   private final EmailTemplateService emailTemplateService;
 
+  public Page<ReservationDto> getAll
+
   @Transactional(readOnly = true)
   @Override
   public Page<ReservationDto> getAllMy(Jwt jwt, Pageable pageable) {

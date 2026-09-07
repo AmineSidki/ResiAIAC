@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.dto.request.ChambreUpdateRequest;
@@ -66,7 +65,7 @@ class ChambreControllerTest {
   void setUp() {
     id = UUID.randomUUID();
     etageId = UUID.randomUUID();
-    dto = new ChambreDto(id, "CH-101", 2L, null, List.of(), List.of(), List.of(), etageId);
+    dto = new ChambreDto(id, "CH-101", 2L, null, etageId);
   }
 
   // ---------- getById ----------
@@ -90,10 +89,8 @@ class ChambreControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    ChambreDto inputDto =
-        new ChambreDto(null, "CH-202", 4L, null, List.of(), List.of(), List.of(), etageId);
-    ChambreDto resultDto =
-        new ChambreDto(id, "CH-202", 4L, null, List.of(), List.of(), List.of(), etageId);
+    ChambreDto inputDto = new ChambreDto(null, "CH-202", 4L, null, etageId);
+    ChambreDto resultDto = new ChambreDto(id, "CH-202", 4L, null, etageId);
 
     when(chambreService.save(inputDto)).thenReturn(resultDto);
 
@@ -115,8 +112,7 @@ class ChambreControllerTest {
   @Test
   void update_shouldMutateAndReturnDto() throws Exception {
     ChambreUpdateRequest request = new ChambreUpdateRequest(id, dto);
-    ChambreDto resultDto =
-        new ChambreDto(id, "CH-101 - renamed", 2L, null, List.of(), List.of(), List.of(), etageId);
+    ChambreDto resultDto = new ChambreDto(id, "CH-101 - renamed", 2L, null, etageId);
 
     when(chambreService.update(id, dto)).thenReturn(resultDto);
 

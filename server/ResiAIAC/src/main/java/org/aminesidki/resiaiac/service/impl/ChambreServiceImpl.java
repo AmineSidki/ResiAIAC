@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.entity.Chambre;
 import org.aminesidki.resiaiac.enumeration.EtatChambre;
+import org.aminesidki.resiaiac.exception.ResourceNotFoundException;
 import org.aminesidki.resiaiac.mapper.ChambreMapper;
 import org.aminesidki.resiaiac.repository.ChambreRepository;
 import org.aminesidki.resiaiac.service.ChambreService;
@@ -69,6 +70,6 @@ public class ChambreServiceImpl implements ChambreService {
 
   @Override
   public Chambre getRandom() {
-    return chambreRepository.getRandomChambre(PageRequest.of(0, 1));
+    return chambreRepository.getRandomChambre(PageRequest.of(0, 1)).stream().findFirst().orElseThrow(() -> new ResourceNotFoundException("Resource not found: Chambre"));
   }
 }

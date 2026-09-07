@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.ChambreDto;
 import org.aminesidki.resiaiac.entity.Chambre;
@@ -54,20 +53,18 @@ class ChambreServiceTest {
 
     id = UUID.randomUUID();
     entity = Chambre.builder().id(id).matricule("A101").capacite(2L).etat(null).build();
-    dto = new ChambreDto(id, "A101", 2L, null, List.of(), List.of(), List.of(), null);
+    dto = new ChambreDto(id, "A101", 2L, null, null);
   }
 
   // ---------- save ----------
 
   @Test
   void save_shouldMapPersistAndReturnDto() {
-    ChambreDto inputDto =
-        new ChambreDto(null, "B202", 3L, null, List.of(), List.of(), List.of(), null);
+    ChambreDto inputDto = new ChambreDto(null, "B202", 3L, null, null);
     Chambre mappedEntity = Chambre.builder().matricule("B202").capacite(3L).etat(null).build();
     Chambre savedEntity =
         Chambre.builder().id(id).matricule("B202").capacite(3L).etat(null).build();
-    ChambreDto resultDto =
-        new ChambreDto(id, "B202", 3L, null, List.of(), List.of(), List.of(), null);
+    ChambreDto resultDto = new ChambreDto(id, "B202", 3L, null, null);
 
     when(chambreMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(chambreRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -121,8 +118,7 @@ class ChambreServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Chambre savedEntity =
         Chambre.builder().id(id).matricule("A101 - renamed").capacite(2L).etat(null).build();
-    ChambreDto resultDto =
-        new ChambreDto(id, "A101 - renamed", 2L, null, List.of(), List.of(), List.of(), null);
+    ChambreDto resultDto = new ChambreDto(id, "A101 - renamed", 2L, null, null);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher
