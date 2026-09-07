@@ -64,19 +64,19 @@ export const requireAdministrateur: CanActivateFn = buildRoleGuard('ADMINISTRATE
 
 /**
  * The student self-service shell is for ETUDIANT-and-up in the raw role
- * hierarchy sense (requireEtudiant admits everyone), but ADMINISTRATEUR
+ * hierarchy sense (requireEtudiant admits everyone), but MANAGER and above
  * specifically shouldn't land there — they have their own dashboard.
  * Composed alongside requireEtudiant on the /student route rather than
  * replacing it, so the ETUDIANT floor + unauthenticated handling stay
  * exactly as before for every other role.
  */
-export const blockAdministrateur: CanActivateFn = createAuthGuard<CanActivateFn>(
+export const blockStaff: CanActivateFn = createAuthGuard<CanActivateFn>(
   async (route, state, authData: AuthGuardData) => {
     const router = inject(Router);
     const { authenticated, grantedRoles } = authData;
 
     if (!authenticated) return true; // let requireEtudiant handle the unauthenticated case
-    if (grantedRoles.realmRoles.includes('ADMINISTRATEUR')) {
+    if (hasRoleAtLeast(grantedRoles.realmRoles, 'MANAGER')) {
       return router.parseUrl('/admin');
     }
     return true;

@@ -60,12 +60,15 @@ function emptyUser(): UtilisateurDto {
  * actually allowed to grant, and `save()` picks the matching endpoint.
  *
  * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
- * dev/amine): it's the only user-facing way to give a student a chambre —
- * the server auto-picks any LIBRE room when reservationId is omitted.
- * Before showing the dialog, openAssign() checks GET
- * /reservation/by-utilisateur/{id} (also new on dev/amine) for the target's
- * ACTIVE reservation: if one exists it's reused (finalizing that specific
- * room hold) instead of letting the server auto-pick a random LIBRE chambre.
+ * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
+ * dev/amine) for any user row, not just ETUDIANT — assigning a
+ * promotion/room to a MANAGER/RESPONSABLE/ADMINISTRATEUR account is allowed
+ * by the server (RoomAssignationRequest only needs an utilisateurId), so the
+ * frontend no longer narrows it to students. Before showing the dialog,
+ * openAssign() checks GET /reservation/by-utilisateur/{id} (also new on
+ * dev/amine) for the target's ACTIVE reservation: if one exists it's reused
+ * (finalizing that specific room hold) instead of letting the server
+ * auto-pick a random LIBRE chambre.
  */
 @Component({
   selector: 'app-user-list-page',
@@ -118,9 +121,7 @@ function emptyUser(): UtilisateurDto {
 
     <ng-template #actionsTpl let-row>
       <div class="flex flex-wrap gap-3">
-        @if (row.role === 'ETUDIANT') {
-          <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openAssign(row)">Assigner une promotion</button>
-        }
+        <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openAssign(row)">Assigner une promotion</button>
         <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openEdit(row)">Modifier</button>
         <button type="button" class="text-sm font-medium text-danger-500 hover:text-danger-600" (click)="deleteTarget.set(row)">Supprimer</button>
       </div>
