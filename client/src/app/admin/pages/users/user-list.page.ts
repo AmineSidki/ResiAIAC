@@ -5,6 +5,7 @@ import { UtilisateurService } from '../../../core/services/utilisateur.service';
 import { FiliereService } from '../../../core/services/filiere.service';
 import { PromotionService } from '../../../core/services/promotion.service';
 import { UtilisateurPromotionChambreService } from '../../../core/services/utilisateur-promotion-chambre.service';
+import { ReservationService } from '../../../core/services/reservation.service';
 import { UtilisateurDto } from '../../../core/models/dtos';
 import { AppRole } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -60,8 +61,11 @@ function emptyUser(): UtilisateurDto {
  *
  * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
  * dev/amine): it's the only user-facing way to give a student a chambre —
- * the server auto-picks any LIBRE room when reservationId is omitted, which
- * is what this dialog always does (no chambre-picker needed here).
+ * the server auto-picks any LIBRE room when reservationId is omitted.
+ * Before showing the dialog, openAssign() checks GET
+ * /reservation/by-utilisateur/{id} (also new on dev/amine) for the target's
+ * ACTIVE reservation: if one exists it's reused (finalizing that specific
+ * room hold) instead of letting the server auto-pick a random LIBRE chambre.
  */
 @Component({
   selector: 'app-user-list-page',
@@ -160,7 +164,13 @@ function emptyUser(): UtilisateurDto {
     <app-dialog [open]="assignTarget() !== null" title="Assigner une promotion" (close)="closeAssign()">
       @if (assignTarget(); as target) {
         <p class="text-sm text-neutral-600 dark:text-neutral-300">
-          {{ target.prenom }} {{ target.nom }} — une chambre libre sera attribuée automatiquement.
+          @if (loadingReservation()) {
+            {{ target.prenom }} {{ target.nom }} — vérification d'une réservation active…
+          } @else if (existingReservationId()) {
+            {{ target.prenom }} {{ target.nom }} — une réservation active existe déjà, elle sera utilisée pour l'assignation.
+          } @else {
+            {{ target.prenom }} {{ target.nom }} — une chambre libre sera attribuée automatiquement.
+          }
         </p>
         <div class="mt-3">
           @if (loadingPromotions()) {
@@ -183,7 +193,7 @@ function emptyUser(): UtilisateurDto {
       }
       <div footer class="flex gap-2">
         <app-button variant="secondary" (click)="closeAssign()">Annuler</app-button>
-        <app-button [loading]="assigning()" [disabled]="!selectedPromotionId()" (click)="confirmAssign()">Assigner</app-button>
+        <app-button [loading]="assigning()" [disabled]="!selectedPromotionId() || loadingReservation()" (click)="confirmAssign()">Assigner</app-button>
       </div>
     </app-dialog>
 
@@ -203,6 +213,7 @@ export class UserListPageComponent implements OnInit {
   private readonly filiereService = inject(FiliereService);
   private readonly promotionService = inject(PromotionService);
   private readonly upcService = inject(UtilisateurPromotionChambreService);
+  private readonly reservationService = inject(ReservationService);
   private readonly currentUser = inject(CurrentUserService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
@@ -223,6 +234,11 @@ export class UserListPageComponent implements OnInit {
   protected readonly assigning = signal(false);
   protected readonly loadingPromotions = signal(false);
   protected readonly selectedPromotionId = signal<string>('');
+  // Active reservation for the assign target, if any — reused as
+  // roomAssignationRequest.reservationId instead of the server auto-picking
+  // a random LIBRE chambre. null once resolved means "no active reservation".
+  protected readonly existingReservationId = signal<string | null>(null);
+  protected readonly loadingReservation = signal(false);
   private readonly promotionOptionsSignal = signal<SelectOption[]>([]);
   protected readonly promotionOptions = this.promotionOptionsSignal.asReadonly();
 
@@ -404,6 +420,7 @@ export class UserListPageComponent implements OnInit {
   protected openAssign(row: UtilisateurDto): void {
     this.assignTarget.set(row);
     this.selectedPromotionId.set('');
+    this.existingReservationId.set(null);
     this.loadingPromotions.set(true);
     // First page only (max 20) — a school-scale promotion list fits in one
     // page in practice; revisit with a search-as-you-type select if that
@@ -423,10 +440,25 @@ export class UserListPageComponent implements OnInit {
         this.toast.showError(err.message);
       },
     });
+
+    this.loadingReservation.set(true);
+    this.reservationService.getAllOpenByUtilisateurId(row.id as string).subscribe({
+      next: (reservations) => {
+        // A student shouldn't have more than one ACTIVE reservation at a
+        // time (saveMy rejects a second one) — take the first defensively.
+        this.existingReservationId.set(reservations[0]?.id ?? null);
+        this.loadingReservation.set(false);
+      },
+      error: (err: AppError) => {
+        this.loadingReservation.set(false);
+        this.toast.showError(err.message);
+      },
+    });
   }
 
   protected closeAssign(): void {
     this.assignTarget.set(null);
+    this.existingReservationId.set(null);
   }
 
   protected confirmAssign(): void {
@@ -436,7 +468,11 @@ export class UserListPageComponent implements OnInit {
 
     this.assigning.set(true);
     this.upcService
-      .assignRoom({ utilisateurId: target.id, promotionId, reservationId: null })
+      .assignRoom({
+        utilisateurId: target.id,
+        promotionId,
+        reservationId: this.existingReservationId(),
+      })
       .subscribe({
         next: () => {
           this.assigning.set(false);
