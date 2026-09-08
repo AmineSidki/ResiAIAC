@@ -25,13 +25,11 @@ public class EtageServiceImpl implements EtageService {
   private final EtageMapper etageMapper;
 
   @Override
-  @Cacheable(key = "'all'")
   public List<EtageDto> getAll() {
     return etageRepository.findAll().stream().map(etageMapper::toDto).toList();
   }
 
   @Override
-  @Caching(evict = {@CacheEvict(key = "'all'")})
   public EtageDto save(EtageDto dto) {
     Etage entity = etageMapper.toEntity(dto);
     entity = etageRepository.save(entity);
@@ -47,7 +45,7 @@ public class EtageServiceImpl implements EtageService {
   }
 
   @Override
-  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
+  @Caching(evict = {@CacheEvict(key = "#id")})
   public EtageDto update(UUID id, EtageDto dto) {
     Etage entity = ResourceFetcher.fetchResource(id, etageRepository, "Etage");
     etageMapper.updateEntityFromDto(dto, entity);
@@ -56,7 +54,7 @@ public class EtageServiceImpl implements EtageService {
   }
 
   @Override
-  @Caching(evict = {@CacheEvict(key = "#id"), @CacheEvict(key = "'all'")})
+  @Caching(evict = {@CacheEvict(key = "#id")})
   public void delete(UUID id) {
     etageRepository.delete(ResourceFetcher.fetchResource(id, etageRepository, "Etage"));
   }

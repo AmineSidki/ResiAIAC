@@ -115,10 +115,6 @@ function emptyUser(): UtilisateurDto {
       </a>
     </ng-template>
 
-    <ng-template #roleTpl let-row>
-      <app-role-badge [role]="row.role"></app-role-badge>
-    </ng-template>
-
     <ng-template #actionsTpl let-row>
       <div class="flex flex-wrap gap-3">
         <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openAssign(row)">Assigner une promotion</button>
@@ -248,6 +244,9 @@ export class UserListPageComponent implements OnInit {
     { value: NO_FILIERE, label: 'Aucune' },
     ...this.filiereOptionsSignal(),
   ]);
+  // id -> nom lookup, built alongside filiereOptionsSignal — used to label
+  // the promotion dropdown with its filiere rather than just year/niveau.
+  private readonly filiereNameById = signal<Map<number, string>>(new Map());
 
   protected readonly rowId = (row: UtilisateurDto) => row.id;
 
@@ -277,16 +276,13 @@ export class UserListPageComponent implements OnInit {
   });
 
   private readonly nameTpl = viewChild<TemplateRef<{ $implicit: UtilisateurDto }>>('nameTpl');
-  private readonly roleTpl = viewChild<TemplateRef<{ $implicit: UtilisateurDto }>>('roleTpl');
   private readonly actionsTpl = viewChild<TemplateRef<{ $implicit: UtilisateurDto }>>('actionsTpl');
 
   protected readonly columns = computed<DataTableColumn<UtilisateurDto>[]>(() => {
     const nameTpl = this.nameTpl();
-    const roleTpl = this.roleTpl();
     const actionsTpl = this.actionsTpl();
     const cols: DataTableColumn<UtilisateurDto>[] = [
       { key: 'name', header: 'Nom', cellTemplate: nameTpl, accessor: (r) => `${r.prenom} ${r.nom}` },
-      { key: 'role', header: 'Rôle', cellTemplate: roleTpl, accessor: (r) => r.role },
       { key: 'email', header: 'Email', accessor: (r) => r.email },
       { key: 'cin', header: 'CIN', accessor: (r) => r.cin },
       { key: 'telephone', header: 'Téléphone', accessor: (r) => r.telephone },
@@ -301,6 +297,7 @@ export class UserListPageComponent implements OnInit {
     this.load();
     this.filiereService.getAll().subscribe((filieres) => {
       this.filiereOptionsSignal.set(filieres.map((f) => ({ value: String(f.id), label: f.nom })));
+      this.filiereNameById.set(new Map(filieres.map((f) => [f.id as number, f.nom])));
     });
   }
 
@@ -431,7 +428,7 @@ export class UserListPageComponent implements OnInit {
         this.promotionOptionsSignal.set(
           result.content.map((p) => ({
             value: p.id as string,
-            label: `${p.anneeDeDepart} - ${p.anneeDeFin} · Niveau ${p.niveau}`,
+            label: `${this.filiereNameById().get(p.filiere) ?? 'Filière inconnue'} · ${p.anneeDeDepart} - ${p.anneeDeFin} · Niveau ${p.niveau}`,
           })),
         );
         this.loadingPromotions.set(false);
