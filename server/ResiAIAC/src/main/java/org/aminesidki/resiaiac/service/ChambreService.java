@@ -21,4 +21,6 @@ public interface ChambreService {
   ChambreDto update(UUID id, ChambreDto dto);
 
   void delete(UUID id);
+
+  Chambre getRandom();
 }

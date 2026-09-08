@@ -15,15 +15,29 @@ export class PromotionService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/promotion`;
 
+  /**
+   * buildPageableParams defaults `sort` to "createdAt,desc" (see
+   * core/api/pageable.ts) — a sane default for entities that actually have
+   * a createdAt column (most of them). Promotion doesn't: no @CreatedDate,
+   * no createdAt field on PromotionDto or the JPA entity. Left unoverridden,
+   * every request here asked Spring Data to sort by a property that doesn't
+   * exist on Promotion, which Spring rejects — that's the "ghost field"
+   * that broke every promotions fetch. anneeDeDepart is the closest
+   * equivalent (newest cohort first) and actually exists on the entity.
+   */
+  private withPromotionSort(pageable?: PageableParams): PageableParams {
+    return { sort: 'anneeDeDepart,desc', ...pageable };
+  }
+
   getAll(pageable?: PageableParams): Observable<Page<PromotionDto>> {
     return this.http.get<Page<PromotionDto>>(`${this.baseUrl}/`, {
-      params: buildPageableParams(pageable),
+      params: buildPageableParams(this.withPromotionSort(pageable)),
     });
   }
 
   getAllByFiliere(filiereId: number, pageable?: PageableParams): Observable<Page<PromotionDto>> {
     return this.http.get<Page<PromotionDto>>(`${this.baseUrl}/by-filiere/${filiereId}`, {
-      params: buildPageableParams(pageable),
+      params: buildPageableParams(this.withPromotionSort(pageable)),
     });
   }
 

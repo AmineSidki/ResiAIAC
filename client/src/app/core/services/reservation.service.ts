@@ -10,6 +10,16 @@ export class ReservationService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/reservation`;
 
+  /**
+   * GET /api/v1/reservation/by-utilisateur/{id} — the student's currently
+   * ACTIVE (open, not-yet-finalized) reservations. Used ahead of
+   * POST /upc/assign so the assign dialog can reuse an existing reservation
+   * instead of letting the server auto-pick a random LIBRE chambre.
+   */
+  getAllOpenByUtilisateurId(utilisateurId: string): Observable<ReservationDto[]> {
+    return this.http.get<ReservationDto[]>(`${this.baseUrl}/by-utilisateur/${utilisateurId}`);
+  }
+
   // --- self-service (/me) — open to any authenticated user ---
 
   getAllMy(pageable?: PageableParams): Observable<Page<ReservationDto>> {

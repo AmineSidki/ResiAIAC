@@ -43,7 +43,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
   @Transactional(readOnly = true)
   @Override
-  public Utilisateur getMyEntityById(UUID id) {
+  public Utilisateur getEntityById(UUID id) {
     return ResourceFetcher.fetchResource(id, utilisateurRepository, "Utilisateur");
   }
 

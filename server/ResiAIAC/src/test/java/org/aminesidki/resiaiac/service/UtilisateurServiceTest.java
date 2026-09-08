@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
@@ -79,10 +78,7 @@ class UtilisateurServiceTest {
             null,
             null,
             null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
   }
@@ -97,30 +93,14 @@ class UtilisateurServiceTest {
         null,
         null,
         null,
-        List.of(),
-        List.of(),
-        List.of(),
-        List.of(),
+        null,
         null,
         null);
   }
 
   private UtilisateurDto dtoWithRoleAndId(Role role, UUID id) {
     return new UtilisateurDto(
-        id,
-        role,
-        "amine.sidki@example.com",
-        "Sidki",
-        "Amine",
-        null,
-        null,
-        null,
-        List.of(),
-        List.of(),
-        List.of(),
-        List.of(),
-        null,
-        null);
+        id, role, "amine.sidki@example.com", "Sidki", "Amine", null, null, null, null, null, null);
   }
 
   // ---------- save ----------
@@ -334,10 +314,7 @@ class UtilisateurServiceTest {
             null,
             null,
             null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 
@@ -489,10 +466,7 @@ class UtilisateurServiceTest {
             null,
             "12 Rue des Fleurs",
             "+212600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
     Utilisateur savedEntity =

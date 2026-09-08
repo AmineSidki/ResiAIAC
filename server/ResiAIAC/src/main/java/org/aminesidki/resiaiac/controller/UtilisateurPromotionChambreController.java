@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aminesidki.resiaiac.dto.UtilisateurPromotionChambreDto;
+import org.aminesidki.resiaiac.dto.request.RoomAssignationRequest;
 import org.aminesidki.resiaiac.dto.request.UtilisateurPromotionChambreUpdateRequest;
 import org.aminesidki.resiaiac.service.UtilisateurPromotionChambreService;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class UtilisateurPromotionChambreController {
 
   private final UtilisateurPromotionChambreService utilisateurPromotionChambreService;
+
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @PostMapping("/assign")
+  public ResponseEntity<?> assignRoom(@RequestBody @Valid RoomAssignationRequest request) {
+    return ResponseEntity.ok(utilisateurPromotionChambreService.assignRoom(request));
+  }
 
   @PreAuthorize("hasAnyRole('MANAGER')")
   @GetMapping("/by-utilisateur/{id}")

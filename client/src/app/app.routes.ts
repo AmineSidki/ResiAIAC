@@ -1,13 +1,15 @@
 import { Routes } from '@angular/router';
-import { requireEtudiant, requireManager } from './core/auth/role.guard';
+import { blockStaff, requireEtudiant, requireManager } from './core/auth/role.guard';
 
 /**
  * Top-level routes. `student` and `admin` are the two independent shells,
  * each guarded at its natural role floor (any authenticated user for the
  * student shell, MANAGER-and-above for the admin shell), lazy-loaded so
- * neither shell pulls in the other's bundle. `student` now points at the
- * real Track A shell (see ./student/student.routes.ts); `admin` is still
- * the Track B placeholder.
+ * neither shell pulls in the other's bundle. `student` also runs
+ * `blockStaff` alongside `requireEtudiant`: MANAGER/RESPONSABLE/ADMINISTRATEUR
+ * all hold ETUDIANT in the hierarchy so requireEtudiant alone would let them
+ * in — they're bounced to /admin instead, since they have their own
+ * dashboard and shouldn't be operating the self-service student views.
  */
 export const routes: Routes = [
   {
@@ -26,7 +28,7 @@ export const routes: Routes = [
   },
   {
     path: 'student',
-    canActivate: [requireEtudiant],
+    canActivate: [requireEtudiant, blockStaff],
     loadChildren: () => import('./student/student.routes').then((m) => m.studentRoutes),
   },
   {

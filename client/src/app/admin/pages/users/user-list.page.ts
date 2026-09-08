@@ -1,33 +1,47 @@
 import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UtilisateurService } from '../../../core/services/utilisateur.service';
+import { FiliereService } from '../../../core/services/filiere.service';
+import { PromotionService } from '../../../core/services/promotion.service';
+import { UtilisateurPromotionChambreService } from '../../../core/services/utilisateur-promotion-chambre.service';
+import { ReservationService } from '../../../core/services/reservation.service';
 import { UtilisateurDto } from '../../../core/models/dtos';
+import { AppRole } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
+import { CurrentUserService } from '../../../core/auth/current-user.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { InputComponent } from '../../../shared/components/input/input.component';
+import { SelectComponent, SelectOption } from '../../../shared/components/select/select.component';
 import { DialogComponent } from '../../../shared/components/dialog/dialog.component';
 import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { RoleBadgeComponent } from '../../../shared/components/role-badge/role-badge.component';
 import { SkeletonRowsComponent } from '../../shared/skeleton/skeleton-rows.component';
 import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 
 const TELEPHONE_PATTERN = '^\\+?[0-9]{8,15}$';
+const NO_FILIERE = '__none__';
+
+const ROLE_LABELS: Record<AppRole, string> = {
+  ETUDIANT: 'Étudiant',
+  MANAGER: 'Manager',
+  RESPONSABLE: 'Responsable',
+  ADMINISTRATEUR: 'Administrateur',
+};
 
 function emptyUser(): UtilisateurDto {
   return {
     id: null,
+    role: 'ETUDIANT',
     email: '',
     nom: '',
     prenom: '',
     cin: '',
     adresse: '',
     telephone: '',
-    reservations: [],
-    reclamations: [],
-    documents: [],
-    combinaisonsUpc: [],
+    filiere: null,
     createdAt: null,
     updatedAt: null,
   };
@@ -38,33 +52,53 @@ function emptyUser(): UtilisateurDto {
  * never reaches this page (hidden from the sidebar, and the /admin/utilisateurs
  * route itself is guarded requireResponsable in admin.routes.ts). Individual
  * lookups (GET /{id}) are MANAGER-accessible via a separate detail route.
+ *
+ * Custom-role creation: POST /utilisateur/ (RESPONSABLE-gated) rejects
+ * role=RESPONSABLE/ADMINISTRATEUR server-side (BadRouteException) — only
+ * POST /utilisateur/admin/ (ADMINISTRATEUR-only) can hand out those two
+ * roles. The role dropdown below is scoped to what the signed-in user is
+ * actually allowed to grant, and `save()` picks the matching endpoint.
+ *
+ * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
+ * "Assigner une promotion" hits the new POST /upc/assign (MANAGER-gated,
+ * dev/amine) for any user row, not just ETUDIANT — assigning a
+ * promotion/room to a MANAGER/RESPONSABLE/ADMINISTRATEUR account is allowed
+ * by the server (RoomAssignationRequest only needs an utilisateurId), so the
+ * frontend no longer narrows it to students. Before showing the dialog,
+ * openAssign() checks GET /reservation/by-utilisateur/{id} (also new on
+ * dev/amine) for the target's ACTIVE reservation: if one exists it's reused
+ * (finalizing that specific room hold) instead of letting the server
+ * auto-pick a random LIBRE chambre.
  */
 @Component({
   selector: 'app-user-list-page',
   standalone: true,
   imports: [
     RouterLink,
+    FormsModule,
     ReactiveFormsModule,
     ButtonComponent,
     InputComponent,
+    SelectComponent,
     DialogComponent,
     DataTableComponent,
     PaginationComponent,
+    RoleBadgeComponent,
     SkeletonRowsComponent,
     EmptyStateComponent,
   ],
   template: `
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-semibold text-neutral-900">Utilisateurs</h1>
-        <p class="text-sm text-neutral-500">{{ totalElements() }} au total</p>
+        <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Utilisateurs</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ totalElements() }} au total</p>
       </div>
       <app-button (click)="openCreate()">Ajouter un utilisateur</app-button>
     </div>
 
     <div class="mt-4">
       @if (loading()) {
-        <app-skeleton-rows [columns]="5"></app-skeleton-rows>
+        <app-skeleton-rows [columns]="6"></app-skeleton-rows>
       } @else if (rows().length === 0) {
         <app-empty-state reason="no-data">
           <app-button size="sm" (click)="openCreate()">Ajouter un utilisateur</app-button>
@@ -76,13 +110,14 @@ function emptyUser(): UtilisateurDto {
     </div>
 
     <ng-template #nameTpl let-row>
-      <a [routerLink]="['/admin/utilisateurs', row.id]" class="font-medium text-primary-600 hover:text-primary-700">
+      <a [routerLink]="['/admin/utilisateurs', row.id]" class="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400">
         {{ row.prenom }} {{ row.nom }}
       </a>
     </ng-template>
 
     <ng-template #actionsTpl let-row>
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-3">
+        <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openAssign(row)">Assigner une promotion</button>
         <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-700" (click)="openEdit(row)">Modifier</button>
         <button type="button" class="text-sm font-medium text-danger-500 hover:text-danger-600" (click)="deleteTarget.set(row)">Supprimer</button>
       </div>
@@ -90,12 +125,26 @@ function emptyUser(): UtilisateurDto {
 
     <app-dialog [open]="dialogOpen()" [title]="editingRow() ? 'Modifier utilisateur' : 'Ajouter un utilisateur'" (close)="closeDialog()">
       <form [formGroup]="form" class="flex flex-col gap-3">
+        @if (!editingRow()) {
+          <app-select
+            formControlName="role"
+            label="Rôle"
+            [options]="roleOptions()"
+          ></app-select>
+        } @else {
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Rôle</span>
+            <app-role-badge [role]="editingRow()!.role"></app-role-badge>
+            <p class="text-xs text-neutral-400">Le rôle ne se modifie pas depuis ce formulaire.</p>
+          </div>
+        }
         <app-input formControlName="prenom" label="Prénom" [errorText]="errorFor('prenom')"></app-input>
         <app-input formControlName="nom" label="Nom" [errorText]="errorFor('nom')"></app-input>
         <app-input formControlName="email" label="Email" type="email" [errorText]="errorFor('email')"></app-input>
         <app-input formControlName="cin" label="CIN" [errorText]="errorFor('cin')"></app-input>
         <app-input formControlName="telephone" label="Téléphone" type="tel" hint="Format: +212612345678" [errorText]="errorFor('telephone')"></app-input>
         <app-input formControlName="adresse" label="Adresse (optionnel)"></app-input>
+        <app-select formControlName="filiere" label="Filière (optionnel)" [options]="filiereOptionsWithNone()"></app-select>
       </form>
       @if (editingRow()) {
         <p class="mt-3 text-xs text-neutral-400">
@@ -109,8 +158,44 @@ function emptyUser(): UtilisateurDto {
       </div>
     </app-dialog>
 
+    <app-dialog [open]="assignTarget() !== null" title="Assigner une promotion" (close)="closeAssign()">
+      @if (assignTarget(); as target) {
+        <p class="text-sm text-neutral-600 dark:text-neutral-300">
+          @if (loadingReservation()) {
+            {{ target.prenom }} {{ target.nom }} — vérification d'une réservation active…
+          } @else if (existingReservationId()) {
+            {{ target.prenom }} {{ target.nom }} — une réservation active existe déjà, elle sera utilisée pour l'assignation.
+          } @else {
+            {{ target.prenom }} {{ target.nom }} — une chambre libre sera attribuée automatiquement.
+          }
+        </p>
+        <div class="mt-3">
+          @if (loadingPromotions()) {
+            <app-skeleton-rows [rows]="1" [columns]="1"></app-skeleton-rows>
+          } @else if (promotionOptions().length === 0) {
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              Aucune promotion disponible — créez-en une dans Référentiel → Promotions d'abord.
+            </p>
+          } @else {
+            <app-select
+              label="Promotion"
+              placeholder="Choisir une promotion"
+              [clearable]="false"
+              [options]="promotionOptions()"
+              [ngModel]="selectedPromotionId()"
+              (ngModelChange)="selectedPromotionId.set($event)"
+            ></app-select>
+          }
+        </div>
+      }
+      <div footer class="flex gap-2">
+        <app-button variant="secondary" (click)="closeAssign()">Annuler</app-button>
+        <app-button [loading]="assigning()" [disabled]="!selectedPromotionId() || loadingReservation()" (click)="confirmAssign()">Assigner</app-button>
+      </div>
+    </app-dialog>
+
     <app-dialog [open]="deleteTarget() !== null" title="Confirmer la suppression" (close)="deleteTarget.set(null)">
-      <p class="text-sm text-neutral-600">
+      <p class="text-sm text-neutral-600 dark:text-neutral-300">
         Supprimer cet utilisateur désactivera aussi son compte Keycloak. Cette action est irréversible.
       </p>
       <div footer class="flex gap-2">
@@ -122,6 +207,11 @@ function emptyUser(): UtilisateurDto {
 })
 export class UserListPageComponent implements OnInit {
   private readonly userService = inject(UtilisateurService);
+  private readonly filiereService = inject(FiliereService);
+  private readonly promotionService = inject(PromotionService);
+  private readonly upcService = inject(UtilisateurPromotionChambreService);
+  private readonly reservationService = inject(ReservationService);
+  private readonly currentUser = inject(CurrentUserService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
 
@@ -137,15 +227,52 @@ export class UserListPageComponent implements OnInit {
   protected readonly editingRow = signal<UtilisateurDto | null>(null);
   protected readonly deleteTarget = signal<UtilisateurDto | null>(null);
 
+  protected readonly assignTarget = signal<UtilisateurDto | null>(null);
+  protected readonly assigning = signal(false);
+  protected readonly loadingPromotions = signal(false);
+  protected readonly selectedPromotionId = signal<string>('');
+  // Active reservation for the assign target, if any — reused as
+  // roomAssignationRequest.reservationId instead of the server auto-picking
+  // a random LIBRE chambre. null once resolved means "no active reservation".
+  protected readonly existingReservationId = signal<string | null>(null);
+  protected readonly loadingReservation = signal(false);
+  private readonly promotionOptionsSignal = signal<SelectOption[]>([]);
+  protected readonly promotionOptions = this.promotionOptionsSignal.asReadonly();
+
+  private readonly filiereOptionsSignal = signal<SelectOption[]>([]);
+  protected readonly filiereOptionsWithNone = computed<SelectOption[]>(() => [
+    { value: NO_FILIERE, label: 'Aucune' },
+    ...this.filiereOptionsSignal(),
+  ]);
+  // id -> nom lookup, built alongside filiereOptionsSignal — used to label
+  // the promotion dropdown with its filiere rather than just year/niveau.
+  private readonly filiereNameById = signal<Map<number, string>>(new Map());
+
   protected readonly rowId = (row: UtilisateurDto) => row.id;
 
+  /**
+   * A RESPONSABLE can only hand out ETUDIANT/MANAGER via the normal create
+   * route (the server rejects the rest with BadRouteException); an
+   * ADMINISTRATEUR can grant any role via the admin-only route. Scoping the
+   * dropdown avoids offering a choice that would just come back as a 400.
+   */
+  protected readonly roleOptions = computed<SelectOption<AppRole>[]>(() => {
+    const allowed: AppRole[] =
+      this.currentUser.highestRole() === 'ADMINISTRATEUR'
+        ? ['ETUDIANT', 'MANAGER', 'RESPONSABLE', 'ADMINISTRATEUR']
+        : ['ETUDIANT', 'MANAGER'];
+    return allowed.map((role) => ({ value: role, label: ROLE_LABELS[role] }));
+  });
+
   protected readonly form = this.fb.nonNullable.group({
+    role: ['ETUDIANT' as AppRole, Validators.required],
     prenom: ['', Validators.required],
     nom: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     cin: ['', Validators.required],
     telephone: ['', [Validators.required, Validators.pattern(TELEPHONE_PATTERN)]],
     adresse: [''],
+    filiere: [NO_FILIERE],
   });
 
   private readonly nameTpl = viewChild<TemplateRef<{ $implicit: UtilisateurDto }>>('nameTpl');
@@ -168,6 +295,10 @@ export class UserListPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.filiereService.getAll().subscribe((filieres) => {
+      this.filiereOptionsSignal.set(filieres.map((f) => ({ value: String(f.id), label: f.nom })));
+      this.filiereNameById.set(new Map(filieres.map((f) => [f.id as number, f.nom])));
+    });
   }
 
   protected load(): void {
@@ -193,19 +324,21 @@ export class UserListPageComponent implements OnInit {
 
   protected openCreate(): void {
     this.editingRow.set(null);
-    this.form.reset({ prenom: '', nom: '', email: '', cin: '', telephone: '', adresse: '' });
+    this.form.reset({ role: 'ETUDIANT', prenom: '', nom: '', email: '', cin: '', telephone: '', adresse: '', filiere: NO_FILIERE });
     this.dialogOpen.set(true);
   }
 
   protected openEdit(row: UtilisateurDto): void {
     this.editingRow.set(row);
     this.form.reset({
+      role: row.role,
       prenom: row.prenom,
       nom: row.nom,
       email: row.email,
       cin: row.cin,
       telephone: row.telephone,
       adresse: row.adresse ?? '',
+      filiere: row.filiere != null ? String(row.filiere) : NO_FILIERE,
     });
     this.dialogOpen.set(true);
   }
@@ -233,18 +366,22 @@ export class UserListPageComponent implements OnInit {
     const editing = this.editingRow();
     const dto: UtilisateurDto = {
       ...(editing ?? emptyUser()),
+      role: editing ? editing.role : value.role,
       prenom: value.prenom,
       nom: value.nom,
       email: value.email,
       cin: value.cin,
       telephone: value.telephone,
       adresse: value.adresse || null,
+      filiere: value.filiere === NO_FILIERE ? null : Number(value.filiere),
     };
 
     this.saving.set(true);
     const request$ = editing
       ? this.userService.update({ id: editing.id as string, dto })
-      : this.userService.create(dto);
+      : dto.role === 'RESPONSABLE' || dto.role === 'ADMINISTRATEUR'
+        ? this.userService.createAdmin(dto)
+        : this.userService.create(dto);
 
     request$.subscribe({
       next: () => {
@@ -276,5 +413,74 @@ export class UserListPageComponent implements OnInit {
         this.toast.showError(err.message);
       },
     });
+  }
+
+  protected openAssign(row: UtilisateurDto): void {
+    this.assignTarget.set(row);
+    this.selectedPromotionId.set('');
+    this.existingReservationId.set(null);
+    this.loadingPromotions.set(true);
+    // First page only (max 20) — a school-scale promotion list fits in one
+    // page in practice; revisit with a search-as-you-type select if that
+    // ever stops being true.
+    this.promotionService.getAll({ size: 20 }).subscribe({
+      next: (result) => {
+        this.promotionOptionsSignal.set(
+          result.content.map((p) => ({
+            value: p.id as string,
+            label: `${this.filiereNameById().get(p.filiere) ?? 'Filière inconnue'} · ${p.anneeDeDepart} - ${p.anneeDeFin} · Niveau ${p.niveau}`,
+          })),
+        );
+        this.loadingPromotions.set(false);
+      },
+      error: (err: AppError) => {
+        this.loadingPromotions.set(false);
+        this.toast.showError(err.message);
+      },
+    });
+
+    this.loadingReservation.set(true);
+    this.reservationService.getAllOpenByUtilisateurId(row.id as string).subscribe({
+      next: (reservations) => {
+        // A student shouldn't have more than one ACTIVE reservation at a
+        // time (saveMy rejects a second one) — take the first defensively.
+        this.existingReservationId.set(reservations[0]?.id ?? null);
+        this.loadingReservation.set(false);
+      },
+      error: (err: AppError) => {
+        this.loadingReservation.set(false);
+        this.toast.showError(err.message);
+      },
+    });
+  }
+
+  protected closeAssign(): void {
+    this.assignTarget.set(null);
+    this.existingReservationId.set(null);
+  }
+
+  protected confirmAssign(): void {
+    const target = this.assignTarget();
+    const promotionId = this.selectedPromotionId();
+    if (!target?.id || !promotionId) return;
+
+    this.assigning.set(true);
+    this.upcService
+      .assignRoom({
+        utilisateurId: target.id,
+        promotionId,
+        reservationId: this.existingReservationId(),
+      })
+      .subscribe({
+        next: () => {
+          this.assigning.set(false);
+          this.toast.show('Promotion et chambre assignées.', 'success');
+          this.closeAssign();
+        },
+        error: (err: AppError) => {
+          this.assigning.set(false);
+          this.toast.showError(err.message);
+        },
+      });
   }
 }

@@ -32,9 +32,22 @@ export class UtilisateurService {
     return this.http.get<UtilisateurDto>(`${this.baseUrl}/${id}`);
   }
 
-  /** RESPONSABLE-gated — admin-side creation; provisions the Keycloak account server-side too. */
+  /**
+   * RESPONSABLE-gated — admin-side creation; provisions the Keycloak account
+   * server-side too. The backend rejects `role: RESPONSABLE` and
+   * `role: ADMINISTRATEUR` on this route (BadRouteException) — use
+   * createAdmin for those.
+   */
   create(dto: UtilisateurDto): Observable<UtilisateurDto> {
     return this.http.post<UtilisateurDto>(`${this.baseUrl}/`, dto);
+  }
+
+  /**
+   * ADMINISTRATEUR-only — the only route that can create RESPONSABLE or
+   * ADMINISTRATEUR accounts (also accepts ETUDIANT/MANAGER).
+   */
+  createAdmin(dto: UtilisateurDto): Observable<UtilisateurDto> {
+    return this.http.post<UtilisateurDto>(`${this.baseUrl}/admin/`, dto);
   }
 
   /** RESPONSABLE-gated. Note: does not currently propagate nom/prenom changes to the Keycloak username. */

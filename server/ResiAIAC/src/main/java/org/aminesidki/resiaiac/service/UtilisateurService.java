@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UtilisateurService {
-  Utilisateur getMyEntityById(UUID id);
+  Utilisateur getEntityById(UUID id);
 
   Utilisateur getMyEntityByJwt(Jwt jwt);
 

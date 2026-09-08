@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import org.aminesidki.resiaiac.dto.FiliereDto;
 import org.aminesidki.resiaiac.entity.Filiere;
 import org.aminesidki.resiaiac.mapper.FiliereMapper;
@@ -53,18 +52,18 @@ class FiliereServiceTest {
 
     id = 1L;
     entity = Filiere.builder().id(id).nom("Genie Informatique").niveauMaximal(5).build();
-    dto = new FiliereDto(id, "Genie Informatique", 5, List.of());
+    dto = new FiliereDto(id, "Genie Informatique", 5);
   }
 
   // ---------- save ----------
 
   @Test
   void save_shouldMapPersistAndReturnDto() {
-    FiliereDto inputDto = new FiliereDto(null, "Genie Informatique", 5, List.of());
+    FiliereDto inputDto = new FiliereDto(null, "Genie Informatique", 5);
     Filiere mappedEntity = Filiere.builder().nom("Genie Informatique").niveauMaximal(5).build();
     Filiere savedEntity =
         Filiere.builder().id(id).nom("Genie Informatique").niveauMaximal(5).build();
-    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique", 5, List.of());
+    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique", 5);
 
     when(filiereMapper.toEntity(inputDto)).thenReturn(mappedEntity);
     when(filiereRepository.save(mappedEntity)).thenReturn(savedEntity);
@@ -118,7 +117,7 @@ class FiliereServiceTest {
   void update_shouldFetchMutateSaveAndReturnDto() {
     Filiere savedEntity =
         Filiere.builder().id(id).nom("Genie Informatique - renamed").niveauMaximal(5).build();
-    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique - renamed", 5, List.of());
+    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique - renamed", 5);
 
     try (MockedStatic<ResourceFetcher> fetcher = mockStatic(ResourceFetcher.class)) {
       fetcher

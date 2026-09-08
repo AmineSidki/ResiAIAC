@@ -21,7 +21,7 @@ let nextId = 0;
   template: `
     <div class="flex flex-col gap-1">
       @if (label()) {
-        <label [for]="id" class="text-sm font-medium text-neutral-700">{{ label() }}</label>
+        <label [for]="id" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ label() }}</label>
       }
       <select
         [id]="id"
@@ -29,10 +29,17 @@ let nextId = 0;
         [value]="value"
         (change)="onSelect($event)"
         (blur)="onTouched()"
-        class="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+        class="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-neutral-50 dark:border-white/10 dark:bg-white/5 dark:text-neutral-100 dark:disabled:bg-white/5"
       >
         @if (placeholder()) {
-          <option value="" disabled selected>{{ placeholder() }}</option>
+          <!--
+            "clearable" selects (filter bars) leave the placeholder option
+            enabled and selectable, so picking it back resets the filter —
+            previously it was always disabled, which meant a table filter
+            could be set but never cleared back through the dropdown itself.
+            Form selects (required fields) keep the old disabled behavior.
+          -->
+          <option value="" [disabled]="!clearable()">{{ placeholder() }}</option>
         }
         @for (option of options(); track option.value) {
           <option [value]="option.value">{{ option.label }}</option>
@@ -45,6 +52,8 @@ export class SelectComponent implements ControlValueAccessor {
   readonly label = input<string | null>(null);
   readonly placeholder = input<string | null>(null);
   readonly options = input.required<SelectOption[]>();
+  /** When true, the placeholder option stays selectable — used by table filter bars so users can clear back to "all". */
+  readonly clearable = input(false);
 
   readonly id = `app-select-${nextId++}`;
   protected value = '';

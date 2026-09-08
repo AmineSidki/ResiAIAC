@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } f
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DocumentService } from '../../../core/services/document.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { DocumentDto } from '../../../core/models/dtos';
 import { ETAT_DOCUMENT_VALUES, EtatDocument } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -37,16 +38,28 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
   template: `
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-semibold text-neutral-900">Documents</h1>
-        <p class="text-sm text-neutral-500">File d'attente de validation — lecture seule, aucune création ici.</p>
+        <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Documents</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">File d'attente de validation — lecture seule, aucune création ici.</p>
       </div>
-      <div class="w-56">
-        <app-select
-          placeholder="Tous les états"
-          [options]="etatOptions"
-          [ngModel]="etatFilter()"
-          (ngModelChange)="onFilterChange($event)"
-        ></app-select>
+      <div class="flex items-end gap-2">
+        <div class="w-56">
+          <app-select
+            placeholder="Tous les états"
+            [clearable]="true"
+            [options]="etatOptions"
+            [ngModel]="etatFilter()"
+            (ngModelChange)="onFilterChange($event)"
+          ></app-select>
+        </div>
+        @if (etatFilter()) {
+          <button
+            type="button"
+            (click)="onFilterChange('')"
+            class="h-[38px] rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 dark:border-white/10 dark:text-neutral-300 dark:hover:bg-white/5"
+          >
+            Réinitialiser
+          </button>
+        }
       </div>
     </div>
 
@@ -70,13 +83,19 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
     <ng-template #etatTpl let-row>
       <app-status-badge kind="document" [value]="row.etat ?? 'AUCUN'"></app-status-badge>
     </ng-template>
+
+    <ng-template #ownerTpl let-row>
+      {{ ownerNames().get(row.proprietaire) ?? '…' }}
+    </ng-template>
   `,
 })
 export class DocumentListPageComponent implements OnInit {
   private readonly documentService = inject(DocumentService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
 
   protected readonly rows = signal<DocumentDto[]>([]);
+  protected readonly ownerNames = signal<Map<string, string>>(new Map());
   protected readonly loading = signal(true);
   protected readonly page = signal(0);
   protected readonly totalPages = signal(0);
@@ -88,10 +107,11 @@ export class DocumentListPageComponent implements OnInit {
 
   private readonly nameTpl = viewChild<TemplateRef<{ $implicit: DocumentDto }>>('nameTpl');
   private readonly etatTpl = viewChild<TemplateRef<{ $implicit: DocumentDto }>>('etatTpl');
+  private readonly ownerTpl = viewChild<TemplateRef<{ $implicit: DocumentDto }>>('ownerTpl');
 
   protected readonly columns = computed<DataTableColumn<DocumentDto>[]>(() => [
     { key: 'nomFichier', header: 'Fichier', cellTemplate: this.nameTpl() },
-    { key: 'proprietaire', header: 'Propriétaire', accessor: (r) => r.proprietaire },
+    { key: 'proprietaire', header: 'Propriétaire', cellTemplate: this.ownerTpl() },
     { key: 'etat', header: 'État', cellTemplate: this.etatTpl() },
   ]);
 
@@ -123,6 +143,7 @@ export class DocumentListPageComponent implements OnInit {
         this.totalPages.set(result.totalPages);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        this.ownerNameService.resolveMany(result.content.map((d) => d.proprietaire)).subscribe((names) => this.ownerNames.set(names));
       },
       error: (err: AppError) => {
         this.loading.set(false);

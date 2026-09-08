@@ -14,7 +14,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.dto.request.UpdateMeRequest;
@@ -79,10 +78,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
   }
@@ -118,10 +114,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
     UtilisateurDto resultDto =
@@ -134,10 +127,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 
@@ -170,10 +160,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
     UtilisateurDto resultDto =
@@ -186,10 +173,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 
@@ -223,10 +207,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Casablanca",
             "0600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 
@@ -286,10 +267,7 @@ class UtilisateurControllerTest {
             "AB123456",
             "Rabat",
             "+212600000000",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 

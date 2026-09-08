@@ -6,6 +6,19 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Applies the persisted (or OS-level) theme before Angular bootstraps,
+    // so there's no flash of the wrong theme on load. Mirrors the logic in
+    // core/theme/theme.service.ts — kept in sync manually since this has
+    // to run before any Angular code exists.
+    (function () {
+      try {
+        var stored = localStorage.getItem('resiaiac.theme');
+        var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

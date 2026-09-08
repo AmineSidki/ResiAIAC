@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import org.aminesidki.resiaiac.dto.FiliereDto;
 import org.aminesidki.resiaiac.dto.request.FiliereUpdateRequest;
 import org.aminesidki.resiaiac.service.FiliereService;
@@ -63,7 +62,7 @@ class FiliereControllerTest {
   @BeforeEach
   void setUp() {
     id = 1L;
-    dto = new FiliereDto(id, "Genie Informatique", 5, List.of());
+    dto = new FiliereDto(id, "Genie Informatique", 5);
   }
 
   // ---------- getById ----------
@@ -86,8 +85,8 @@ class FiliereControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    FiliereDto inputDto = new FiliereDto(null, "Genie Informatique", 5, List.of());
-    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique", 5, List.of());
+    FiliereDto inputDto = new FiliereDto(null, "Genie Informatique", 5);
+    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique", 5);
 
     when(filiereService.save(inputDto)).thenReturn(resultDto);
 
@@ -109,7 +108,7 @@ class FiliereControllerTest {
   @Test
   void update_shouldMutateAndReturnDto() throws Exception {
     FiliereUpdateRequest request = new FiliereUpdateRequest(id, dto);
-    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique - renamed", 5, List.of());
+    FiliereDto resultDto = new FiliereDto(id, "Genie Informatique - renamed", 5);
 
     when(filiereService.update(id, dto)).thenReturn(resultDto);
 

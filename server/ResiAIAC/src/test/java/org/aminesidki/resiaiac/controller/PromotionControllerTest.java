@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.PromotionDto;
 import org.aminesidki.resiaiac.dto.request.PromotionUpdateRequest;
@@ -44,8 +43,7 @@ import tools.jackson.databind.ObjectMapper;
  * Boot {@code @MockBean}.
  *
  * <p>{@code PromotionDto}'s constructor order is {@code (id, anneeDeDepart, anneeDeFin, niveau,
- * filiere, combinaisonsUpc)} — {@code niveau} is an {@code Integer}, {@code filiere} is a {@code
- * Long}.
+ * filiere)} — {@code niveau} is an {@code Integer}, {@code filiere} is a {@code Long}.
  */
 @WebMvcTest(PromotionController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -63,7 +61,7 @@ class PromotionControllerTest {
   @BeforeEach
   void setUp() {
     id = UUID.randomUUID();
-    dto = new PromotionDto(id, 2025L, 2026L, 3, 1L, List.of());
+    dto = new PromotionDto(id, 2025L, 2026L, 3, 1L);
   }
 
   // ---------- getById ----------
@@ -87,8 +85,8 @@ class PromotionControllerTest {
 
   @Test
   void save_shouldPersistAndReturnDto() throws Exception {
-    PromotionDto inputDto = new PromotionDto(null, 2025L, 2026L, 3, 1L, List.of());
-    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 3, 1L, List.of());
+    PromotionDto inputDto = new PromotionDto(null, 2025L, 2026L, 3, 1L);
+    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 3, 1L);
 
     when(promotionService.save(inputDto)).thenReturn(resultDto);
 
@@ -110,7 +108,7 @@ class PromotionControllerTest {
   @Test
   void update_shouldMutateAndReturnDto() throws Exception {
     PromotionUpdateRequest request = new PromotionUpdateRequest(id, dto);
-    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 4, 1L, List.of());
+    PromotionDto resultDto = new PromotionDto(id, 2025L, 2026L, 4, 1L);
 
     when(promotionService.update(id, dto)).thenReturn(resultDto);
 

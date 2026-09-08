@@ -33,7 +33,6 @@ export class FilierePageComponent {
   protected readonly columns: DataTableColumn<FiliereDto>[] = [
     { key: 'nom', header: 'Nom', accessor: (r) => r.nom },
     { key: 'niveauMaximal', header: 'Niveau max.', accessor: (r) => String(r.niveauMaximal) },
-    { key: 'promotions', header: 'Promotions', accessor: (r) => String(r.promotions.length) },
   ];
 
   protected readonly fields: EntityFieldConfig<FiliereDto>[] = [
@@ -41,7 +40,7 @@ export class FilierePageComponent {
     { key: 'niveauMaximal', label: 'Niveau maximal', type: 'number', required: true, min: 1 },
   ];
 
-  protected readonly emptyDto = (): FiliereDto => ({ id: null, nom: '', niveauMaximal: 1, promotions: [] });
+  protected readonly emptyDto = (): FiliereDto => ({ id: null, nom: '', niveauMaximal: 1 });
 
   protected readonly buildUpdateRequest = (id: number, dto: FiliereDto): FiliereUpdateRequest => ({ id, dto });
 }

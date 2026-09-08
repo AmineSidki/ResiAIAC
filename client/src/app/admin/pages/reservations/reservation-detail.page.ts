@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { ReservationService } from '../../../core/services/reservation.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { ReservationDto } from '../../../core/models/dtos';
 import { EtatReservation } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -36,11 +37,11 @@ const NEXT_STATES: Record<EtatReservation, { state: EtatReservation; label: stri
       <div class="mt-4"><app-skeleton-rows [rows]="3" [columns]="2"></app-skeleton-rows></div>
     } @else {
       @if (reservation(); as r) {
-        <div class="mt-4 rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="mt-4 rounded-lg border border-neutral-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
           <div class="flex items-start justify-between">
             <div>
-              <h1 class="text-lg font-semibold text-neutral-900">Réservation {{ r.id?.slice(0, 8) }}…</h1>
-              <p class="text-sm text-neutral-500">Chambre {{ r.chambre }} · Utilisateur {{ r.utilisateur }}</p>
+              <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réservation {{ r.id?.slice(0, 8) }}…</h1>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">Chambre {{ r.chambre }} · Étudiant {{ ownerName() ?? '…' }}</p>
               @if (r.createdAt) {
                 <p class="mt-1 text-xs text-neutral-400">Créée le {{ r.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
               }
@@ -65,9 +66,11 @@ const NEXT_STATES: Record<EtatReservation, { state: EtatReservation; label: stri
 export class ReservationDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly reservationService = inject(ReservationService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
 
   protected readonly reservation = signal<ReservationDto | null>(null);
+  protected readonly ownerName = signal<string | null>(null);
   protected readonly loading = signal(true);
   protected readonly transitioning = signal(false);
 
@@ -80,6 +83,7 @@ export class ReservationDetailPageComponent implements OnInit {
       next: (r) => {
         this.reservation.set(r);
         this.loading.set(false);
+        this.ownerNameService.resolveOne(r.utilisateur).subscribe((name) => this.ownerName.set(name));
       },
       error: (err: AppError) => {
         this.loading.set(false);

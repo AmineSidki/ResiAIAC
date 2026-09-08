@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { buildPageableParams, PageableParams } from '../api/pageable';
 import { DocumentDto, DocumentUpdateRequest, Page } from '../models/dtos';
@@ -30,8 +30,23 @@ export class DocumentService {
     return this.http.get<DocumentDto>(`${this.baseUrl}/me/${id}`);
   }
 
+  /** See getUrlById above — same text/plain-vs-JSON fix, same endpoint shape. */
   getMyUrlById(id: string): Observable<string> {
-    return this.http.get<string>(`${this.baseUrl}/me/${id}/url`);
+    return this.http.get(`${this.baseUrl}/me/${id}/url`, { responseType: 'text' });
+  }
+
+  /**
+   * Convenience for the profile page: current student's profile-picture
+   * document, if any. A single page is enough — uploadMy('pfp', ...)
+   * always replaces rather than accumulates, so there's at most one.
+   *
+   * nomSceau on the wire is literally FileType.bucketName ('images' for
+   * pfp, not the short 'pfp' slot key) — see DocumentServiceImpl.uploadMyDocument.
+   */
+  getMyProfileImage(): Observable<DocumentDto | null> {
+    return this.getAllMy({ size: 20 }).pipe(
+      map((page) => page.content.find((d) => d.nomSceau === 'images') ?? null),
+    );
   }
 
   /** Replaces the student's existing document of this type rather than accumulating history. */
@@ -56,8 +71,15 @@ export class DocumentService {
   // --- admin/manager side ---
 
   /** MANAGER-gated. */
+  /**
+   * Backend returns this as a bare String body — Spring's
+   * StringHttpMessageConverter writes that as unquoted text/plain, not
+   * JSON. `responseType: 'text'` tells HttpClient to read the body as-is
+   * instead of running it through JSON.parse (which was silently throwing
+   * on the raw URL string and breaking every document preview).
+   */
   getUrlById(id: string): Observable<string> {
-    return this.http.get<string>(`${this.baseUrl}/${id}/url`);
+    return this.http.get(`${this.baseUrl}/${id}/url`, { responseType: 'text' });
   }
 
   /** MANAGER-gated. */

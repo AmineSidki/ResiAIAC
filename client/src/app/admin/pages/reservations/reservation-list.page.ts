@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } f
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReservationService } from '../../../core/services/reservation.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { ReservationDto } from '../../../core/models/dtos';
 import { ETAT_RESERVATION_VALUES, EtatReservation } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -35,14 +36,26 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
   ],
   template: `
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-neutral-900">Réservations</h1>
-      <div class="w-56">
-        <app-select
-          placeholder="Tous les états"
-          [options]="etatOptions"
-          [ngModel]="etatFilter()"
-          (ngModelChange)="etatFilter.set($event || null)"
-        ></app-select>
+      <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réservations</h1>
+      <div class="flex items-end gap-2">
+        <div class="w-56">
+          <app-select
+            placeholder="Tous les états"
+            [clearable]="true"
+            [options]="etatOptions"
+            [ngModel]="etatFilter()"
+            (ngModelChange)="etatFilter.set($event || null)"
+          ></app-select>
+        </div>
+        @if (etatFilter()) {
+          <button
+            type="button"
+            (click)="etatFilter.set(null)"
+            class="h-[38px] rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 dark:border-white/10 dark:text-neutral-300 dark:hover:bg-white/5"
+          >
+            Réinitialiser
+          </button>
+        }
       </div>
     </div>
 
@@ -63,6 +76,10 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
       </a>
     </ng-template>
 
+    <ng-template #ownerTpl let-row>
+      {{ ownerNames().get(row.utilisateur) ?? '…' }}
+    </ng-template>
+
     <ng-template #etatTpl let-row>
       <app-status-badge kind="reservation" [value]="row.etat ?? 'ACTIVE'"></app-status-badge>
     </ng-template>
@@ -70,9 +87,11 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
 })
 export class ReservationListPageComponent implements OnInit {
   private readonly reservationService = inject(ReservationService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
 
   protected readonly rows = signal<ReservationDto[]>([]);
+  protected readonly ownerNames = signal<Map<string, string>>(new Map());
   protected readonly loading = signal(true);
   protected readonly page = signal(0);
   protected readonly totalPages = signal(0);
@@ -89,10 +108,12 @@ export class ReservationListPageComponent implements OnInit {
   });
 
   private readonly idTpl = viewChild<TemplateRef<{ $implicit: ReservationDto }>>('idTpl');
+  private readonly ownerTpl = viewChild<TemplateRef<{ $implicit: ReservationDto }>>('ownerTpl');
   private readonly etatTpl = viewChild<TemplateRef<{ $implicit: ReservationDto }>>('etatTpl');
 
   protected readonly columns = computed<DataTableColumn<ReservationDto>[]>(() => [
     { key: 'id', header: 'ID', cellTemplate: this.idTpl() },
+    { key: 'utilisateur', header: 'Étudiant', cellTemplate: this.ownerTpl() },
     { key: 'chambre', header: 'Chambre', accessor: (r) => r.chambre },
     { key: 'etat', header: 'État', cellTemplate: this.etatTpl() },
   ]);
@@ -114,6 +135,7 @@ export class ReservationListPageComponent implements OnInit {
         this.totalPages.set(result.totalPages);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        this.ownerNameService.resolveMany(result.content.map((r) => r.utilisateur)).subscribe((names) => this.ownerNames.set(names));
       },
       error: (err: AppError) => {
         this.loading.set(false);

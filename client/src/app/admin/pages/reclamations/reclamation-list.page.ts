@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, computed, inject, signal, viewChild } f
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReclamationService } from '../../../core/services/reclamation.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { ReclamationDto } from '../../../core/models/dtos';
 import { ETAT_RECLAMATION_VALUES, EtatReclamation } from '../../../core/models/enums';
 import { AppError } from '../../../core/api/app-error';
@@ -29,14 +30,26 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
   ],
   template: `
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-neutral-900">Réclamations</h1>
-      <div class="w-56">
-        <app-select
-          placeholder="Tous les états"
-          [options]="etatOptions"
-          [ngModel]="etatFilter()"
-          (ngModelChange)="onFilterChange($event)"
-        ></app-select>
+      <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réclamations</h1>
+      <div class="flex items-end gap-2">
+        <div class="w-56">
+          <app-select
+            placeholder="Tous les états"
+            [clearable]="true"
+            [options]="etatOptions"
+            [ngModel]="etatFilter()"
+            (ngModelChange)="onFilterChange($event)"
+          ></app-select>
+        </div>
+        @if (etatFilter()) {
+          <button
+            type="button"
+            (click)="clearFilter()"
+            class="h-[38px] rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 dark:border-white/10 dark:text-neutral-300 dark:hover:bg-white/5"
+          >
+            Réinitialiser
+          </button>
+        }
       </div>
     </div>
 
@@ -57,6 +70,10 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
       </a>
     </ng-template>
 
+    <ng-template #ownerTpl let-row>
+      {{ ownerNames().get(row.utilisateur) ?? '…' }}
+    </ng-template>
+
     <ng-template #etatTpl let-row>
       <app-status-badge kind="reclamation" [value]="row.etat ?? 'EN_ATTENTE'"></app-status-badge>
     </ng-template>
@@ -64,9 +81,11 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
 })
 export class ReclamationListPageComponent implements OnInit {
   private readonly reclamationService = inject(ReclamationService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
 
   protected readonly rows = signal<ReclamationDto[]>([]);
+  protected readonly ownerNames = signal<Map<string, string>>(new Map());
   protected readonly loading = signal(true);
   protected readonly page = signal(0);
   protected readonly totalPages = signal(0);
@@ -78,10 +97,12 @@ export class ReclamationListPageComponent implements OnInit {
   protected readonly rowId = (row: ReclamationDto) => row.id;
 
   private readonly idTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('idTpl');
+  private readonly ownerTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('ownerTpl');
   private readonly etatTpl = viewChild<TemplateRef<{ $implicit: ReclamationDto }>>('etatTpl');
 
   protected readonly columns = computed<DataTableColumn<ReclamationDto>[]>(() => [
     { key: 'id', header: 'ID', cellTemplate: this.idTpl() },
+    { key: 'utilisateur', header: 'Étudiant', cellTemplate: this.ownerTpl() },
     { key: 'service', header: 'Service', accessor: (r) => String(r.service) },
     { key: 'message', header: 'Message', accessor: (r) => r.message ?? '—' },
     { key: 'etat', header: 'État', cellTemplate: this.etatTpl() },
@@ -95,6 +116,11 @@ export class ReclamationListPageComponent implements OnInit {
     this.etatFilter.set(value || null);
     this.page.set(0);
     this.load();
+  }
+
+  /** Filter Clearing fix: the select's placeholder used to be permanently disabled, so once a filter was set there was no way back to "all" without this. */
+  protected clearFilter(): void {
+    this.onFilterChange('');
   }
 
   protected goToPage(page: number): void {
@@ -115,6 +141,7 @@ export class ReclamationListPageComponent implements OnInit {
         this.totalPages.set(result.totalPages);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        this.ownerNameService.resolveMany(result.content.map((r) => r.utilisateur)).subscribe((names) => this.ownerNames.set(names));
       },
       error: (err: AppError) => {
         this.loading.set(false);

@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReclamationService } from '../../../core/services/reclamation.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { EquipementReclamationService } from '../../../core/services/equipement-reclamation.service';
 import { EquipementService } from '../../../core/services/equipement.service';
 import { ReclamationDto, EquipementReclamationDto } from '../../../core/models/dtos';
@@ -39,23 +40,23 @@ const TRANSITION_LABELS: Record<EtatReclamation, string> = {
   standalone: true,
   imports: [RouterLink, FormsModule, StatusBadgeComponent, ButtonComponent, DialogComponent, SelectComponent, SkeletonRowsComponent],
   template: `
-    <a routerLink="/admin/reclamations" class="text-sm text-primary-600 hover:text-primary-700">&larr; Retour aux réclamations</a>
+    <a routerLink="/admin/reclamations" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400">&larr; Retour aux réclamations</a>
 
     @if (loading()) {
       <div class="mt-4"><app-skeleton-rows [rows]="3" [columns]="2"></app-skeleton-rows></div>
     } @else {
       @if (reclamation(); as r) {
-        <div class="mt-4 rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="mt-4 rounded-lg border border-neutral-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
           <div class="flex items-start justify-between">
             <div>
-              <h1 class="text-lg font-semibold text-neutral-900">Réclamation {{ r.id?.slice(0, 8) }}…</h1>
-              <p class="text-sm text-neutral-500">Chambre {{ r.chambre }} · Service {{ r.service }}</p>
+              <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">Réclamation {{ r.id?.slice(0, 8) }}…</h1>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">Étudiant {{ ownerName() ?? '…' }} · Chambre {{ r.chambre }} · Service {{ r.service }}</p>
             </div>
             <app-status-badge kind="reclamation" [value]="r.etat ?? 'EN_ATTENTE'"></app-status-badge>
           </div>
 
           @if (r.message) {
-            <p class="mt-4 rounded-md bg-neutral-50 p-3 text-sm text-neutral-700">{{ r.message }}</p>
+            <p class="mt-4 rounded-md bg-neutral-50 p-3 text-sm text-neutral-700 dark:bg-white/5 dark:text-neutral-200">{{ r.message }}</p>
           }
 
           @if (nextStates(r.etat).length > 0) {
@@ -71,7 +72,7 @@ const TRANSITION_LABELS: Record<EtatReclamation, string> = {
 
         <div class="mt-6">
           <div class="flex items-center justify-between">
-            <h2 class="text-base font-semibold text-neutral-900">Équipement signalé</h2>
+            <h2 class="text-base font-semibold text-neutral-900 dark:text-white">Équipement signalé</h2>
             <app-button size="sm" variant="secondary" (click)="openAddEquipment()">+ Ajouter</app-button>
           </div>
           @if (loadingEquipment()) {
@@ -81,7 +82,7 @@ const TRANSITION_LABELS: Record<EtatReclamation, string> = {
           } @else {
             <ul class="mt-2 flex flex-wrap gap-2">
               @for (item of equipmentEntries(); track item.equipement) {
-                <li class="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700">
+                <li class="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 dark:bg-white/10 dark:text-neutral-200">
                   {{ equipementNameById().get(item.equipement) ?? item.equipement }} × {{ item.quantite }}
                 </li>
               }
@@ -114,6 +115,7 @@ const TRANSITION_LABELS: Record<EtatReclamation, string> = {
 export class ReclamationDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly reclamationService = inject(ReclamationService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly equipementReclamationService = inject(EquipementReclamationService);
   private readonly equipementService = inject(EquipementService);
   private readonly toast = inject(ToastService);
@@ -121,6 +123,7 @@ export class ReclamationDetailPageComponent implements OnInit {
   private reclamationId!: string;
 
   protected readonly reclamation = signal<ReclamationDto | null>(null);
+  protected readonly ownerName = signal<string | null>(null);
   protected readonly loading = signal(true);
   protected readonly transitioning = signal(false);
 
@@ -147,6 +150,7 @@ export class ReclamationDetailPageComponent implements OnInit {
       next: (r) => {
         this.reclamation.set(r);
         this.loading.set(false);
+        this.ownerNameService.resolveOne(r.utilisateur).subscribe((name) => this.ownerName.set(name));
       },
       error: (err: AppError) => {
         this.loading.set(false);

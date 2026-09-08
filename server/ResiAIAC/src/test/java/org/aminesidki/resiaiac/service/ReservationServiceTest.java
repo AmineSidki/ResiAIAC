@@ -102,7 +102,7 @@ class ReservationServiceTest {
         new ReservationDto(id, null, UUID.randomUUID(), UUID.randomUUID(), null, null);
 
     when(reservationMapper.toEntity(inputDto)).thenReturn(mappedEntity);
-    when(utilisateurService.getMyEntityById(inputDto.utilisateur())).thenReturn(owner);
+    when(utilisateurService.getEntityById(inputDto.utilisateur())).thenReturn(owner);
     when(reservationRepository.save(mappedEntity)).thenReturn(savedEntity);
     when(reservationMapper.toDto(savedEntity)).thenReturn(resultDto);
 
@@ -110,7 +110,7 @@ class ReservationServiceTest {
 
     assertThat(result).isEqualTo(resultDto);
     verify(reservationMapper).toEntity(inputDto);
-    verify(utilisateurService).getMyEntityById(inputDto.utilisateur());
+    verify(utilisateurService).getEntityById(inputDto.utilisateur());
     verify(reservationRepository).save(mappedEntity);
     verify(reservationMapper).toDto(savedEntity);
     verify(emailTemplateService).envoyerReservationCreee(owner, savedEntity.getChambre());

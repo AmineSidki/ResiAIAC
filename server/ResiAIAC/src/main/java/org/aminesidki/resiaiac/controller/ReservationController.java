@@ -23,6 +23,12 @@ import org.springframework.web.bind.annotation.*;
 public class ReservationController {
   private final ReservationService reservationService;
 
+  @PreAuthorize("hasAnyRole('MANAGER')")
+  @GetMapping("/by-utilisateur/{id}")
+  public ResponseEntity<?> getAllOpenByUser(@PathVariable UUID id) {
+    return ResponseEntity.ok(reservationService.getAllOpenByUser(id));
+  }
+
   @GetMapping("/me")
   public ResponseEntity<?> getAllMyReservations(
       @AuthenticationPrincipal Jwt jwt,

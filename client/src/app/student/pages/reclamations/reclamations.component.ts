@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ReclamationService } from '../../../core/services/reclamation.service';
+import { MyRoomStatusService } from '../../../core/services/my-room-status.service';
 import { ServiceEntityService } from '../../../core/services/service.service';
 import { EquipementService } from '../../../core/services/equipement.service';
 import { EquipementEntry, EquipementDto, ReclamationDto, ServiceDto } from '../../../core/models/dtos';
@@ -45,58 +46,65 @@ const ETAT_FILTER_OPTIONS: SelectOption[] = [
       <h1 class="text-lg font-semibold text-neutral-900">Mes réclamations</h1>
 
       <!-- Create form -->
-      <form
-        [formGroup]="form"
-        (ngSubmit)="onSubmit()"
-        class="flex flex-col gap-3 rounded-lg border border-neutral-100 bg-surface p-4 shadow-sm"
-      >
-        <p class="text-sm font-medium text-neutral-900">Nouvelle réclamation</p>
-
-        @if (loadingReferenceData()) {
-          <app-skeleton variant="block" height="2.5rem" />
-        } @else {
-          <app-select label="Service concerné" placeholder="Choisir un service" formControlName="service" [options]="serviceOptions()" />
-        }
-
-        <div class="flex flex-col gap-1">
-          <label for="reclamation-message" class="text-sm font-medium text-neutral-700">Message (optionnel)</label>
-          <textarea
-            id="reclamation-message"
-            formControlName="message"
-            rows="3"
-            placeholder="Décrivez le problème..."
-            class="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          ></textarea>
+      @if (roomStatus.status() === 'no-history') {
+        <div class="rounded-lg border border-neutral-100 bg-surface p-4 text-sm text-neutral-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-neutral-300">
+          Vous n'avez pas encore de chambre attribuée — vous pourrez déposer une réclamation une fois qu'une
+          chambre vous aura été assignée par l'administration.
         </div>
+      } @else {
+        <form
+          [formGroup]="form"
+          (ngSubmit)="onSubmit()"
+          class="flex flex-col gap-3 rounded-lg border border-neutral-100 bg-surface p-4 shadow-sm"
+        >
+          <p class="text-sm font-medium text-neutral-900">Nouvelle réclamation</p>
 
-        @if (equipementRows().length > 0) {
-          <div class="flex flex-col gap-2">
-            <p class="text-sm font-medium text-neutral-700">Équipements concernés (optionnel)</p>
-            @for (row of equipementRows(); track row.id) {
-              <div class="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  [checked]="row.selected"
-                  (change)="toggleEquipement(row.id)"
-                  class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                />
-                <span class="flex-1 text-sm text-neutral-700">{{ row.nom }}</span>
-                @if (row.selected) {
-                  <input
-                    type="number"
-                    min="1"
-                    [value]="row.quantite"
-                    (input)="setQuantite(row.id, $event)"
-                    class="w-16 rounded-md border border-neutral-300 px-2 py-1 text-sm"
-                  />
-                }
-              </div>
-            }
+          @if (loadingReferenceData()) {
+            <app-skeleton variant="block" height="2.5rem" />
+          } @else {
+            <app-select label="Service concerné" placeholder="Choisir un service" formControlName="service" [options]="serviceOptions()" />
+          }
+
+          <div class="flex flex-col gap-1">
+            <label for="reclamation-message" class="text-sm font-medium text-neutral-700">Message (optionnel)</label>
+            <textarea
+              id="reclamation-message"
+              formControlName="message"
+              rows="3"
+              placeholder="Décrivez le problème..."
+              class="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            ></textarea>
           </div>
-        }
 
-        <app-button type="submit" [disabled]="form.invalid" [loading]="submitting()">Envoyer</app-button>
-      </form>
+          @if (equipementRows().length > 0) {
+            <div class="flex flex-col gap-2">
+              <p class="text-sm font-medium text-neutral-700">Équipements concernés (optionnel)</p>
+              @for (row of equipementRows(); track row.id) {
+                <div class="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    [checked]="row.selected"
+                    (change)="toggleEquipement(row.id)"
+                    class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span class="flex-1 text-sm text-neutral-700">{{ row.nom }}</span>
+                  @if (row.selected) {
+                    <input
+                      type="number"
+                      min="1"
+                      [value]="row.quantite"
+                      (input)="setQuantite(row.id, $event)"
+                      class="w-16 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                    />
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <app-button type="submit" [disabled]="form.invalid" [loading]="submitting()">Envoyer</app-button>
+        </form>
+      }
 
       <!-- List -->
       <div class="flex flex-col gap-2">
@@ -156,6 +164,7 @@ export class ReclamationsComponent implements OnInit {
   private readonly serviceEntityService = inject(ServiceEntityService);
   private readonly equipementService = inject(EquipementService);
   private readonly toastService = inject(ToastService);
+  protected readonly roomStatus = inject(MyRoomStatusService);
 
   protected readonly loadingReferenceData = signal(true);
   protected readonly loadingList = signal(true);
@@ -275,6 +284,18 @@ export class ReclamationsComponent implements OnInit {
         },
         error: (err: AppError) => {
           this.submitting.set(false);
+          // The proactive notice above already covers the common case (zero
+          // reservation history); this covers the narrower one it can't
+          // safely detect — some reservation exists, but the student still
+          // has no real UPC-based room, so getCurrentRoomByUser (server
+          // side) 404s. Same underlying cause, just caught reactively here.
+          if (err.status === 404) {
+            this.toastService.showError(
+              "Vous n'avez pas encore de chambre attribuée — la réclamation n'a pas pu être envoyée.",
+            );
+            this.roomStatus.refresh();
+            return;
+          }
           this.toastService.showError(err.message);
         },
       });

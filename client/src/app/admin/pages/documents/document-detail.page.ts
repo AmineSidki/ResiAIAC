@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DocumentService } from '../../../core/services/document.service';
+import { OwnerNameService } from '../../shared/owner-name/owner-name.service';
 import { DocumentDto } from '../../../core/models/dtos';
 import { AppError } from '../../../core/api/app-error';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -23,30 +24,30 @@ import { SkeletonRowsComponent } from '../../shared/skeleton/skeleton-rows.compo
   standalone: true,
   imports: [RouterLink, FormsModule, StatusBadgeComponent, ButtonComponent, InputComponent, SkeletonRowsComponent],
   template: `
-    <a routerLink="/admin/documents" class="text-sm text-primary-600 hover:text-primary-700">&larr; Retour aux documents</a>
+    <a routerLink="/admin/documents" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400">&larr; Retour aux documents</a>
 
     @if (loading()) {
       <div class="mt-4"><app-skeleton-rows [rows]="3" [columns]="2"></app-skeleton-rows></div>
     } @else {
       @if (document(); as d) {
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
-          <div class="rounded-lg border border-neutral-200 bg-white p-4">
+          <div class="rounded-lg border border-neutral-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
             @if (previewUrl(); as url) {
               @if (isImage(d.nomFichier)) {
                 <img [src]="url" alt="Aperçu du document" class="max-h-[600px] w-full rounded-md object-contain" />
               } @else {
-                <iframe [src]="safePreviewUrl()" class="h-[600px] w-full rounded-md border border-neutral-100" title="Aperçu du document"></iframe>
+                <iframe [src]="safePreviewUrl()" class="h-[600px] w-full rounded-md border border-neutral-100 dark:border-white/10" title="Aperçu du document"></iframe>
               }
             } @else {
               <div class="flex h-64 items-center justify-center text-sm text-neutral-400">Chargement de l'aperçu…</div>
             }
           </div>
 
-          <div class="rounded-lg border border-neutral-200 bg-white p-6">
+          <div class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
             <div class="flex items-start justify-between">
               <div>
-                <h1 class="text-base font-semibold text-neutral-900 break-all">{{ d.nomFichier }}</h1>
-                <p class="mt-1 text-xs text-neutral-500">Propriétaire {{ d.proprietaire }}</p>
+                <h1 class="text-base font-semibold text-neutral-900 break-all dark:text-white">{{ d.nomFichier }}</h1>
+                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Propriétaire {{ ownerName() ?? '…' }}</p>
               </div>
               <app-status-badge kind="document" [value]="d.etat ?? 'AUCUN'"></app-status-badge>
             </div>
@@ -68,12 +69,14 @@ import { SkeletonRowsComponent } from '../../shared/skeleton/skeleton-rows.compo
 export class DocumentDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly documentService = inject(DocumentService);
+  private readonly ownerNameService = inject(OwnerNameService);
   private readonly toast = inject(ToastService);
   private readonly sanitizer = inject(DomSanitizer);
 
   private documentId!: string;
 
   protected readonly document = signal<DocumentDto | null>(null);
+  protected readonly ownerName = signal<string | null>(null);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly previewUrl = signal<string | null>(null);
@@ -96,6 +99,7 @@ export class DocumentDetailPageComponent implements OnInit {
         this.document.set(d);
         this.note = d.noteSurValidite ?? '';
         this.loading.set(false);
+        this.ownerNameService.resolveOne(d.proprietaire).subscribe((name) => this.ownerName.set(name));
       },
       error: (err: AppError) => {
         this.loading.set(false);

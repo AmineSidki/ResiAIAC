@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 import org.aminesidki.resiaiac.dto.UtilisateurDto;
 import org.aminesidki.resiaiac.enumeration.Role;
@@ -21,7 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.RoleMappingResource;
+import org.keycloak.admin.client.resource.RoleResource;
+import org.keycloak.admin.client.resource.RoleScopeResource;
+import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -47,6 +52,11 @@ class KeycloakServiceTest {
   @Mock private RealmResource realmResource;
   @Mock private UsersResource usersResource;
   @Mock private Response response;
+  @Mock private RolesResource rolesResource;
+  @Mock private RoleResource roleResource;
+  @Mock private UserResource userResource;
+  @Mock private RoleMappingResource roleMappingResource;
+  @Mock private RoleScopeResource roleScopeResource;
 
   private KeycloakService keycloakService; // typed as the interface
 
@@ -68,10 +78,7 @@ class KeycloakServiceTest {
             null,
             null,
             null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
+            null,
             null,
             null);
 
@@ -79,20 +86,40 @@ class KeycloakServiceTest {
     when(realmResource.users()).thenReturn(usersResource);
   }
 
+  /**
+   * {@code createUser} looks up the Keycloak role for the DTO's {@code role} right after checking
+   * the creation status, before it even extracts the new user's id. Every test whose {@code
+   * response.getStatus()} is 201 exercises this lookup, so it needs to be stubbed or the call
+   * throws a NullPointerException instead of the exception the test is actually asserting on.
+   */
+  private void stubRoleLookup() {
+    RoleRepresentation roleRepresentation = new RoleRepresentation();
+    roleRepresentation.setName(Role.ETUDIANT.name());
+
+    when(realmResource.roles()).thenReturn(rolesResource);
+    when(rolesResource.get(Role.ETUDIANT.name())).thenReturn(roleResource);
+    when(roleResource.toRepresentation()).thenReturn(roleRepresentation);
+  }
+
   // ---------- createUser ----------
 
   @Test
   void createUser_shouldReturnKeycloakIdOnSuccess() {
     UUID expectedId = UUID.randomUUID();
+    stubRoleLookup();
     when(usersResource.create(any())).thenReturn(response);
     when(response.getStatus()).thenReturn(201);
     when(response.getLocation())
         .thenReturn(URI.create("http://localhost:8080/admin/realms/resiaiac/users/" + expectedId));
+    when(usersResource.get(expectedId.toString())).thenReturn(userResource);
+    when(userResource.roles()).thenReturn(roleMappingResource);
+    when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
 
     UUID result = keycloakService.createUser(dto);
 
     assertThat(result).isEqualTo(expectedId);
     verify(usersResource).create(any());
+    verify(roleScopeResource).add(any());
   }
 
   @Test
@@ -106,6 +133,7 @@ class KeycloakServiceTest {
 
   @Test
   void createUser_shouldThrowWhenLocationIdIsNotAValidUuid() {
+    stubRoleLookup();
     when(usersResource.create(any())).thenReturn(response);
     when(response.getStatus()).thenReturn(201);
     when(response.getLocation())
@@ -117,6 +145,7 @@ class KeycloakServiceTest {
 
   @Test
   void createUser_shouldThrowWhenLocationHeaderIsMissing() {
+    stubRoleLookup();
     when(usersResource.create(any())).thenReturn(response);
     when(response.getStatus()).thenReturn(201);
     when(response.getLocation()).thenReturn(null);
